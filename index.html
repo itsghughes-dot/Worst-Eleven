@@ -364,10 +364,11 @@
   /* Combined bottom action row */
   .draft-action-row {
     display: flex;
-    align-items: center;
+    align-items: stretch;
     gap: 8px;
     width: 100%;
     flex-shrink: 0;
+    box-sizing: border-box;
   }
   .turn-pill {
     display: flex;
@@ -376,22 +377,34 @@
     background: var(--black);
     color: white;
     border-radius: 10px;
-    padding: 8px 12px;
-    flex: 1;
+    padding: 10px 12px;
+    flex: 1 1 0;
     min-width: 0;
+    max-width: calc(55% - 4px);
+    overflow: hidden;
   }
   .turn-text {
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 500;
     flex: 1;
     min-width: 0;
-    line-height: 1.3;
+    line-height: 1.35;
+    overflow: hidden;
   }
-  .turn-text em { font-style: normal; color: #aaa; }
+  .turn-text strong {
+    display: block;
+    font-size: 12px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+  }
+  .turn-text em { font-style: normal; color: #aaa; font-size: 10.5px; }
   .btn-confirm {
-    flex-shrink: 0;
-    width: 130px;
-    padding: 11px 0;
+    flex: 1 1 0;
+    min-width: 0;
+    max-width: calc(45% - 4px);
+    padding: 11px 8px;
     border-radius: 10px;
     border: none;
     font-size: 13px;
@@ -2657,7 +2670,7 @@
       </div>
       <div class="carousel-hint">← scroll to browse · select to pick</div>
 
-      <!-- Bottom action row: status pill + button side by side -->
+      <!-- Bottom action row: status pill (left) + pick button (right) -->
       <div class="draft-action-row">
         <div class="turn-pill">
           <div class="turn-text" id="turn-text">Your pick</div>
@@ -2670,7 +2683,7 @@
             <div class="timer-num" id="timer-num">30</div>
           </div>
         </div>
-        <button class="btn-confirm" onclick="draftPlayer()" id="btn-me">Pick for Me</button>
+        <button class="btn-confirm" onclick="draftPlayer()" id="btn-me">Pick Player</button>
         <button style="display:none" id="btn-sabotage"></button>
       </div>
 
@@ -3916,38 +3929,62 @@ function revealMatch(m) {
 
   showCoinPhase('reveal');
 
-  // In mp mode as guest (B): just show a pulsing "waiting" state — the host controls timing
-  if (state.mp && state.mp.role === 'B') {
-    const fill  = document.getElementById('coin-countdown-fill');
-    const label = document.getElementById('coin-countdown-label');
-    if (fill)  { fill.style.transition = 'none'; fill.style.width = '40%'; }
-    if (label) label.textContent = 'Waiting for coin flip…';
-    return; // Guest does nothing — mpShowCoinResultForGuest handles the rest
+  // In multiplayer: countdown is driven by a shared Firebase timestamp so both
+  // clients animate in perfect sync. startCoinCountdown() handles this.
+  // In single-player: just start the countdown immediately.
+  if (!state.mp) {
+    startCoinCountdown(Date.now());
   }
+  // In mp mode, the countdown is triggered by mpStartDraft once the
+  // Firebase coinFlipStart timestamp has been written/read.
+}
 
-  // Countdown bar — 10 seconds (single player or mp host)
+// Start the coin countdown bar synced to a wall-clock timestamp.
+// startAt = Date.now()-compatible ms timestamp when the 10s countdown began.
+function startCoinCountdown(startAt) {
   const fill  = document.getElementById('coin-countdown-fill');
   const label = document.getElementById('coin-countdown-label');
   const TOTAL = 10;
-  let secs = TOTAL;
 
-  fill.style.transition = 'none';
-  fill.style.width = '100%';
-  requestAnimationFrame(() => {
+  // Calculate how much time has already elapsed (for late-joining guest)
+  const elapsed = Math.min((Date.now() - startAt) / 1000, TOTAL);
+  const remaining = TOTAL - elapsed;
+
+  if (remaining <= 0) {
+    // Already past — run flip immediately
+    if (label) label.textContent = 'Flipping…';
+    runCoinFlip();
+    return;
+  }
+
+  // Animate bar from current position to 0 over remaining time
+  const startPct = (remaining / TOTAL) * 100;
+  if (fill) {
+    fill.style.transition = 'none';
+    fill.style.width = startPct + '%';
     requestAnimationFrame(() => {
-      fill.style.transition = `width ${TOTAL}s linear`;
-      fill.style.width = '0%';
+      requestAnimationFrame(() => {
+        fill.style.transition = `width ${remaining}s linear`;
+        fill.style.width = '0%';
+      });
     });
-  });
+  }
 
-  const countdown = setInterval(() => {
-    secs--;
-    label.textContent = secs > 0 ? `Coin flip in ${secs}…` : 'Flipping…';
-    if (secs <= 0) {
-      clearInterval(countdown);
+  let secsLeft = Math.ceil(remaining);
+  if (label) label.textContent = secsLeft > 0 ? `Coin flip in ${secsLeft}…` : 'Flipping…';
+
+  const tick = setInterval(() => {
+    secsLeft--;
+    const nowElapsed = (Date.now() - startAt) / 1000;
+    const nowRemaining = TOTAL - nowElapsed;
+    if (nowRemaining <= 0) {
+      clearInterval(tick);
+      if (label) label.textContent = 'Flipping…';
       runCoinFlip();
+    } else {
+      if (label) label.textContent = `Coin flip in ${Math.ceil(nowRemaining)}…`;
     }
-  }, 1000);
+  }, 500); // check every 0.5s for accuracy
 }
 
 function revealTip() {
@@ -4016,6 +4053,11 @@ function runCoinFlip() {
   coin.style.transform = '';
   status.textContent = '';
   sub.textContent = '';
+
+  // In mp (host): signal the guest that the spin is starting RIGHT NOW
+  if (state.mp && state.mp.role === 'A') {
+    window._fb.update(state.mp.sessionRef, { coinFlipAnimStart: Date.now() });
+  }
 
   // Spin animation
   let flips = 0;
@@ -4338,67 +4380,56 @@ function updateTurnUI() {
   const step = currentStep();
   if (!step) return;
 
-  const isMyTurn = mp_isMyStep(step); // works for both sp and mp
-
-  const btn = document.getElementById('btn-me');
+  const isMyTurn = mp_isMyStep(step);
+  const btn      = document.getElementById('btn-me');
+  const turnEl   = document.getElementById('turn-text');
   document.getElementById('btn-sabotage').style.display = 'none';
 
-  // Opponent name for messaging
-  const oppName = state.mp
+  // Opponent name — truncate long names to keep UI tidy
+  const rawOppName = state.mp
     ? (state.mp.oppName || (state.mp.role === 'A' ? state.mp.playerB : state.mp.playerA)?.name || 'Opponent')
     : 'Opponent';
+  const oppName = rawOppName.length > 10 ? rawOppName.slice(0, 9) + '…' : rawOppName;
 
-  // Count progress for this step type
-  const myStepsDone  = state.sequence.slice(0, state.currentPick)
-    .filter(s => mp_isMyStep(s) && s.type === step.type).length;
-  const oppStepsDone = state.sequence.slice(0, state.currentPick)
+  // Progress counters
+  const myDone  = state.sequence.slice(0, state.currentPick)
+    .filter(s =>  mp_isMyStep(s) && s.type === step.type).length;
+  const oppDone = state.sequence.slice(0, state.currentPick)
     .filter(s => !mp_isMyStep(s) && s.type === step.type).length;
-  const totalOfType  = state.sequence.filter(s => s.type === step.type).length / 2; // per player
 
+  // ── LEFT PILL: status text only (no button label logic here) ──
   if (step.type === 'gk') {
-    document.getElementById('turn-text').innerHTML = isMyTurn
-      ? `<em>You won the toss!</em> Pick your goalkeeper`
-      : `<em>${oppName} won the toss.</em> Picking GK…`;
-    btn.textContent = isMyTurn ? 'Pick GK' : `Waiting for ${oppName}…`;
-    btn.disabled = !isMyTurn;
-    btn.style.background = isMyTurn ? 'var(--blue)' : '#555';
+    turnEl.innerHTML = isMyTurn
+      ? '<strong>Pick your goalkeeper</strong><em>You won the toss</em>'
+      : `<strong>${oppName} picks GK</strong><em>You pick first after</em>`;
 
   } else if (step.type === 'sabotage') {
-    // Round number = how many sabotage rounds have been fully completed + 1
-    const sabRound = Math.floor(state.currentPick / 2) + 1; // rough, good enough
-    // Better: count total sabotage picks done ÷ 2 (both players do one each round)
-    const totalSabsDone = state.sequence.slice(0, state.currentPick).filter(s => s.type === 'sabotage').length;
-    const roundNum = Math.floor(totalSabsDone / 2) + 1;
-
     if (isMyTurn) {
-      document.getElementById('turn-text').innerHTML =
-        `⚡ Send a sabotage pick to ${oppName} <em>· ${myStepsDone + 1} of 3</em>`;
-      btn.textContent = `⚡ Send to ${oppName}`;
-      btn.disabled = false;
-      btn.style.background = 'var(--red)';
+      turnEl.innerHTML =
+        `<strong>⚡ Your sabotage pick</strong><em>${myDone + 1} of 3 · goes to ${oppName}</em>`;
     } else {
-      document.getElementById('turn-text').innerHTML =
-        `⚡ ${oppName} is sending you a sabotage pick <em>· ${oppStepsDone + 1} of 3</em>`;
-      btn.textContent = `${oppName} is picking…`;
-      btn.disabled = true;
-      btn.style.background = '#555';
+      turnEl.innerHTML =
+        `<strong>⚡ ${oppName} sabotages you</strong><em>${oppDone + 1} of 3 · wait for pick</em>`;
     }
 
   } else {
     if (isMyTurn) {
-      document.getElementById('turn-text').innerHTML =
-        `Your pick <em>· ${myStepsDone + 1} of 7</em>`;
-      btn.textContent = 'Pick for Me';
-      btn.disabled = false;
-      btn.style.background = 'var(--blue)';
+      turnEl.innerHTML =
+        `<strong>Your pick</strong><em>${myDone + 1} of 7</em>`;
     } else {
-      document.getElementById('turn-text').innerHTML =
-        `${oppName} is picking… <em>· ${oppStepsDone + 1} of 7</em>`;
-      btn.textContent = `Waiting for ${oppName}…`;
-      btn.disabled = true;
-      btn.style.background = '#555';
+      turnEl.innerHTML =
+        `<strong>${oppName} is picking</strong><em>${oppDone + 1} of 7 · your turn next</em>`;
     }
   }
+
+  // ── RIGHT BUTTON: always "Pick Player", just enabled/disabled ──
+  btn.textContent = 'Pick Player';
+  btn.disabled    = !isMyTurn;
+  btn.style.background = isMyTurn
+    ? (step.type === 'sabotage' ? 'var(--red)' : 'var(--blue)')
+    : '#555';
+  btn.style.cursor = isMyTurn ? 'pointer' : 'default';
+  btn.style.opacity = isMyTurn ? '1' : '0.6';
 }
 
 // Helper: is this sequence step MY turn?
@@ -6757,37 +6788,94 @@ function mpStartDraft(sessionData) {
     t++;
   }, 220);
 
-  // ── Step 2: After reel, show match reveal → trigger coin ──
-  setTimeout(() => {
+  // ── Step 2: After reel, sync coin countdown via Firebase timestamp ──
+  setTimeout(async () => {
     clearInterval(lineInterval);
     const m = ALL_MATCHES[mp.matchIdx];
 
-    // revealMatch shows the reveal phase and starts a 10-second countdown
-    // that eventually calls runCoinFlip().
-    // For the GUEST (B) we intercept that so the coin never actually runs locally.
-    // Instead the guest just shows "Waiting for coin flip…" and watches Firebase.
+    // Show the match reveal panel (no countdown starts inside revealMatch for mp)
     revealMatch(m);
 
+    // HOST writes the coinFlipStart timestamp so both clients sync to same moment
+    let coinFlipStart;
     if (mp.role === 'A') {
-      // Host: register the callback that runCoinFlip calls after showing the result.
-      // By the time this fires, the host has ALREADY seen the coin result on screen
-      // (runCoinFlip shows it), so we just write to Firebase and go straight to draft.
+      coinFlipStart = Date.now();
+      await window._fb.update(mp.sessionRef, { coinFlipStart });
+    } else {
+      // Guest: wait for host to write the timestamp (near-instant over LAN/mobile)
+      coinFlipStart = await new Promise(resolve => {
+        window._fb.onValue(mp.sessionRef, function readStart(snap) {
+          const d = snap.val();
+          if (d && d.coinFlipStart) {
+            window._fb.off(mp.sessionRef);
+            resolve(d.coinFlipStart);
+          }
+        });
+      });
+    }
+
+    // Both clients start their countdown bar from the SAME wall-clock moment
+    startCoinCountdown(coinFlipStart);
+
+    // HOST: runCoinFlip() calls _mpCoinDone after its 10s + animation
+    if (mp.role === 'A') {
       window._mpCoinDone = async (playerAWins) => {
         const gkWinner = playerAWins ? 'A' : 'B';
         await window._fb.update(mp.sessionRef, { gkWinner });
-        // Enter draft immediately (host already saw result; guest is still animating)
+        // Host already saw the result in runCoinFlip — go to draft
         _mpEnterDraft(mp, gkWinner);
       };
-    } else {
-      // Guest: watch Firebase for the host's result
+    }
+
+    // GUEST: watch Firebase for the spin animation start + result
+    if (mp.role === 'B') {
+      let animStarted = false;
       window._fb.onValue(mp.sessionRef, (snap) => {
         const d = snap.val();
-        if (d && d.gkWinner) {
+        if (!d) return;
+
+        // When host starts spinning, guest starts their spin in sync
+        if (d.coinFlipAnimStart && !animStarted) {
+          animStarted = true;
+          // Show flip phase on guest screen immediately
+          showCoinPhase('flip');
+          const coin = document.getElementById('coin');
+          const status = document.getElementById('coin-status');
+          const sub = document.getElementById('coin-sub');
+          if (coin) { coin.textContent = '🪙'; coin.style.transform = ''; }
+          if (status) status.textContent = '';
+          if (sub) sub.textContent = '';
+
+          // Run the same spin animation (~1.2s for 10 flips at 120ms)
+          let flips = 0;
+          const faces = ['🪙', '⚽'];
+          const guestSpin = setInterval(() => {
+            if (coin) {
+              coin.textContent = faces[flips % 2];
+              coin.style.transform = `rotateY(${flips * 180}deg) scale(${flips % 2 === 0 ? 1 : 0.85})`;
+            }
+            flips++;
+            if (flips > 10) {
+              clearInterval(guestSpin);
+              if (coin) { coin.style.transform = ''; coin.textContent = '🪙'; }
+              // Keep showing spinning coin until gkWinner arrives
+            }
+          }, 120);
+        }
+
+        // When result arrives, show it then go to draft
+        if (d.gkWinner) {
           window._fb.off(mp.sessionRef);
-          // Show the same coin result animation then enter draft
-          _mpShowCoinResult(mp, d.gkWinner, () => {
-            setTimeout(() => _mpEnterDraft(mp, d.gkWinner), 1000);
-          });
+          const iWinGK = (mp.role === d.gkWinner);
+          const coin = document.getElementById('coin');
+          const status = document.getElementById('coin-status');
+          const sub = document.getElementById('coin-sub');
+          if (coin) { coin.style.transform = ''; coin.textContent = iWinGK ? '✅' : '❌'; }
+          if (status) status.textContent = iWinGK ? 'YOU WIN' : 'OPPONENT WINS';
+          if (sub) sub.textContent = iWinGK
+            ? 'You pick the goalkeeper first'
+            : mp.oppName + ' picks the goalkeeper first';
+          setTimeout(() => _mpEnterDraft(mp, d.gkWinner), 2500);
         }
       });
     }
@@ -7016,6 +7104,65 @@ function mpDraftComplete() {
   clearInterval(state.timerInterval);
   if (state.myTeam.length < 11 || state.oppTeam.length < 11) return;
   setTimeout(() => showCaptainScreen(), 600);
+}
+
+// ── Captain selection + simulation sync ──────────────────────
+// Called by confirmCaptain(). Writes our captain, reads opponent's captain,
+// signals ready, waits for shared sim timestamp, then fires callback.
+async function mpSetCaptain(playerId) {
+  const mp = state.mp;
+  if (!mp) return;
+  const myField  = mp.role === 'A' ? 'captainA' : 'captainB';
+  const oppField = mp.role === 'A' ? 'captainB' : 'captainA';
+  await window._fb.update(mp.sessionRef, { [myField]: playerId });
+}
+
+async function mpReadyToSim() {
+  const mp = state.mp;
+  if (!mp) return;
+  const readyField = mp.role === 'A' ? 'simReadyA' : 'simReadyB';
+  await window._fb.update(mp.sessionRef, { [readyField]: true });
+
+  // Player A is responsible for writing the shared start timestamp once both are ready
+  if (mp.role === 'A') {
+    window._fb.onValue(mp.sessionRef, async (snap) => {
+      const d = snap.val();
+      if (d && d.simReadyA && d.simReadyB && !d.simStartTimestamp) {
+        window._fb.off(mp.sessionRef);
+        await window._fb.update(mp.sessionRef, {
+          simStartTimestamp: Date.now(),
+          status: 'simulating',
+        });
+      }
+    });
+  }
+}
+
+// Wait for the shared sim start timestamp, read opponent captain, then fire callback
+function mpWaitForSimStart(callback) {
+  const mp = state.mp;
+  if (!mp) { callback(); return; }
+  const oppField = mp.role === 'A' ? 'captainB' : 'captainA';
+  window._fb.onValue(mp.sessionRef, (snap) => {
+    const d = snap.val();
+    if (!d) return;
+    // Capture opponent captain as soon as it appears in Firebase
+    if (d[oppField]) state.oppCaptain = d[oppField];
+    // Fire simulation once shared timestamp is written
+    if (d.simStartTimestamp) {
+      window._fb.off(mp.sessionRef);
+      const delay = Math.max(0, d.simStartTimestamp + 500 - Date.now());
+      setTimeout(callback, delay);
+    }
+  });
+}
+
+// Write final score to Firebase so both clients can see the result
+async function mpWriteScore(score) {
+  const mp = state.mp;
+  if (!mp) return;
+  const field = mp.role === 'A' ? 'scoreA' : 'scoreB';
+  await window._fb.update(mp.sessionRef, { [field]: Math.round(score), status: 'done' });
 }
 
 // ── Override draftPlayer in mp mode ──────────────────────────

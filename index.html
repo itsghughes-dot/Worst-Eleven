@@ -966,6 +966,21 @@
     margin-bottom: 8px;
   }
   #result-graph { width: 100%; display: block; }
+  .profile-delete-btn {
+    width: 100%;
+    margin-top: 8px;
+    background: none;
+    border: 1.5px solid #f87171;
+    border-radius: 10px;
+    padding: 12px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #f87171;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .profile-delete-btn:hover { background: #fff1f2; }
+
   /* ─── TEAM BADGES ─── */
   .match-badges-row {
     display: flex;
@@ -1137,14 +1152,16 @@
     border: 1.5px solid #333;
     border-radius: 10px;
     color: white;
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 28px;
-    letter-spacing: 8px;
-    padding: 10px 16px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: 3px;
+    padding: 10px 12px;
     text-align: center;
     outline: none;
     min-width: 0;
   }
+  .lobby-code-input::placeholder { letter-spacing: 0; font-weight: 400; color: #555; font-size: 13px; }
   .lobby-code-input:focus { border-color: #555; }
   .lobby-code-display {
     font-family: 'Bebas Neue', sans-serif;
@@ -2376,17 +2393,47 @@
 
 <!-- ═══════════════════════════════════════ HOME ═══════════════════════════════════════ -->
 <div id="screen-home" class="screen active">
+  <!-- Title + tagline -->
   <div style="margin-bottom: 16px;">
     <div class="home-logo">WORST<br><span>ELEVEN</span></div>
     <div class="home-tagline">Draft the worst. <span class="tagline-score">Score the most. 😈</span></div>
   </div>
 
-  <!-- How to play — shown first -->
+  <!-- Profile selector — pick or create -->
+  <div class="home-profile-section">
+    <div class="profile-pick-label">Your Profile</div>
+
+    <!-- Existing profiles list (populated by JS) -->
+    <div class="profile-cards-list" id="home-profiles-list"></div>
+
+    <!-- New profile creation — only shown when no profiles exist -->
+    <div class="profile-new-form" id="profile-new-form">
+      <div class="profile-new-row">
+        <button class="emoji-pick-btn" id="emoji-btn" onclick="toggleEmojiPicker()">⚽</button>
+        <input class="profile-new-input" id="team-name-input" type="text" placeholder="Team name…" maxlength="24" oninput="onTeamNameInput()"/>
+        <button class="profile-new-save" id="profile-save-btn" onclick="saveNewProfile()" disabled>Save</button>
+      </div>
+      <div class="emoji-hint">Tap the crest to pick · <span style="cursor:pointer;text-decoration:underline;" onclick="randomEmoji()">randomise</span></div>
+      <div class="emoji-grid" id="emoji-grid" style="display:none;"></div>
+    </div>
+  </div>
+
+  <!-- Side-by-side CTA buttons -->
+  <div style="display:flex;gap:10px;width:100%;max-width:360px;margin-bottom:16px;">
+    <button class="btn-primary" id="start-btn" onclick="startGame()" style="flex:1;font-size:15px;padding:18px 12px;border-radius:14px;" disabled>
+      🤖 Practice vs AI
+    </button>
+    <button class="btn-primary dark" id="mp-btn" onclick="openLobby()" style="flex:1;font-size:15px;padding:18px 12px;border-radius:14px;" disabled>
+      ⚽ Play vs Friend
+    </button>
+  </div>
+
+  <!-- How to play -->
   <div class="home-rules">
     <div class="home-rules-title">How to play</div>
     <div class="home-rule-step">
       <span class="home-rule-num">1</span>
-      <span><strong>Pick your team name and crest</strong> below, then hit Go to Draft.</span>
+      <span><strong>Create your profile</strong> above, then hit Practice vs AI or Play vs Friend.</span>
     </div>
     <div class="home-rule-step">
       <span class="home-rule-num">2</span>
@@ -2406,34 +2453,7 @@
     </div>
   </div>
 
-  <!-- Profile selector — pick or create, this IS the first step -->
-  <div class="home-profile-section">
-    <div class="profile-pick-label">Your Profile</div>
-
-    <!-- Existing profiles list (populated by JS) -->
-    <div class="profile-cards-list" id="home-profiles-list"></div>
-
-    <!-- New profile creation -->
-    <button class="profile-new-btn" id="profile-new-btn" onclick="openNewProfileForm()">+ Create new profile</button>
-    <div class="profile-new-form" id="profile-new-form">
-      <div class="profile-new-row">
-        <button class="emoji-pick-btn" id="emoji-btn" onclick="toggleEmojiPicker()">⚽</button>
-        <input class="profile-new-input" id="team-name-input" type="text" placeholder="Team name…" maxlength="24" oninput="onTeamNameInput()"/>
-        <button class="profile-new-save" id="profile-save-btn" onclick="saveNewProfile()" disabled>Save</button>
-      </div>
-      <div class="emoji-hint">Tap the crest to pick · <span style="cursor:pointer;text-decoration:underline;" onclick="randomEmoji()">randomise</span></div>
-      <div class="emoji-grid" id="emoji-grid" style="display:none;"></div>
-    </div>
-  </div>
-
-  <button class="btn-primary" id="start-btn" onclick="startGame()" style="font-size: 18px; padding: 20px 60px;" disabled>
-    Go to Draft →
-  </button>
-  <button class="btn-primary dark" id="mp-btn" onclick="openLobby()" style="font-size:15px;padding:14px 40px;margin-top:0;" disabled>
-    ⚽ Play vs Friend
-  </button>
-
-  <!-- Scoring mechanics — brief, below the button -->
+  <!-- Scoring mechanics -->
   <div class="home-scoring">
     <div class="home-scoring-title">Scoring</div>
     <div class="home-scoring-row"><span class="score-pill pos">+20</span> GK red card</div>
@@ -2556,6 +2576,8 @@
       <div class="profile-section-title">Badges</div>
       <div class="profile-badges-grid" id="profile-badges-grid"></div>
     </div>
+
+    <button class="profile-delete-btn" onclick="confirmDeleteProfile()">🗑 Delete Profile</button>
   </div>
 </div>
 
@@ -3373,8 +3395,6 @@ function getTeamBadge(teamName, colour, size) {
 
   return `<svg width="${s}" height="${s}" viewBox="0 0 ${s} ${s}" xmlns="http://www.w3.org/2000/svg">
     <path d="${shield}" fill="${colour || '#333'}" stroke="rgba(255,255,255,0.2)" stroke-width="1"/>
-    <text x="${s*0.5}" y="${s*0.58}" text-anchor="middle" dominant-baseline="middle"
-      font-family="'Bebas Neue',sans-serif" font-size="${fs}" fill="${textColour}" letter-spacing="1">${initials}</text>
   </svg>`;
 }
 
@@ -3641,6 +3661,16 @@ function renderHomeProfiles() {
     list.appendChild(card);
   }
 
+  // Show create form only when there are no profiles at all
+  const newForm = document.getElementById('profile-new-form');
+  if (newForm) {
+    if (_profiles.length === 0) {
+      newForm.classList.add('open');
+    } else {
+      newForm.classList.remove('open');
+    }
+  }
+
   // Update start button
   updateStartBtn();
 }
@@ -3686,6 +3716,17 @@ function openNewProfileForm() {
   if (input) { input.value = ''; input.focus(); }
   const saveBtn = document.getElementById('profile-save-btn');
   if (saveBtn) saveBtn.disabled = true;
+}
+
+function confirmDeleteProfile() {
+  const profile = getActiveProfile();
+  if (!profile) return;
+  if (!confirm(`Delete profile "${profile.name}"? This cannot be undone.`)) return;
+  _profiles = _profiles.filter(p => p.id !== _activeProfileId);
+  saveProfiles(_profiles);
+  _activeProfileId = null;
+  renderHomeProfiles();
+  showScreen('home');
 }
 
 function saveNewProfile() {
@@ -3865,7 +3906,7 @@ function revealMatch(m) {
         ${getTeamBadge(m.meta.home, hc, 44)}
         <div class="match-badge-name">${m.meta.home}</div>
       </div>
-      <div class="match-badge-vs">${m.meta.score || 'vs'}</div>
+      <div class="match-badge-vs">vs</div>
       <div class="match-badge-item">
         ${getTeamBadge(m.meta.away, ac, 44)}
         <div class="match-badge-name">${m.meta.away}</div>
@@ -3875,15 +3916,12 @@ function revealMatch(m) {
 
   showCoinPhase('reveal');
 
-  // In mp mode as guest (B): skip the flip entirely — just show the match
-  // and wait for host to write gkWinner to Firebase
+  // In mp mode as guest (B): show the same countdown bar — both players see it together
+  // mpWaitForCoinResult is already listening for gkWinner in Firebase
   if (state.mp && state.mp.role === 'B') {
     const label = document.getElementById('coin-countdown-label');
-    const fill  = document.getElementById('coin-countdown-fill');
-    if (label) label.textContent = 'Waiting for coin flip…';
-    if (fill)  { fill.style.transition = 'none'; fill.style.width = '0%'; }
-    // mpWaitForCoinResult is already listening — nothing else needed here
-    return;
+    if (label) label.textContent = 'Coin flip incoming…';
+    // Countdown bar still animates the same way — fall through to countdown code below
   }
 
   // Countdown bar — 10 seconds (single player or mp host)
@@ -3963,6 +4001,10 @@ function applyTipPenalty() {
 }
 
 function runCoinFlip() {
+  // In mp mode as guest — don't run the flip locally, the host runs it
+  // and we'll receive the result via Firebase (mpShowCoinResultForGuest)
+  if (state.mp && state.mp.role === 'B') return;
+
   showCoinPhase('flip');
 
   const coin   = document.getElementById('coin');
@@ -4093,7 +4135,8 @@ function restart() {
   };
   const form = document.getElementById('profile-new-form');
   if (form) form.classList.remove('open');
-  document.getElementById('emoji-grid').style.display = 'none';
+  const emojiGridEl = document.getElementById('emoji-grid');
+  if (emojiGridEl) emojiGridEl.style.display = 'none';
   emojiIndex = 0;
   emojiPickerOpen = false;
   renderHomeProfiles(); // re-render so active profile stays highlighted
@@ -4164,7 +4207,7 @@ function setupDraft() {
   if (gkWinner === 'opp') {
     setTimeout(() => autoPickGK(), 1000);
   } else {
-    startTimer();
+    startTimer(10); // GK pick: 10 second timer
   }
 }
 
@@ -4547,8 +4590,8 @@ function getTimerDuration() {
   return picksRemaining <= 5 ? 10 : 30;
 }
 
-function startTimer() {
-  const duration = getTimerDuration();
+function startTimer(durationOverride) {
+  const duration = durationOverride || getTimerDuration();
   state.timerSecs = duration;
   state.timerDuration = duration;
   updateTimerDisplay();
@@ -6697,55 +6740,89 @@ function mpStartDraft(sessionData) {
 }
 
 function mpRunCoinAsHost(mp) {
-  // Override the countdown so after it ends we do mp coin flip
-  // The coin reveal countdown already started in revealMatch
-  // We intercept by watching for the flip phase
-  const origSetup = window._mpCoinDone;
-  window._mpCoinDone = async (playerWins) => {
-    // playerWins = did Player A win the toss?
-    const gkWinner = playerWins ? 'A' : 'B';
+  // Both players see the reveal countdown simultaneously.
+  // After the countdown (managed in revealMatch → runCoinFlip),
+  // the host does the flip and writes the result to Firebase.
+  // We override _mpCoinDone which is called by runCoinFlip after the animation.
+  window._mpCoinDone = async (playerAWins) => {
+    const gkWinner = playerAWins ? 'A' : 'B';
     await window._fb.update(mp.sessionRef, { gkWinner });
+    // Host already saw the coin flip animation — proceed to draft
     mpProceedToDraft(mp, gkWinner);
   };
 }
 
 function mpWaitForCoinResult(mp) {
+  // Guest: also show the reveal countdown (already running from revealMatch).
+  // Now just watch Firebase for the gkWinner result.
   window._fb.onValue(mp.sessionRef, (snap) => {
     const d = snap.val();
     if (d && d.gkWinner) {
       window._fb.off(mp.sessionRef);
-      mpProceedToDraft(mp, d.gkWinner);
+      // Show the coin flip animation result for the guest too
+      mpShowCoinResultForGuest(mp, d.gkWinner);
     }
   });
+}
+
+function mpShowCoinResultForGuest(mp, gkWinner) {
+  // Guest never saw the spin — show them the result screen now
+  showCoinPhase('flip');
+  const coin   = document.getElementById('coin');
+  const status = document.getElementById('coin-status');
+  const sub    = document.getElementById('coin-sub');
+  const iWinGK = (mp.role === gkWinner);
+
+  // Animate: spin then reveal
+  coin.textContent = '🪙';
+  let flips = 0;
+  const faces = ['🪙','⚽'];
+  const spinInterval = setInterval(() => {
+    coin.textContent = faces[flips % 2];
+    coin.style.transform = `rotateY(${flips * 180}deg) scale(${flips % 2 === 0 ? 1 : 0.85})`;
+    flips++;
+    if (flips > 10) {
+      clearInterval(spinInterval);
+      coin.style.transform = '';
+      coin.textContent = iWinGK ? '✅' : '❌';
+      if (status) status.textContent = iWinGK ? 'YOU WIN' : 'OPPONENT WINS';
+      if (sub) sub.textContent = iWinGK
+        ? 'You pick the goalkeeper first'
+        : 'Opponent picks the goalkeeper first';
+      setTimeout(() => mpProceedToDraft(mp, gkWinner), 2500);
+    }
+  }, 120);
 }
 
 function mpProceedToDraft(mp, gkWinner) {
   // gkWinner is 'A' or 'B' — convert to my perspective
   const iWinGK = (mp.role === gkWinner);
   state.gkPickerIsMe = iWinGK;
-  buildDraftSequence(iWinGK);
-
-  // If guest (B), show coin flip result screen briefly before draft
-  if (mp.role === 'B') {
-    showCoinPhase('flip');
-    const coin   = document.getElementById('coin');
-    const status = document.getElementById('coin-status');
-    const sub    = document.getElementById('coin-sub');
-    if (coin)   coin.textContent   = iWinGK ? '✅' : '❌';
-    if (status) status.textContent = iWinGK ? 'YOU WIN' : 'OPPONENT WINS';
-    if (sub)    sub.textContent    = iWinGK
-      ? 'You pick the goalkeeper first'
-      : 'Opponent picks the goalkeeper first';
-    setTimeout(() => _mpEnterDraft(mp, iWinGK), 2500);
-    return;
-  }
-
   _mpEnterDraft(mp, iWinGK);
 }
 
 function _mpEnterDraft(mp, iWinGK) {
   showScreen('draft');
+
+  // Build fresh sequence from scratch (not from iWinGK — we need 'me'/'opp' perspective)
+  state.myTeam        = [];
+  state.oppTeam       = [];
+  state.currentPick   = 0;
+  state.selectedPlayer = null;
+  state.teamFilter    = 'home';
+  const gkWinner = iWinGK ? 'me' : 'opp';
+  state.sequence = buildDraftSequence(gkWinner);
+
   initPlayerData();
+
+  // Set my zone label
+  const myLabel = document.getElementById('my-zone-label');
+  if (myLabel) {
+    const profile = getActiveProfile();
+    const name = (profile ? profile.emoji + ' ' + profile.name : null) || state.teamName || 'Your XI';
+    myLabel.innerHTML = `<span class="dot yours"></span> ${name}`;
+  }
+
   renderDraftSlots();
   renderCarousel();
   updateTurnUI();
@@ -6762,13 +6839,13 @@ function _mpEnterDraft(mp, iWinGK) {
     mpSyncPicks(picks);
   });
 
-  // Start timer only if my turn first
-  const firstStep = state.sequence[0];
-  const myTurnFirst = firstStep && (
-    (mp.role === 'A' && firstStep.who === 'me') ||
-    (mp.role === 'B' && firstStep.who === 'opp')
-  );
-  if (myTurnFirst) startTimer();
+  // GK step: winner gets 10s timer, loser waits (timer starts after GK picked)
+  const firstStep = state.sequence[0]; // always GK step
+  const isMyGKTurn = firstStep && mp_isMyStep(firstStep);
+  if (isMyGKTurn) {
+    startTimer(10); // 10-second GK pick timer
+  }
+  // If not my turn, timer starts in mpSyncPicks once GK is picked
 }
 
 // ── Sync picks from Firebase into local state ─────────────────
@@ -6823,7 +6900,11 @@ function mpSyncPicks(picks) {
   const isMyTurn = nextStep && mp_isMyStep(nextStep);
 
   clearInterval(state.timerInterval);
-  if (isMyTurn) startTimer();
+  if (isMyTurn) {
+    // GK pick gets 10s, everything else uses normal duration
+    const timerSecs = nextStep.type === 'gk' ? 10 : undefined;
+    startTimer(timerSecs);
+  }
 }
 
 // ── Write a pick to Firebase (called instead of local draftPlayer in mp mode) ──

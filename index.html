@@ -3916,12 +3916,13 @@ function revealMatch(m) {
 
   showCoinPhase('reveal');
 
-  // In mp mode as guest (B): show the same countdown bar — both players see it together
-  // mpWaitForCoinResult is already listening for gkWinner in Firebase
+  // In mp mode as guest (B): just show a pulsing "waiting" state — the host controls timing
   if (state.mp && state.mp.role === 'B') {
+    const fill  = document.getElementById('coin-countdown-fill');
     const label = document.getElementById('coin-countdown-label');
-    if (label) label.textContent = 'Coin flip incoming…';
-    // Countdown bar still animates the same way — fall through to countdown code below
+    if (fill)  { fill.style.transition = 'none'; fill.style.width = '40%'; }
+    if (label) label.textContent = 'Waiting for coin flip…';
+    return; // Guest does nothing — mpShowCoinResultForGuest handles the rest
   }
 
   // Countdown bar — 10 seconds (single player or mp host)
@@ -4039,9 +4040,12 @@ function runCoinFlip() {
         sub.textContent = 'Opponent picks the goalkeeper first';
       }
 
-      // In mp mode (host only): write result then proceed
+      // In mp mode (host only): write result to Firebase, then proceed to draft.
+      // The host already SAW the flip here, so we skip _mpShowCoinResult for the host
+      // and go straight to the draft after a short pause.
       if (state.mp && state.mp.role === 'A' && window._mpCoinDone) {
-        setTimeout(() => window._mpCoinDone(playerWins), 2000);
+        // 2.5s pause so host can read the result, THEN write + proceed
+        setTimeout(() => window._mpCoinDone(playerWins), 2500);
         return;
       }
 
@@ -4334,72 +4338,76 @@ function updateTurnUI() {
   const step = currentStep();
   if (!step) return;
 
-  // In mp mode, 'me' in sequence = Player A. Player B's turns are 'opp'.
-  const isMyTurn = state.mp
-    ? (mp_isMyStep(step))
-    : (step.who === 'me');
+  const isMyTurn = mp_isMyStep(step); // works for both sp and mp
 
   const btn = document.getElementById('btn-me');
   document.getElementById('btn-sabotage').style.display = 'none';
 
+  // Opponent name for messaging
+  const oppName = state.mp
+    ? (state.mp.oppName || (state.mp.role === 'A' ? state.mp.playerB : state.mp.playerA)?.name || 'Opponent')
+    : 'Opponent';
+
+  // Count progress for this step type
+  const myStepsDone  = state.sequence.slice(0, state.currentPick)
+    .filter(s => mp_isMyStep(s) && s.type === step.type).length;
+  const oppStepsDone = state.sequence.slice(0, state.currentPick)
+    .filter(s => !mp_isMyStep(s) && s.type === step.type).length;
+  const totalOfType  = state.sequence.filter(s => s.type === step.type).length / 2; // per player
+
   if (step.type === 'gk') {
-    const oppName = state.mp
-      ? ((state.mp.role === 'A' ? state.mp.playerB : state.mp.playerA)?.name || 'Opponent')
-      : 'Opponent';
     document.getElementById('turn-text').innerHTML = isMyTurn
       ? `<em>You won the toss!</em> Pick your goalkeeper`
-      : `<em>${oppName} won the toss.</em> Picking GK…<br><small style="color:#888;font-size:11px">You'll sabotage first after this</small>`;
-    btn.textContent = 'Pick GK';
+      : `<em>${oppName} won the toss.</em> Picking GK…`;
+    btn.textContent = isMyTurn ? 'Pick GK' : `Waiting for ${oppName}…`;
     btn.disabled = !isMyTurn;
     btn.style.background = isMyTurn ? 'var(--blue)' : '#555';
 
   } else if (step.type === 'sabotage') {
-    const mySabsDone  = state.sequence.slice(0, state.currentPick).filter(s => mp_isMyStep(s) && s.type === 'sabotage').length;
-    const oppSabsDone = state.sequence.slice(0, state.currentPick).filter(s => !mp_isMyStep(s) && s.type === 'sabotage').length;
-    const oppName = state.mp
-      ? ((state.mp.role === 'A' ? state.mp.playerB : state.mp.playerA)?.name || 'Opponent')
-      : 'Opponent';
+    // Round number = how many sabotage rounds have been fully completed + 1
+    const sabRound = Math.floor(state.currentPick / 2) + 1; // rough, good enough
+    // Better: count total sabotage picks done ÷ 2 (both players do one each round)
+    const totalSabsDone = state.sequence.slice(0, state.currentPick).filter(s => s.type === 'sabotage').length;
+    const roundNum = Math.floor(totalSabsDone / 2) + 1;
+
     if (isMyTurn) {
       document.getElementById('turn-text').innerHTML =
-        `⚡ Sabotage <em>· ${mySabsDone + 1} of 3 — goes to opponent</em>`;
-      btn.textContent = '⚡ Send to Opp';
+        `⚡ Send a sabotage pick to ${oppName} <em>· ${myStepsDone + 1} of 3</em>`;
+      btn.textContent = `⚡ Send to ${oppName}`;
       btn.disabled = false;
       btn.style.background = 'var(--red)';
     } else {
       document.getElementById('turn-text').innerHTML =
-        `⚡ ${oppName} sabotaging you <em>· ${oppSabsDone + 1} of 3</em>`;
+        `⚡ ${oppName} is sending you a sabotage pick <em>· ${oppStepsDone + 1} of 3</em>`;
+      btn.textContent = `${oppName} is picking…`;
       btn.disabled = true;
       btn.style.background = '#555';
-      btn.textContent = 'Waiting…';
     }
 
   } else {
-    const myNormalDone  = state.sequence.slice(0, state.currentPick).filter(s => mp_isMyStep(s) && s.type === 'normal').length;
-    const oppNormalDone = state.sequence.slice(0, state.currentPick).filter(s => !mp_isMyStep(s) && s.type === 'normal').length;
-    const oppName = state.mp
-      ? ((state.mp.role === 'A' ? state.mp.playerB : state.mp.playerA)?.name || 'Opponent')
-      : 'Opponent';
     if (isMyTurn) {
       document.getElementById('turn-text').innerHTML =
-        `Your pick <em>· ${myNormalDone + 1} of 7</em>`;
+        `Your pick <em>· ${myStepsDone + 1} of 7</em>`;
       btn.textContent = 'Pick for Me';
       btn.disabled = false;
       btn.style.background = 'var(--blue)';
     } else {
       document.getElementById('turn-text').innerHTML =
-        `${oppName} picking… <em>· ${oppNormalDone + 1} of 7</em>`;
+        `${oppName} is picking… <em>· ${oppStepsDone + 1} of 7</em>`;
+      btn.textContent = `Waiting for ${oppName}…`;
       btn.disabled = true;
       btn.style.background = '#555';
-      btn.textContent = 'Waiting…';
     }
   }
 }
 
-// Helper: is this sequence step MY turn, accounting for mp role
+// Helper: is this sequence step MY turn?
+// The sequence is always built from the LOCAL player's perspective
+// ('me' = this device, 'opp' = the other player), so we can
+// simply check step.who === 'me' in both single-player and multiplayer.
 function mp_isMyStep(step) {
-  if (!state.mp) return step.who === 'me';
-  // sequence 'me' = Player A, 'opp' = Player B
-  return state.mp.role === 'A' ? step.who === 'me' : step.who === 'opp';
+  if (!step) return false;
+  return step.who === 'me';
 }
 
 function draftPlayer() {
@@ -4600,8 +4608,11 @@ function startTimer(durationOverride) {
     updateTimerDisplay();
     if (state.timerSecs <= 0) {
       clearInterval(state.timerInterval);
+      state.timerInterval = null;
       const step = currentStep();
-      if (step && step.who === 'me') {
+      // In mp mode use mp_isMyStep; in sp use who === 'me'
+      const isMyTurn = mp_isMyStep(step);
+      if (step && isMyTurn) {
         const drafted = [...state.myTeam, ...state.oppTeam];
         const available = PLAYERS.filter(p => {
           if (drafted.includes(p.id)) return false;
@@ -4609,10 +4620,10 @@ function startTimer(durationOverride) {
           return true;
         });
         if (available.length > 0) {
-          // Random auto-assign when timer expires
-          const randomPick = available[Math.floor(Math.random() * available.length)];
-          state.selectedPlayer = randomPick.id;
-          draftPlayer();
+          // Auto-pick highest chaos value on timer expiry
+          const sorted = [...available].sort((a, b) => (CHAOS_VALUES[b.id] || 0) - (CHAOS_VALUES[a.id] || 0));
+          state.selectedPlayer = sorted[0].id;
+          window.draftPlayer(); // use patched version (routes through Firebase in mp)
         }
       }
     }
@@ -6702,17 +6713,31 @@ async function joinGame() {
   });
 }
 
-// ── Start multiplayer draft ────────────────────────────────────
+// ══════════════════════════════════════════════════════════════
+// MULTIPLAYER DRAFT  — complete rewrite for correct turn flow
+// ══════════════════════════════════════════════════════════════
+
+// ── Kick off the multiplayer draft ────────────────────────────
 function mpStartDraft(sessionData) {
-  // Detach lobby listener
+  // Guard against double-fire from the Firebase listener
+  if (state.mp && state.mp._draftStarted) return;
+
+  // Detach lobby listener so it doesn't fire again
   if (state.mp && state.mp.sessionRef) window._fb.off(state.mp.sessionRef);
 
   const mp = state.mp;
+  if (!mp) return;
+  mp._draftStarted = true;
   mp.matchIdx = sessionData.matchIdx;
-  mp.playerA  = sessionData.playerA;
+  mp.playerA  = sessionData.playerA;   // { name, emoji }
   mp.playerB  = sessionData.playerB;
 
-  // Set profile
+  // Derive opponent display name (used throughout UI)
+  mp.oppName = mp.role === 'A'
+    ? (mp.playerB.emoji + ' ' + mp.playerB.name)
+    : (mp.playerA.emoji + ' ' + mp.playerA.name);
+
+  // Profile
   const profile = getActiveProfile();
   state.teamName  = profile.emoji + ' ' + profile.name;
   state.teamEmoji = profile.emoji;
@@ -6721,163 +6746,167 @@ function mpStartDraft(sessionData) {
   loadMatch(mp.matchIdx);
   state.matchIdx = mp.matchIdx;
 
-  // Go through the normal coin screen — match is already loaded
-  // so revealMatch will show the right one
-  const m = ALL_MATCHES[mp.matchIdx];
+  // ── Step 1: Show the VHS loading reel (same as single-player) ──
   showScreen('coin');
-  revealMatch(m);
+  showCoinPhase('loading');
 
-  // In mp mode the coin flip result must be shared
-  // Player A runs the flip and writes gkWinner to Firebase
-  // Player B watches for it
-  if (mp.role === 'A') {
-    // Show normal reveal + countdown, then do coin flip and write result
-    mpRunCoinAsHost(mp);
-  } else {
-    // Guest: show reveal, wait for host's coin flip result
-    mpWaitForCoinResult(mp);
-  }
-}
+  let t = 0;
+  const linesEl = document.getElementById('coin-loading-lines');
+  const lineInterval = setInterval(() => {
+    if (linesEl) linesEl.textContent = REEL_LINES[t % REEL_LINES.length];
+    t++;
+  }, 220);
 
-function mpRunCoinAsHost(mp) {
-  // Both players see the reveal countdown simultaneously.
-  // After the countdown (managed in revealMatch → runCoinFlip),
-  // the host does the flip and writes the result to Firebase.
-  // We override _mpCoinDone which is called by runCoinFlip after the animation.
-  window._mpCoinDone = async (playerAWins) => {
-    const gkWinner = playerAWins ? 'A' : 'B';
-    await window._fb.update(mp.sessionRef, { gkWinner });
-    // Host already saw the coin flip animation — proceed to draft
-    mpProceedToDraft(mp, gkWinner);
-  };
-}
+  // ── Step 2: After reel, show match reveal → trigger coin ──
+  setTimeout(() => {
+    clearInterval(lineInterval);
+    const m = ALL_MATCHES[mp.matchIdx];
 
-function mpWaitForCoinResult(mp) {
-  // Guest: also show the reveal countdown (already running from revealMatch).
-  // Now just watch Firebase for the gkWinner result.
-  window._fb.onValue(mp.sessionRef, (snap) => {
-    const d = snap.val();
-    if (d && d.gkWinner) {
-      window._fb.off(mp.sessionRef);
-      // Show the coin flip animation result for the guest too
-      mpShowCoinResultForGuest(mp, d.gkWinner);
+    // revealMatch shows the reveal phase and starts a 10-second countdown
+    // that eventually calls runCoinFlip().
+    // For the GUEST (B) we intercept that so the coin never actually runs locally.
+    // Instead the guest just shows "Waiting for coin flip…" and watches Firebase.
+    revealMatch(m);
+
+    if (mp.role === 'A') {
+      // Host: register the callback that runCoinFlip calls after showing the result.
+      // By the time this fires, the host has ALREADY seen the coin result on screen
+      // (runCoinFlip shows it), so we just write to Firebase and go straight to draft.
+      window._mpCoinDone = async (playerAWins) => {
+        const gkWinner = playerAWins ? 'A' : 'B';
+        await window._fb.update(mp.sessionRef, { gkWinner });
+        // Enter draft immediately (host already saw result; guest is still animating)
+        _mpEnterDraft(mp, gkWinner);
+      };
+    } else {
+      // Guest: watch Firebase for the host's result
+      window._fb.onValue(mp.sessionRef, (snap) => {
+        const d = snap.val();
+        if (d && d.gkWinner) {
+          window._fb.off(mp.sessionRef);
+          // Show the same coin result animation then enter draft
+          _mpShowCoinResult(mp, d.gkWinner, () => {
+            setTimeout(() => _mpEnterDraft(mp, d.gkWinner), 1000);
+          });
+        }
+      });
     }
-  });
+  }, 1500);
 }
 
-function mpShowCoinResultForGuest(mp, gkWinner) {
-  // Guest never saw the spin — show them the result screen now
+// ── Show coin flip result for EITHER player, then call onDone ──
+function _mpShowCoinResult(mp, gkWinner, onDone) {
   showCoinPhase('flip');
   const coin   = document.getElementById('coin');
   const status = document.getElementById('coin-status');
   const sub    = document.getElementById('coin-sub');
   const iWinGK = (mp.role === gkWinner);
 
-  // Animate: spin then reveal
-  coin.textContent = '🪙';
+  if (coin) coin.textContent = '🪙';
+  if (status) status.textContent = '';
+  if (sub) sub.textContent = '';
+
   let flips = 0;
-  const faces = ['🪙','⚽'];
+  const faces = ['🪙', '⚽'];
   const spinInterval = setInterval(() => {
-    coin.textContent = faces[flips % 2];
-    coin.style.transform = `rotateY(${flips * 180}deg) scale(${flips % 2 === 0 ? 1 : 0.85})`;
+    if (coin) {
+      coin.textContent = faces[flips % 2];
+      coin.style.transform = `rotateY(${flips * 180}deg) scale(${flips % 2 === 0 ? 1 : 0.85})`;
+    }
     flips++;
     if (flips > 10) {
       clearInterval(spinInterval);
-      coin.style.transform = '';
-      coin.textContent = iWinGK ? '✅' : '❌';
+      if (coin) {
+        coin.style.transform = '';
+        coin.textContent = iWinGK ? '✅' : '❌';
+      }
       if (status) status.textContent = iWinGK ? 'YOU WIN' : 'OPPONENT WINS';
       if (sub) sub.textContent = iWinGK
         ? 'You pick the goalkeeper first'
-        : 'Opponent picks the goalkeeper first';
-      setTimeout(() => mpProceedToDraft(mp, gkWinner), 2500);
+        : mp.oppName + ' picks the goalkeeper first';
+      // 2.5s to read result, then call onDone
+      setTimeout(onDone, 2500);
     }
   }, 120);
 }
 
-function mpProceedToDraft(mp, gkWinner) {
-  // gkWinner is 'A' or 'B' — convert to my perspective
+// ── Enter the draft screen and wire up Firebase sync ──────────
+function _mpEnterDraft(mp, gkWinner) {
+  // gkWinner = 'A' or 'B' (absolute role)
   const iWinGK = (mp.role === gkWinner);
-  state.gkPickerIsMe = iWinGK;
-  _mpEnterDraft(mp, iWinGK);
-}
 
-function _mpEnterDraft(mp, iWinGK) {
   showScreen('draft');
 
-  // Build fresh sequence from scratch (not from iWinGK — we need 'me'/'opp' perspective)
-  state.myTeam        = [];
-  state.oppTeam       = [];
-  state.currentPick   = 0;
+  // Reset draft state completely
+  state.myTeam         = [];
+  state.oppTeam        = [];
+  state.currentPick    = 0;
   state.selectedPlayer = null;
-  state.teamFilter    = 'home';
-  const gkWinner = iWinGK ? 'me' : 'opp';
-  state.sequence = buildDraftSequence(gkWinner);
+  state.teamFilter     = 'home';
+  clearInterval(state.timerInterval);
+  state.timerInterval  = null;
+
+  // Build sequence from MY perspective: did I win the GK toss?
+  state.sequence = buildDraftSequence(iWinGK ? 'me' : 'opp');
 
   initPlayerData();
 
-  // Set my zone label
+  // Label my zone
   const myLabel = document.getElementById('my-zone-label');
   if (myLabel) {
-    const profile = getActiveProfile();
-    const name = (profile ? profile.emoji + ' ' + profile.name : null) || state.teamName || 'Your XI';
-    myLabel.innerHTML = `<span class="dot yours"></span> ${name}`;
+    const name = state.teamName || 'Your XI';
+    myLabel.innerHTML = '<span class="dot yours"></span> ' + name;
   }
 
   renderDraftSlots();
   renderCarousel();
   updateTurnUI();
-  clearInterval(state.timerInterval);
 
-  const oppName = mp.role === 'A'
-    ? (mp.playerB.emoji + ' ' + mp.playerB.name)
-    : (mp.playerA.emoji + ' ' + mp.playerA.name);
-  showToast('🔴 LIVE — playing vs ' + oppName);
+  showToast('🔴 LIVE — playing vs ' + mp.oppName);
 
-  // Listen for picks
-  window._fb.onValue(window._fb.ref('sessions/' + mp.code + '/picks'), (snap) => {
-    const picks = snap.val() || [];
-    mpSyncPicks(picks);
-  });
-
-  // GK step: winner gets 10s timer, loser waits (timer starts after GK picked)
-  const firstStep = state.sequence[0]; // always GK step
-  const isMyGKTurn = firstStep && mp_isMyStep(firstStep);
-  if (isMyGKTurn) {
-    startTimer(10); // 10-second GK pick timer
-  }
-  // If not my turn, timer starts in mpSyncPicks once GK is picked
+  // ── Firebase picks listener — THE single source of truth ──
+  // All timer start/stop, UI updates and turn-gating happen here.
+  // We use a short delay so state is fully initialised before the
+  // first onValue fires (which happens immediately on attach).
+  setTimeout(() => {
+    const picksRef = window._fb.ref('sessions/' + mp.code + '/picks');
+    window._fb.onValue(picksRef, (snap) => {
+      const picks = snap.val() || [];
+      _mpSyncPicks(mp, picks);
+    });
+  }, 100);
 }
 
-// ── Sync picks from Firebase into local state ─────────────────
-function mpSyncPicks(picks) {
-  const mp = state.mp;
-  if (!mp) return;
+// ── Rebuild state from the canonical Firebase picks array ─────
+// Called on every Firebase update (including my own writes).
+// This is the ONLY function that starts timers in multiplayer.
+function _mpSyncPicks(mp, picks) {
+  const seq = state.sequence;
+  if (!seq || seq.length === 0) return;
 
+  // ── Rebuild teams ──
   const newMy  = [];
   const newOpp = [];
-  const seq    = state.sequence;
 
   for (let i = 0; i < picks.length; i++) {
     const pick = picks[i];
     const step = seq[i];
-    if (!step) continue;
+    if (!step || !pick) continue;
 
     if (step.type === 'gk') {
-      // teamA and teamB are absolute — convert to my/opp
+      // teamA / teamB are absolute player IDs
       if (pick.teamA !== undefined) {
-        newMy.push(mp.role === 'A'  ? pick.teamA : pick.teamB);
+        newMy.push( mp.role === 'A' ? pick.teamA : pick.teamB);
         newOpp.push(mp.role === 'A' ? pick.teamB : pick.teamA);
       }
     } else if (step.type === 'sabotage') {
-      // sabotage goes to opponent of picker
-      const iPickedThis = mp_isMyStep(step);
-      if (iPickedThis) newOpp.push(pick.playerId);
-      else             newMy.push(pick.playerId);
+      // Sabotage pick goes into the OPPONENT of whoever made it
+      if (_mpIsMine(step)) newOpp.push(pick.playerId);
+      else                 newMy.push(pick.playerId);
     } else {
-      // normal pick goes to picker's own team
-      const iPickedThis = mp_isMyStep(step);
-      if (iPickedThis) newMy.push(pick.playerId);
-      else             newOpp.push(pick.playerId);
+      // Normal pick goes to the picker
+      if (_mpIsMine(step)) newMy.push(pick.playerId);
+      else                 newOpp.push(pick.playerId);
     }
   }
 
@@ -6885,126 +6914,108 @@ function mpSyncPicks(picks) {
   state.oppTeam     = newOpp;
   state.currentPick = picks.length;
 
+  // ── Always stop running timer before deciding what to do next ──
+  clearInterval(state.timerInterval);
+  state.timerInterval = null;
+
   renderDraftSlots();
   renderCarousel();
   updateTurnUI();
 
-  // Check if draft is complete
+  // ── Draft complete? ──
   if (picks.length >= seq.length) {
     mpDraftComplete();
     return;
   }
 
-  // Start or stop timer based on whose turn it is
+  // ── Start timer only if it is MY turn next ──
   const nextStep = seq[picks.length];
-  const isMyTurn = nextStep && mp_isMyStep(nextStep);
-
-  clearInterval(state.timerInterval);
-  if (isMyTurn) {
-    // GK pick gets 10s, everything else uses normal duration
-    const timerSecs = nextStep.type === 'gk' ? 10 : undefined;
-    startTimer(timerSecs);
+  if (nextStep && _mpIsMine(nextStep)) {
+    const dur = nextStep.type === 'gk' ? 10 : undefined;
+    startTimer(dur);
   }
+  // If it is NOT my turn: no timer. We just sit and wait for the
+  // opponent's Firebase write which will re-trigger this function.
 }
 
-// ── Write a pick to Firebase (called instead of local draftPlayer in mp mode) ──
+// Helper: is this sequence step mine (accounts for A/B role)?
+// 'me' in the sequence always means the GK-toss winner; 'opp' = loser.
+// We re-map to absolute roles via the sequence itself — the sequence
+// was built with iWinGK already applied, so 'me' literally means me.
+function _mpIsMine(step) {
+  if (!step) return false;
+  if (!state.mp) return step.who === 'me'; // single-player fallback
+  // sequence 'me' = the player on THIS device; 'opp' = the other player
+  // (This is correct because _mpEnterDraft builds the sequence with
+  //  buildDraftSequence(iWinGK ? 'me' : 'opp') from MY perspective)
+  return step.who === 'me';
+}
+
+// ── Write a pick to Firebase ───────────────────────────────────
 async function mpDraftPlayer() {
   const mp   = state.mp;
   const step = currentStep();
-  if (!step) return;
-
-  // Only act on my turn
-  const isMyTurn = mp_isMyStep(step);
-  if (!isMyTurn) { showToast("Not your turn!"); return; }
+  if (!step || !_mpIsMine(step)) {
+    if (step) showToast("Not your turn!");
+    return;
+  }
   if (!state.selectedPlayer) { showToast('Select a player first!'); return; }
 
   const drafted = [...state.myTeam, ...state.oppTeam];
-  if (drafted.includes(state.selectedPlayer)) { state.selectedPlayer = null; renderCarousel(); return; }
+  if (drafted.includes(state.selectedPlayer)) {
+    state.selectedPlayer = null;
+    renderCarousel();
+    return;
+  }
 
+  if (step.type === 'gk') {
+    const p = getPlayer(state.selectedPlayer);
+    if (!p || p.pos !== 'GK') { showToast('Pick a goalkeeper!'); return; }
+  }
+
+  // Kill timer immediately to prevent double-fire
+  clearInterval(state.timerInterval);
+  state.timerInterval = null;
+
+  // Snapshot to guard against race conditions
   const picksRef   = window._fb.ref('sessions/' + mp.code + '/picks');
   const snapNow    = await window._fb.get(picksRef);
   const picksSoFar = snapNow.val() || [];
 
-  if (picksSoFar.length !== state.currentPick) return;
+  if (picksSoFar.length !== state.currentPick) {
+    // Another pick landed while we were awaiting — abort
+    return;
+  }
 
-  let pickEntry;
+  let entry;
   if (step.type === 'gk') {
-    const p = getPlayer(state.selectedPlayer);
-    if (!p || p.pos !== 'GK') { showToast('Must pick a goalkeeper!'); return; }
+    // GK step: write BOTH keepers so both clients can read theirs
     const otherGK = PLAYERS.find(q => q.pos === 'GK' && q.id !== state.selectedPlayer);
     if (!otherGK) return;
-    pickEntry = {
+    // 'me' built the sequence as GK winner = me, so:
+    //   if I am Player A → I am teamA; if I am Player B → I am teamB
+    entry = {
       teamA: mp.role === 'A' ? state.selectedPlayer : otherGK.id,
       teamB: mp.role === 'A' ? otherGK.id : state.selectedPlayer,
     };
   } else {
-    pickEntry = { playerId: state.selectedPlayer };
+    entry = { playerId: state.selectedPlayer };
   }
 
-  clearInterval(state.timerInterval);
   state.selectedPlayer = null;
 
+  // Write — the onValue listener on BOTH clients will call _mpSyncPicks
+  // which handles all subsequent UI and timer updates.
   await window._fb.update(window._fb.ref('sessions/' + mp.code), {
-    picks: [...picksSoFar, pickEntry],
+    picks: [...picksSoFar, entry],
   });
 }
 
-// ── Draft complete → go to captain ────────────────────────────
+// ── Draft complete ─────────────────────────────────────────────
 function mpDraftComplete() {
   clearInterval(state.timerInterval);
   if (state.myTeam.length < 11 || state.oppTeam.length < 11) return;
   setTimeout(() => showCaptainScreen(), 600);
-}
-
-// ── Captain selection sync ────────────────────────────────────
-async function mpSetCaptain(playerId) {
-  const mp = state.mp;
-  if (!mp) return;
-  const field = mp.role === 'A' ? 'captainA' : 'captainB';
-  await window._fb.update(mp.sessionRef, { [field]: playerId });
-}
-
-// ── Simulation sync ───────────────────────────────────────────
-async function mpReadyToSim() {
-  // Both players signal ready; Player A writes the start timestamp
-  const mp = state.mp;
-  if (!mp) return;
-  const field = mp.role === 'A' ? 'simReadyA' : 'simReadyB';
-  await window._fb.update(mp.sessionRef, { [field]: true });
-
-  if (mp.role === 'A') {
-    // Wait for B to also be ready then fire
-    window._fb.onValue(mp.sessionRef, async (snap) => {
-      const d = snap.val();
-      if (d && d.simReadyA && d.simReadyB && !d.simStartTimestamp) {
-        await window._fb.update(mp.sessionRef, {
-          simStartTimestamp: Date.now(),
-          status: 'simulating',
-        });
-      }
-    });
-  }
-}
-
-// Intercept startSim — in mp mode wait for shared timestamp
-function mpWaitForSimStart(callback) {
-  const mp = state.mp;
-  window._fb.onValue(mp.sessionRef, (snap) => {
-    const d = snap.val();
-    if (d && d.simStartTimestamp) {
-      window._fb.off(mp.sessionRef);
-      const delay = Math.max(0, d.simStartTimestamp + 500 - Date.now());
-      setTimeout(callback, delay);
-    }
-  });
-}
-
-// Write final score to Firebase for results comparison
-async function mpWriteScore(score) {
-  const mp = state.mp;
-  if (!mp) return;
-  const field = mp.role === 'A' ? 'scoreA' : 'scoreB';
-  await window._fb.update(mp.sessionRef, { [field]: Math.round(score), status: 'done' });
 }
 
 // ── Override draftPlayer in mp mode ──────────────────────────

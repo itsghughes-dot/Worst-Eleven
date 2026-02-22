@@ -2432,11 +2432,11 @@
   </div>
 
   <!-- Side-by-side CTA buttons -->
-  <div style="display:flex;gap:10px;width:100%;max-width:360px;margin-bottom:16px;">
-    <button class="btn-primary" id="start-btn" onclick="startGame()" style="flex:1;font-size:15px;padding:18px 12px;border-radius:14px;" disabled>
+  <div style="display:flex;gap:10px;width:100%;max-width:360px;margin-bottom:16px;align-items:stretch;">
+    <button class="btn-primary" id="start-btn" onclick="startGame()" style="flex:1;font-size:15px;padding:16px 12px;border-radius:14px;display:flex;align-items:center;justify-content:center;min-height:56px;" disabled>
       🤖 Practice vs AI
     </button>
-    <button class="btn-primary dark" id="mp-btn" onclick="openLobby()" style="flex:1;font-size:15px;padding:18px 12px;border-radius:14px;" disabled>
+    <button class="btn-primary dark" id="mp-btn" onclick="openLobby()" style="flex:1;font-size:15px;padding:16px 12px;border-radius:14px;display:flex;align-items:center;justify-content:center;min-height:56px;" disabled>
       ⚽ Play vs Friend
     </button>
   </div>
@@ -2648,7 +2648,7 @@
   <div class="draft-layout">
     <!-- Opponent slots -->
     <div>
-      <div class="zone-label"><span class="dot opponent"></span> Opponent's XI</div>
+      <div class="zone-label" id="opp-zone-label"><span class="dot opponent"></span> Opponent's XI</div>
       <div class="slots-grid" id="opp-slots"></div>
     </div>
 
@@ -2796,9 +2796,12 @@
   <div class="results-body">
     <div class="result-section">
       <div class="result-section-title">The Rollercoaster</div>
-      <div class="result-graph-wrap">
+      <div class="result-graph-wrap" style="position:relative;padding-bottom:20px;">
         <div class="result-graph-title">Chaos Delta · 90 Minutes</div>
-        <canvas id="result-graph" height="120"></canvas>
+        <div style="position:relative;">
+          <canvas id="result-graph" height="160"></canvas>
+          <div id="result-graph-emoji" style="position:absolute;font-size:22px;transform:translate(-50%,-50%);pointer-events:none;transition:all 0.3s;"></div>
+        </div>
       </div>
     </div>
 
@@ -5314,15 +5317,12 @@ function buildBeats() {
 
     beats.push(...fakesToInsert);
 
-    // ── 3. Guarantee ≥1 prediction per half, max 3 total ─────────
-    // ONLY use teasers (tied to real events) — never near-miss fakes.
-    // A knowledgeable player who says "yes Collymore scores" is right;
-    // penalising them for a fake miss event is unfair.
+    // ── 3. Guarantee 2–3 predictions per game ────────────────────
     const shuffle = arr => [...arr].sort(() => Math.random() - 0.5);
 
-    const teaserOnly    = fakesToInsert.filter(b => b.isTeaser);
-    const firstHalf     = teaserOnly.filter(b => b.matchMin < 45);
-    const secondHalf    = teaserOnly.filter(b => b.matchMin >= 45);
+    const teaserOnly = fakesToInsert.filter(b => b.isTeaser);
+    const firstHalf  = teaserOnly.filter(b => b.matchMin < 45);
+    const secondHalf = teaserOnly.filter(b => b.matchMin >= 45);
 
     const pick1st = shuffle(firstHalf)[0];
     const pick2nd = shuffle(secondHalf)[0];
@@ -5336,10 +5336,48 @@ function buildBeats() {
 
     for (const pb of chosen) {
       pb.isPrediction = true;
-      pb.predIsReal   = true; // all from teasers — real event always follows
+      pb.predIsReal   = true;
       const type = pb.linkedEventType || 'goal';
       const name = pb.linkedPlayerName || '';
       pb.predQuestion = getPredictionQuestion(type, name);
+    }
+
+    // ── Fallback: if we have fewer than 2 predictions, create standalone ones ──
+    // These use drafted players and ask YES/NO about a random event type.
+    // predIsReal = false means "no" is always the correct answer.
+    if (chosen.length < 2) {
+      const FALLBACK_TYPES = ['shot', 'card', 'yellow', 'goal'];
+      const shuffledPool = shuffle(outfield.length > 0 ? outfield : candidatePool);
+      const needed = 2 - chosen.length;
+
+      for (let fi = 0; fi < needed && fi < shuffledPool.length; fi++) {
+        const fp = shuffledPool[fi];
+        const fType = FALLBACK_TYPES[Math.floor(Math.random() * FALLBACK_TYPES.length)];
+        // Place in a gap — try 22' and 68'
+        const targetMin = fi === 0 ? 22 : 68;
+        const targetReal = mapMatchMinToReal(targetMin);
+        const tooClose = [...beats, ...fakesToInsert, ...chosen].some(
+          b => Math.abs(b.realTime - targetReal) < 3000
+        );
+        if (tooClose) continue;
+
+        const fallbackBeat = {
+          realTime:         targetReal,
+          matchMin:         targetMin,
+          events:           [],
+          fake:             true,
+          isTeaser:         false,
+          isPrediction:     true,
+          predIsReal:       false,
+          predQuestion:     getPredictionQuestion(fType, fp.name.split(' ').pop()),
+          commentary:       `${fp.name.split(' ').pop()} bursts into the box…`,
+          emoji:            '👀',
+          linkedPlayerName: fp.name.split(' ').pop(),
+          linkedEventType:  fType,
+        };
+        fakesToInsert.push(fallbackBeat);
+        chosen.push(fallbackBeat);
+      }
     }
   }
 
@@ -5836,7 +5874,10 @@ function _renderResults() {
   }
 
   // Single full-width result tile
-  const gap = Math.abs(state.myScore - state.oppScore);
+  // Guard against NaN in mp mode where scores are async
+  if (state.myScore == null) state.myScore = 0;
+  if (state.oppScore == null) state.oppScore = 0;
+  const gap = Math.abs(Math.round(state.myScore) - Math.round(state.oppScore));
 
   function resultEmoji(won, isTied) {
     if (isTied) return '🤝';
@@ -5878,6 +5919,7 @@ function _renderResults() {
     if (isTied) return 'All square on chaos points';
     if (won) return `You won by ${gap} chaos point${gap === 1 ? '' : 's'}`;
     return `You lost by ${gap} chaos point${gap === 1 ? '' : 's'}`;
+    // Note: gap is always a whole number (rounded above)
   }
 
   const myCard = document.getElementById('my-score-card');
@@ -6285,94 +6327,161 @@ function drawLiveGraph(currentMin) {
 
 function drawResultGraph() {
   const canvas = document.getElementById('result-graph');
-  if (!canvas || !state.deltaHistory.length) return;
+  if (!canvas) return;
 
+  // Need enough data points — ensure we have at least start + all history + end
+  const finalDelta = Math.round(state.myScore) - Math.round(state.oppScore);
+  const rawPts = [
+    { min: 0, delta: 0 },
+    ...state.deltaHistory,
+    { min: 90, delta: finalDelta }
+  ];
+  if (rawPts.length < 2) return;
+
+  // ── Soft-scale: use signed sqrt to compress large values but keep shape ──
+  // This prevents huge deltas from making the chart flat near zero
+  function softScale(v) {
+    return Math.sign(v) * Math.sqrt(Math.abs(v));
+  }
+
+  // Compute scaled points
+  const scaledPts = rawPts.map(p => ({ ...p, sv: softScale(p.delta) }));
+  const allSv = scaledPts.map(p => p.sv);
+  const svMax = Math.max(...allSv.map(Math.abs), 1); // at least 1 to avoid div/0
+
+  // ── Canvas setup ──
   const wrap = canvas.parentElement;
-  const wrapW = wrap.getBoundingClientRect().width - 24; // padding
+  const wrapW = (wrap.getBoundingClientRect().width || 320);
   canvas.style.width  = '100%';
-  canvas.width  = Math.round(wrapW * window.devicePixelRatio);
-  canvas.height = Math.round(120  * window.devicePixelRatio);
-  const W = canvas.width;
-  const H = canvas.height;
-  const ctx = canvas.getContext('2d');
-  ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+  const DPR = window.devicePixelRatio || 1;
   const w = wrapW;
-  const h = 120;
+  const h = 160;
+  canvas.width  = Math.round(w * DPR);
+  canvas.height = Math.round(h * DPR);
+  const ctx = canvas.getContext('2d');
+  ctx.scale(DPR, DPR);
+  ctx.clearRect(0, 0, w, h);
 
-  ctx.clearRect(0, 0, W, H);
+  const PAD_L = 8;
+  const PAD_R = 8;
+  const PAD_T = 16;
+  const PAD_B = 20;
+  const plotW = w - PAD_L - PAD_R;
+  const plotH = h - PAD_T - PAD_B;
 
-  const Y_MAX  = 25;
-  const PAD_L  = 28;
-  const PAD_R  = 12;
-  const PAD_T  = 8;
-  const PAD_B  = 16;
-  const plotW  = w - PAD_L - PAD_R;
-  const plotH  = h - PAD_T - PAD_B;
+  function xPos(min)  { return PAD_L + (min / 90) * plotW; }
+  function yPos(sv)   {
+    // Centre is plotH*0.5; positive sv goes up, negative goes down
+    return PAD_T + plotH * 0.5 - (sv / svMax) * (plotH * 0.48);
+  }
 
-  function xPos(min)   { return PAD_L + (min / 90) * plotW; }
-  function yPos(delta) { return PAD_T + plotH * 0.5 - (delta / Y_MAX) * (plotH * 0.5); }
-
-  // Gridlines
-  ctx.strokeStyle = '#e8e6e1';
+  // ── Zero line ──
+  ctx.strokeStyle = '#d4d0c8';
   ctx.lineWidth = 1;
-  ctx.setLineDash([3, 3]);
-  [25, 0, -25].forEach(v => {
-    ctx.beginPath();
-    ctx.moveTo(PAD_L, yPos(v));
-    ctx.lineTo(w - PAD_R, yPos(v));
-    ctx.stroke();
-  });
+  ctx.setLineDash([4, 4]);
+  ctx.beginPath();
+  ctx.moveTo(PAD_L, yPos(0));
+  ctx.lineTo(w - PAD_R, yPos(0));
+  ctx.stroke();
   ctx.setLineDash([]);
 
-  // Minute labels
-  ctx.font = '8px DM Mono, monospace';
+  // ── HT divider ──
+  ctx.strokeStyle = '#e8e4dc';
+  ctx.lineWidth = 1;
+  ctx.setLineDash([2, 4]);
+  ctx.beginPath();
+  ctx.moveTo(xPos(45), PAD_T);
+  ctx.lineTo(xPos(45), h - PAD_B);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // ── Minute labels ──
+  ctx.font = `${8 * 1}px DM Mono, monospace`;
   ctx.fillStyle = '#bbb';
   ctx.textAlign = 'center';
-  [0, 45, 90].forEach(m => {
-    ctx.fillText(m + "'", xPos(m), h - 2);
-  });
+  ctx.fillText("0'",  xPos(0),  h - 4);
+  ctx.fillText("HT",  xPos(45), h - 4);
+  ctx.fillText("90'", xPos(90), h - 4);
 
-  // Y labels
-  ctx.textAlign = 'right';
-  ctx.fillText('+25', PAD_L - 3, yPos(25) + 3);
-  ctx.fillText('0',   PAD_L - 3, yPos(0)  + 3);
-  ctx.fillText('−25', PAD_L - 3, yPos(-25)+ 3);
+  // ── Smooth catmull-rom spline through all points ──
+  function catmullRom(pts) {
+    // Returns array of {x,y} interpolated at fine resolution
+    const result = [];
+    for (let i = 0; i < pts.length - 1; i++) {
+      const p0 = pts[Math.max(i - 1, 0)];
+      const p1 = pts[i];
+      const p2 = pts[i + 1];
+      const p3 = pts[Math.min(i + 2, pts.length - 1)];
+      const steps = Math.max(8, Math.round((p2.x - p1.x) / 4));
+      for (let t = 0; t <= steps; t++) {
+        const s = t / steps;
+        const s2 = s * s;
+        const s3 = s2 * s;
+        const x = 0.5 * ((2*p1.x) + (-p0.x+p2.x)*s + (2*p0.x-5*p1.x+4*p2.x-p3.x)*s2 + (-p0.x+3*p1.x-3*p2.x+p3.x)*s3);
+        const y = 0.5 * ((2*p1.y) + (-p0.y+p2.y)*s + (2*p0.y-5*p1.y+4*p2.y-p3.y)*s2 + (-p0.y+3*p1.y-3*p2.y+p3.y)*s3);
+        result.push({ x, y });
+      }
+    }
+    return result;
+  }
 
-  // Build full path
-  const pts = [{ min: 0, delta: 0 }, ...state.deltaHistory, { min: 90, delta: state.myScore - state.oppScore }];
+  const splinePts = scaledPts.map(p => ({ x: xPos(p.min), y: yPos(p.sv) }));
+  const smooth = catmullRom(splinePts);
 
-  // Fill
-  const grad = ctx.createLinearGradient(0, PAD_T, 0, h - PAD_B);
-  grad.addColorStop(0,   'rgba(74,222,128,0.2)');
-  grad.addColorStop(0.5, 'rgba(74,222,128,0)');
-  grad.addColorStop(0.5, 'rgba(248,113,113,0)');
-  grad.addColorStop(1,   'rgba(248,113,113,0.2)');
+  // ── Gradient fill under line ──
+  const lineColour = finalDelta > 0 ? '#22c55e' : finalDelta < 0 ? '#ef4444' : '#aaa';
+  const zeroY = yPos(0);
+
+  const fillGrad = ctx.createLinearGradient(0, PAD_T, 0, h - PAD_B);
+  if (finalDelta > 0) {
+    fillGrad.addColorStop(0,   'rgba(34,197,94,0.25)');
+    fillGrad.addColorStop(1,   'rgba(34,197,94,0.02)');
+  } else if (finalDelta < 0) {
+    fillGrad.addColorStop(0,   'rgba(239,68,68,0.04)');
+    fillGrad.addColorStop(1,   'rgba(239,68,68,0.25)');
+  } else {
+    fillGrad.addColorStop(0, 'rgba(180,180,180,0.1)');
+    fillGrad.addColorStop(1, 'rgba(180,180,180,0.1)');
+  }
+
   ctx.beginPath();
-  ctx.moveTo(xPos(0), yPos(0));
-  for (const p of pts) ctx.lineTo(xPos(p.min), yPos(p.delta));
-  ctx.lineTo(xPos(90), yPos(0));
+  ctx.moveTo(smooth[0].x, zeroY);
+  for (const pt of smooth) ctx.lineTo(pt.x, pt.y);
+  ctx.lineTo(smooth[smooth.length - 1].x, zeroY);
   ctx.closePath();
-  ctx.fillStyle = grad;
+  ctx.fillStyle = fillGrad;
   ctx.fill();
 
-  // Line
-  const finalDelta = state.myScore - state.oppScore;
+  // ── Main line ──
   ctx.beginPath();
-  ctx.moveTo(xPos(pts[0].min), yPos(pts[0].delta));
-  for (let i = 1; i < pts.length; i++) ctx.lineTo(xPos(pts[i].min), yPos(pts[i].delta));
-  ctx.strokeStyle = finalDelta > 0 ? '#22c55e' : finalDelta < 0 ? '#ef4444' : '#aaa';
-  ctx.lineWidth = 2;
+  ctx.moveTo(smooth[0].x, smooth[0].y);
+  for (let i = 1; i < smooth.length; i++) ctx.lineTo(smooth[i].x, smooth[i].y);
+  ctx.strokeStyle = lineColour;
+  ctx.lineWidth = 2.5;
   ctx.lineJoin = 'round';
+  ctx.lineCap = 'round';
   ctx.stroke();
 
-  // Event icons
-  for (const p of state.deltaHistory) {
+  // ── Event dots on the line ──
+  for (const p of scaledPts) {
     if (!p.eventType) continue;
     const icon = p.eventType === 'red' ? '🟥' : p.eventType === 'goal' ? '⚽' : p.eventType === 'yellow' ? '🟨' : null;
     if (!icon) continue;
-    ctx.font = '11px serif';
+    ctx.font = '12px serif';
     ctx.textAlign = 'center';
-    ctx.fillText(icon, xPos(p.min), yPos(p.delta) - 6);
+    ctx.fillText(icon, xPos(p.min), yPos(p.sv) - 8);
+  }
+
+  // ── Emoji at the END of the line (not overlaid on canvas — use DOM element) ──
+  const emojiEl = document.getElementById('result-graph-emoji');
+  if (emojiEl && smooth.length > 0) {
+    const lastPt = smooth[smooth.length - 1];
+    const lastPtRaw = splinePts[splinePts.length - 1];
+    const pctX = (lastPtRaw.x / w) * 100;
+    const pctY = (lastPtRaw.y / h) * 100;
+    emojiEl.textContent = getDeltaEmoji(finalDelta);
+    emojiEl.style.left = pctX + '%';
+    emojiEl.style.top  = pctY + '%';
   }
 }
 
@@ -6423,7 +6532,16 @@ function renderHtLists() {
   myList.innerHTML  = '';
   oppList.innerHTML = '';
 
-  state.myTeam.forEach(id => {
+  // My team: worst performers first (easiest to drop at top)
+  const mySorted = [...state.myTeam].sort((a, b) =>
+    (state.playerData[a]?.score || 0) - (state.playerData[b]?.score || 0)
+  );
+  // Opp team: best performers first (best steal target at top)
+  const oppSorted = [...state.oppTeam].sort((a, b) =>
+    (state.playerData[b]?.score || 0) - (state.playerData[a]?.score || 0)
+  );
+
+  mySorted.forEach(id => {
     const p = getPlayer(id);
     if (!p) return;
     const pts = Math.round(state.playerData[id]?.score || 0);
@@ -6434,7 +6552,7 @@ function renderHtLists() {
     myList.appendChild(card);
   });
 
-  state.oppTeam.forEach(id => {
+  oppSorted.forEach(id => {
     const p = getPlayer(id);
     if (!p) return;
     const pts = Math.round(state.playerData[id]?.score || 0);
@@ -6939,11 +7057,15 @@ function _mpEnterDraft(mp, gkWinner) {
 
   initPlayerData();
 
-  // Label my zone
+  // Label my zone and opponent zone
   const myLabel = document.getElementById('my-zone-label');
   if (myLabel) {
     const name = state.teamName || 'Your XI';
     myLabel.innerHTML = '<span class="dot yours"></span> ' + name;
+  }
+  const oppLabel = document.getElementById('opp-zone-label');
+  if (oppLabel) {
+    oppLabel.innerHTML = '<span class="dot opponent"></span> ' + mp.oppName + "'s XI";
   }
 
   renderDraftSlots();
@@ -7019,8 +7141,23 @@ function _mpSyncPicks(mp, picks) {
   // ── Start timer only if it is MY turn next ──
   const nextStep = seq[picks.length];
   if (nextStep && _mpIsMine(nextStep)) {
-    const dur = nextStep.type === 'gk' ? 10 : undefined;
-    startTimer(dur);
+    // Check if there's only 1 player available — auto-pick immediately
+    const drafted = [...state.myTeam, ...state.oppTeam];
+    const available = PLAYERS.filter(p => {
+      if (drafted.includes(p.id)) return false;
+      if (nextStep.type === 'gk') return p.pos === 'GK';
+      return true;
+    });
+    if (available.length === 1) {
+      // Only one option — auto-assign after brief delay
+      setTimeout(() => {
+        state.selectedPlayer = available[0].id;
+        window.draftPlayer();
+      }, 600);
+    } else {
+      const dur = nextStep.type === 'gk' ? 10 : undefined;
+      startTimer(dur);
+    }
   }
   // If it is NOT my turn: no timer. We just sit and wait for the
   // opponent's Firebase write which will re-trigger this function.

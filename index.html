@@ -708,58 +708,134 @@
     padding: 8px 16px 6px;
     flex-shrink: 0;
   }
-  /* ─── LIVE GRAPH ─── */
-  .sim-graph-wrap {
-    position: relative;
-    width: 100%;
-    height: 72px;
-    margin-bottom: 2px;
+  /* ─── SCOREBOARD ─── */
+  .sim-scoreboard {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 4px 0 6px;
   }
-  #sim-graph {
-    width: 100%;
-    height: 100%;
-    display: block;
-  }
-  .sim-graph-labels {
-    position: absolute;
-    top: 0; left: 0; right: 0; bottom: 0;
-    pointer-events: none;
+  .sim-player-score {
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
-    padding: 2px 0;
+    gap: 1px;
   }
-  .sim-graph-you {
+  .sim-player-label {
     font-family: 'DM Mono', monospace;
     font-size: 9px;
-    letter-spacing: 1px;
-    color: #444;
+    letter-spacing: 2px;
+    color: #555;
     text-transform: uppercase;
-    padding-left: 4px;
   }
-  .sim-graph-opp {
-    font-family: 'DM Mono', monospace;
-    font-size: 9px;
+  .sim-score-status {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 20px;
     letter-spacing: 1px;
-    color: #444;
-    text-transform: uppercase;
-    padding-left: 4px;
-  }
-  .sim-graph-tip-emoji {
-    position: absolute;
-    right: 2px;
-    top: 50%;
-    transform: translateY(-50%);
-    font-size: 18px;
+    color: #666;
     line-height: 1;
-    pointer-events: none;
-    transition: top 0.4s ease;
   }
-  /* keep the old score status elements but hidden — referenced in JS */
-  .sim-scoreboard { display: none; }
-  .sim-score-status { display: none; }
-  .sim-opp-pts { display: none; }
-  .sim-gap-line { display: none; }
+  .sim-score-status.winning { color: #4ade80; }
+  .sim-score-status.losing  { color: #f87171; }
+  .sim-score-status.level   { color: #888; }
+  .sim-middle {
+    text-align: center;
+    flex: 1;
+  }
+  .sim-gap-line {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: #444;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    text-align: center;
+  }
+  .sim-opp-pts {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 20px;
+    letter-spacing: 1px;
+    color: #555;
+    line-height: 1;
+    text-align: right;
+  }
+
+  /* ─── EVENT TIMELINE STRIP ─── */
+  .sim-timeline {
+    padding: 6px 16px 8px;
+    background: var(--black);
+    flex-shrink: 0;
+  }
+  .sim-timeline-halves {
+    display: flex;
+    gap: 6px;
+    align-items: flex-end;
+  }
+  .sim-timeline-half {
+    position: relative;
+    height: 36px;
+    flex: 1;
+  }
+  .sim-timeline-half.second-half {
+    opacity: 0.35; /* dim until HT */
+  }
+  .sim-timeline-half.second-half.active {
+    opacity: 1;
+  }
+  .sim-timeline-track {
+    position: absolute;
+    bottom: 6px;
+    left: 0; right: 0;
+    height: 2px;
+    background: #222;
+    border-radius: 2px;
+  }
+  .sim-timeline-progress {
+    position: absolute;
+    bottom: 0; left: 0;
+    height: 100%;
+    background: #333;
+    border-radius: 2px;
+    transition: width 0.8s linear;
+  }
+  .sim-timeline-event {
+    position: absolute;
+    bottom: 10px;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+  }
+  .sim-timeline-emoji {
+    font-size: 11px;
+    line-height: 1;
+  }
+  .sim-timeline-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #555;
+  }
+  .sim-timeline-dot.good { background: #4ade80; }
+  .sim-timeline-dot.bad  { background: #f87171; }
+  .sim-timeline-divider {
+    width: 1px;
+    height: 20px;
+    background: #333;
+    align-self: flex-end;
+    margin-bottom: 0;
+    flex-shrink: 0;
+  }
+  .sim-timeline-ht-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 8px;
+    color: #444;
+    letter-spacing: 1px;
+    text-align: center;
+    margin-bottom: 0;
+    align-self: flex-end;
+    padding-bottom: 0px;
+    flex-shrink: 0;
+  }
 
   /* ─── PREDICTION OVERLAY ─── */
   .prediction-overlay {
@@ -816,6 +892,55 @@
   .pred-no  { background: #dc2626; color: white; }
   .pred-btn.selected { outline: 3px solid white; }
   .pred-btn:disabled { opacity: 0.4; pointer-events: none; }
+
+  /* ─── 3-OPTION SCORER QUESTION ─── */
+  .scorer-overlay {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    background: var(--black);
+    padding: 16px 20px 32px;
+    z-index: 100;
+    animation: pred-slide-up 0.25s ease;
+  }
+  .scorer-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: #f5a623;
+    text-align: center;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .scorer-question {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 22px;
+    letter-spacing: 1px;
+    color: white;
+    text-align: center;
+    margin-bottom: 10px;
+    line-height: 1.3;
+  }
+  .scorer-buttons {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
+  }
+  .scorer-btn {
+    padding: 14px 8px;
+    border: 2px solid #333;
+    border-radius: 12px;
+    background: #111;
+    color: white;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.1s, background 0.1s;
+    text-align: center;
+  }
+  .scorer-btn:active  { transform: scale(0.96); }
+  .scorer-btn:disabled { opacity: 0.4; pointer-events: none; }
+  .scorer-btn.correct { background: #16a34a; border-color: #16a34a; }
+  .scorer-btn.wrong   { background: #dc2626; border-color: #dc2626; }
 
   /* ─── REVEAL TIP CARD ─── */
   .reveal-tip-card {
@@ -1234,7 +1359,7 @@
   }
 
   /* ─── HOME SCREEN mp button ─── */
-  #mp-btn { margin-top: 10px; }
+  #mp-btn { margin-top: 0; }
   .score-bar-track {
     height: 3px;
     background: #222;
@@ -2391,15 +2516,35 @@
   }
 
   // Expose Firebase helpers on window so the main (non-module) script can reach them
+  // onValue() in Firebase v9 modular returns an unsubscribe function.
+  // We wrap it to also register with our cleanup registry.
+  const _origOnValue = (r, cb) => onValue(r, cb);
   window._fb = {
     ref:             (path)           => ref(db, path),
     set:             (r, v)           => set(r, v),
     get:             (r)              => get(r),
     update:          (r, v)           => update(r, v),
-    onValue:         (r, cb)          => onValue(r, cb),
+    onValue:         (r, cb)          => {
+                       const unsub = onValue(r, cb);
+                       if (window._mpUnsubs) window._mpUnsubs.push(unsub);
+                       return unsub;
+                     },
     off:             (r)              => off(r),
     serverTimestamp: ()               => serverTimestamp(),
   };
+</script>
+<script>
+// ── Firebase listener registry ────────────────────────────────
+// _fb.onValue() auto-registers every unsubscribe fn here.
+// mpCleanup() kills ALL active mp listeners in one shot.
+window._mpUnsubs = [];
+
+function mpCleanup() {
+  for (const unsub of window._mpUnsubs) {
+    try { unsub(); } catch(e) {}
+  }
+  window._mpUnsubs = [];
+}
 </script>
 </head>
 <body>
@@ -2715,8 +2860,8 @@
 <!-- ═══════════════════════════════════════ SIMULATION ═══════════════════════════════════════ -->
 <div id="screen-sim" class="screen">
   <div class="sim-header">
-    <!-- hidden score elements — still used by JS -->
-    <div class="sim-scoreboard" style="display:none">
+    <!-- Scoreboard: your name + status vs opponent pts -->
+    <div class="sim-scoreboard">
       <div class="sim-player-score">
         <div class="sim-player-label" id="sim-my-label">You</div>
         <div class="sim-score-status" id="sim-my-status">–</div>
@@ -2729,18 +2874,10 @@
         <div class="sim-opp-pts" id="sim-opp-pts"></div>
       </div>
     </div>
-    <!-- Live rolling delta graph -->
-    <div class="sim-graph-wrap">
-      <canvas id="sim-graph"></canvas>
-      <div class="sim-graph-labels">
-        <div class="sim-graph-you" id="sim-graph-you-label">You</div>
-        <div class="sim-graph-opp">Opponent</div>
-      </div>
-      <div class="sim-graph-tip-emoji" id="sim-graph-emoji">🤝</div>
-    </div>
-    <div class="score-bar-track" style="display:none">
-      <div class="score-bar-fill" id="score-bar-fill" style="width:50%"></div>
-    </div>
+    <!-- hidden canvas kept so drawLiveGraph calls don't throw -->
+    <canvas id="sim-graph" style="display:none"></canvas>
+    <div id="sim-graph-you-label" style="display:none"></div>
+    <div id="sim-graph-emoji" style="display:none"></div>
   </div>
 
   <div class="sim-view-toggle">
@@ -2749,6 +2886,31 @@
   </div>
 
   <div class="sim-players" id="sim-players-list"></div>
+
+  <!-- Event timeline strip — half 1 | HT | half 2 -->
+  <div class="sim-timeline" id="sim-timeline">
+    <div class="sim-timeline-halves">
+      <!-- First half -->
+      <div class="sim-timeline-half" id="tl-half1">
+        <div class="sim-timeline-track">
+          <div class="sim-timeline-progress" id="tl-progress1" style="width:0%"></div>
+        </div>
+        <div id="tl-events1"></div>
+      </div>
+      <!-- HT divider -->
+      <div style="display:flex;flex-direction:column;align-items:center;gap:2px;flex-shrink:0">
+        <div class="sim-timeline-ht-label">HT</div>
+        <div class="sim-timeline-divider"></div>
+      </div>
+      <!-- Second half -->
+      <div class="sim-timeline-half second-half" id="tl-half2">
+        <div class="sim-timeline-track">
+          <div class="sim-timeline-progress" id="tl-progress2" style="width:0%"></div>
+        </div>
+        <div id="tl-events2"></div>
+      </div>
+    </div>
+  </div>
 
   <div class="live-scoreline">
     <span class="live-pill">LIVE</span>
@@ -2773,6 +2935,14 @@
       <button class="pred-btn pred-yes" onclick="submitPrediction(true)">✅ Yes</button>
       <button class="pred-btn pred-no"  onclick="submitPrediction(false)">❌ No</button>
     </div>
+  </div>
+
+  <!-- 3-option scorer question overlay -->
+  <div class="scorer-overlay" id="scorer-overlay" style="display:none">
+    <div class="scorer-label" id="scorer-label">⚡ First to answer wins</div>
+    <div class="scorer-question" id="scorer-question">Who scored?</div>
+    <div class="prediction-timer-bar"><div class="prediction-timer-fill" id="scorer-timer-fill"></div></div>
+    <div class="scorer-buttons" id="scorer-buttons"></div>
   </div>
 </div>
 
@@ -4173,7 +4343,7 @@ function restart() {
     teamFilter: 'home', selectedPlayer: null,
     gkPickerIsMe: true,
     draftDone: false, timerInterval: null, timerSecs: 30,
-    myCaptain: null, oppCaptain: null,
+    myCaptain: null, oppCaptain: null, captainRandom: false, captainDiceBonus: 0,
     simView: 'me', myScore: 0, oppScore: 0, playerData: {},
     teamName: '', teamEmoji: '', matchIdx: null,
     tipTaken: false, predictionPending: null, predictionAnswer: null, predictionTimerTimeout: null,
@@ -4181,6 +4351,7 @@ function restart() {
     mp: null,
     deltaHistory: [],
     htSwapOut: null, htSwapIn: null, htSwapDone: false, htTimerInterval: null,
+    htSwapRandomOut: null, htSwapRandomIn: null,
   };
   const form = document.getElementById('profile-new-form');
   if (form) form.classList.remove('open');
@@ -4684,76 +4855,204 @@ function updateTimerDisplay() {
 // SIMULATION ENGINE
 // ═══════════════════════════════════════════════════════════════
 
+// ── Commentary tier system ─────────────────────────────────────────
+// Tier 1: dry/flat (used for quiet moments, meh players)
+// Tier 2: warm dry humour with a knowing wink (most events)
+// Tier 3: genuinely losing it briefly (big moments, once or twice a game)
+// Tier 4: complete meltdown Easter egg (rate-limited, rare across sessions)
+//
+// getComment() picks a tier based on event type and game state.
+// Tier 4 is only available if state.commentaryMeltdownUsed is false,
+// AND a random roll passes (40% chance when eligible), preventing it
+// firing every game. Once used, it's locked for the rest of the game.
+
 const COMMENTARY = {
+  // ── GOALS ──
   goal: [
-    (name) => `<strong>${name}</strong> — finds the back of the net. Nothing the keeper could do.`,
-    (name) => `<strong>${name}</strong> scores. Easy as you like.`,
-    (name) => `And it's <strong>${name}</strong>. Clinical finish.`,
+    // Tier 1 — dry
+    (name) => `<strong>${name}</strong>. Goal. It's in. Ball's in the net.`,
+    (name) => `<strong>${name}</strong> finds the back of the net. Nothing the keeper could do, apparently.`,
+    (name) => `And it's <strong>${name}</strong>. Clinical. Or something like it.`,
+    (name) => `<strong>${name}</strong> scores. As forwards occasionally do.`,
+    // Tier 2 — warm
+    (name) => `Oh that's a goal. <strong>${name}</strong>. Clean finish, no complaints, plenty of chaos implications.`,
+    (name) => `<strong>${name}</strong> pulls the trigger and it's in. The keeper had a look at it and decided against intervening.`,
+    (name) => `<strong>${name}</strong> — well, he's supposed to score, isn't he. And yet somehow here we are, surprised.`,
+    (name) => `Lovely finish from <strong>${name}</strong>. Textbook. Aesthetically pleasing. Absolutely unhelpful.`,
+    (name) => `There it is. <strong>${name}</strong>. The net ripples. The crowd reacts. The chaos points adjust accordingly.`,
+    // Tier 2 — knowing
+    (name) => `<strong>${name}</strong> with the goal. Whether that's good or bad for your score depends entirely on whose team he's in. You know what you did.`,
+    (name) => `<strong>${name}</strong> scores and somewhere out there a Worst Eleven player is either celebrating or staring at the ceiling.`,
   ],
+
+  // ── OWN GOALS ──
   own_goal: [
-    (name) => `Oh no. <strong>${name}</strong> turns it in. Complete mix-up at the back.`,
-    (name) => `<strong>${name}</strong> — own goal. The crowd falls silent.`,
-    (name) => `Incredible scenes. <strong>${name}</strong> into his own net.`,
+    // Tier 1 — deadpan
+    (name) => `<strong>${name}</strong> — own goal. Ball in his own net. These things happen.`,
+    (name) => `Oh. <strong>${name}</strong> has turned that one in. Unfortunate.`,
+    // Tier 2 — warm
+    (name) => `<strong>${name}</strong> with the own goal. He assessed the options and selected the worst one with some conviction.`,
+    (name) => `That is going in off <strong>${name}</strong>. He came for it, he didn't get it, and now we all have to think about what just happened.`,
+    (name) => `<strong>${name}</strong> — own goal. A flap, a fumble, a moment of chaos for the ages. The keeper won't be mentioning this one.`,
+    (name) => `Oh no. <strong>${name}</strong> has redirected that perfectly into his own net. Technically quite impressive. Entirely the wrong goal.`,
+    // Tier 3 — losing it briefly
+    (name) => `That is an own goal. That is absolutely an own goal. <strong>${name}</strong> has scored for the other team. In his own net. With his knee. At a corner. I have questions.`,
+    (name) => `<strong>${name}</strong> — own goal. The keeper came for a cross he had absolutely no business attempting, missed it by a yard, and the ball rolled in apologetically. I need a moment.`,
   ],
+
+  // ── RED CARDS ──
   red: [
-    (name) => `<strong>${name}</strong> is off! Red card. No arguments there.`,
-    (name) => `<strong>${name}</strong> shown a straight red. He's off.`,
+    // Tier 1
+    (name) => `<strong>${name}</strong> is off. Red card. He's walking.`,
+    (name) => `Red for <strong>${name}</strong>. No arguments. Off he goes.`,
+    // Tier 2
+    (name) => `<strong>${name}</strong> shown a straight red and given his marching orders. He looks surprised. Nobody else is.`,
+    (name) => `Two yellows. <strong>${name}</strong> is off. He saw the first one coming and decided to do it anyway. Bold.`,
+    (name) => `<strong>${name}</strong> — off. The referee had seen enough, and honestly so had we.`,
+    (name) => `<strong>${name}</strong> goes in late, referee reaches for his pocket, and off comes the red. He didn't try to make it look accidental. Some respect for the craft would have been appreciated.`,
+    (name) => `Straight red for <strong>${name}</strong>. He'll have plenty of time to think about that one on the way home.`,
+    // Tier 3
+    (name) => `Straight red. Straight red. <strong>${name}</strong> didn't even try to make it look accidental. Some respect for the craft would be appreciated.`,
+    (name) => `Two yellows. <strong>${name}</strong> is walking. He had a complete shocker and he is walking and I genuinely feel something. I'm not sure what. But something.`,
   ],
+
+  // ── YELLOW CARDS ──
   yellow: [
-    (name) => `<strong>${name}</strong> booked. Frustration showing.`,
+    // Tier 1
+    (name) => `<strong>${name}</strong> booked. In the book.`,
     (name) => `Yellow for <strong>${name}</strong>. He's lucky it's not more.`,
-    (name) => `<strong>${name}</strong> in the book.`,
+    (name) => `<strong>${name}</strong> in the referee's notebook.`,
+    // Tier 2
+    (name) => `<strong>${name}</strong> booked for that. The referee had a word. Several words. The card came out. A predictable sequence of events.`,
+    (name) => `Oh that's a yellow. <strong>${name}</strong> knew it was a yellow. The referee knew it was a yellow. Everyone in the ground knew it was a yellow.`,
+    (name) => `<strong>${name}</strong> went in a bit there. Booked. He's appealing which, given what he just did, takes some nerve.`,
+    (name) => `Yellow card for <strong>${name}</strong> — something about unsporting conduct. Bit rich, but the referee's made his decision.`,
+    (name) => `Booked. <strong>${name}</strong>. Frustration spilling over into poor decision-making. A relatable sequence.`,
   ],
+
+  // ── SUBSTITUTIONS ──
   sub: [
-    (name) => `<strong>${name}</strong> withdrawn. Manager's seen enough.`,
-    (name) => `Off comes <strong>${name}</strong>. Early bath.`,
-    (name) => `<strong>${name}</strong> is hauled off. Not his afternoon.`,
+    // Tier 1
+    (name) => `<strong>${name}</strong> coming off. Substitution.`,
+    (name) => `Off comes <strong>${name}</strong>. Change made.`,
+    // Tier 2
+    (name) => `<strong>${name}</strong> withdrawn. The manager's seen enough. The manager has definitely seen enough.`,
+    (name) => `<strong>${name}</strong> hauled off before the hour. The dugout had been watching. They did not enjoy what they saw.`,
+    (name) => `Off comes <strong>${name}</strong> — early bath. He won't be pleased. The manager almost certainly is.`,
+    (name) => `<strong>${name}</strong> gets the hook. Fifty-something minutes and that's your lot. The fans give him a reception that tells its own story.`,
+    (name) => `<strong>${name}</strong> replaced. Tactical, apparently. We'll leave it at that.`,
   ],
+
+  // ── ASSISTS ──
   assist: [
     (name) => `Lovely ball from <strong>${name}</strong> — that had to be finished.`,
-    (name) => `<strong>${name}</strong> with the assist. He's running this game.`,
+    (name) => `<strong>${name}</strong> with the assist. He's been running this game quietly.`,
+    (name) => `<strong>${name}</strong> picks out his man perfectly. Some delivery that.`,
+    (name) => `<strong>${name}</strong> threading it through on a plate. Couldn't miss.`,
   ],
+
+  // ── HAT-TRICKS ──
   hat_trick: [
-    (name) => `HAT-TRICK! <strong>${name}</strong> completes it! Extraordinary scenes!`,
+    // Tier 2
+    (name) => `Hat-trick. <strong>${name}</strong> completes it. Three goals. In one game. Whether you're happy about that depends entirely on what you were hoping for today.`,
+    (name) => `<strong>${name}</strong> — hat-trick. Third goal. The match ball is his. His manager is delighted. Your feelings are more complicated.`,
+    // Tier 3 — only fires once per game via rate limit
+    (name) => `HAT-TRICK. <strong>${name}</strong>. Three goals. In the same match. I'm going to need someone to explain to me what happened today because I have watched football for thirty years and this — this is something.`,
   ],
+
+  // ── NEUTRAL / QUIET SPELLS ──
   neutral: [
+    // Tier 1 — flat/dry (most of these)
+    () => `Ball goes sideways. Then sideways again. Football, everyone.`,
     () => `Nothing much happening. Both sides feeling each other out.`,
+    () => `The referee checks his watch. We check our phones. A shared moment.`,
+    () => `Possession retained. The status quo defended. Another minute passes.`,
+    () => `A corner, swung in, headed away. The cycle continues.`,
+    () => `He looks up. He plays it safe. He'll sleep well tonight.`,
     () => `Tight game so far. Plenty of running but little creativity.`,
+    () => `A free kick in a dangerous area. Dangerous for whom remains unclear.`,
+    () => `The full back overlaps. Comes to nothing. He'll be back.`,
+    // Tier 2 — a bit warmer
+    () => `Late tension building. Everything still to play for. Theoretically.`,
     () => `The referee's having a quiet afternoon. For now.`,
-    () => `Late tension building. Everything still to play for.`,
+    () => `Tactical foul. Yellow card. The shape is maintained. Everyone moves on.`,
   ],
 };
 
-// Near-miss fake beats — { build, resolve, emoji }
-// build = suspense line, resolve = deflation line ~3s later
+// Tracks whether the tier-3 "losing it" lines and tier-4 meltdown have fired this game
+// Reset in startSimulation
+// state.commentaryTier3Count — how many tier-3 lines have fired (max 2 per game)
+// state.commentaryMeltdownUsed — whether tier-4 has fired (max 1 per game, 40% roll)
+
+function getComment(type, name) {
+  const lines = COMMENTARY[type] || COMMENTARY.neutral;
+
+  // For event types that have tier-3 lines (own_goal, red, hat_trick),
+  // only use them if under the per-game limit
+  const tier3Types = ['own_goal', 'red', 'hat_trick'];
+  if (tier3Types.includes(type)) {
+    if (!state.commentaryTier3Count) state.commentaryTier3Count = 0;
+
+    // Tier-3 lines are the last 1-2 entries in each array
+    const tier3Start = { own_goal: 6, red: 7, hat_trick: 2 };
+    const t3idx = tier3Start[type];
+
+    const regularLines = lines.slice(0, t3idx);
+    const tier3Lines   = lines.slice(t3idx);
+
+    // Try tier-4 meltdown for hat_trick only (rarest, most dramatic)
+    if (type === 'hat_trick' && !state.commentaryMeltdownUsed && Math.random() < 0.4) {
+      state.commentaryMeltdownUsed = true;
+      return tier3Lines[tier3Lines.length - 1](name); // last line is tier-4
+    }
+
+    // Use tier-3 line if under limit (max 2 per game) and random roll passes
+    if (state.commentaryTier3Count < 2 && tier3Lines.length && Math.random() < 0.55) {
+      state.commentaryTier3Count++;
+      const t3line = tier3Lines[Math.floor(Math.random() * (tier3Lines.length - 1))]; // exclude last (tier-4)
+      return t3line(name);
+    }
+
+    // Fall back to regular lines
+    return regularLines[Math.floor(Math.random() * regularLines.length)](name);
+  }
+
+  return lines[Math.floor(Math.random() * lines.length)](name);
+}
+
+// Near-miss fake beats — { setup, build, resolve, emoji }
 const NEAR_MISSES = {
   shot: [
-    { build: (n) => `<strong>${n}</strong> shaping up for a shot here…`,        setup: (n) => `<strong>${n}</strong> picks it up on the edge of the box…`,        resolve: (n) => `…just over the bar! <strong>${n}</strong> puts his hands on his head.`,     emoji: '😬' },
-    { build: (n) => `<strong>${n}</strong> cuts inside, pulls the trigger…`,     setup: (n) => `<strong>${n}</strong> driving at goal, defenders backing off…`,      resolve: (n) => `…straight at the keeper. <strong>${n}</strong> will be disappointed with that.`, emoji: '🧤' },
-    { build: (n) => `Free kick for <strong>${n}</strong>, in a dangerous position…`, setup: (n) => `<strong>${n}</strong> standing over this, the wall's set…`,       resolve: (n) => `…into the wall. Nothing comes of it.`,                                    emoji: '🧱' },
-    { build: (n) => `<strong>${n}</strong> through on goal here, one on one…`,   setup: (n) => `<strong>${n}</strong> played in behind — it's just him and the keeper…`, resolve: (n) => `…keeper spreads himself and saves it! Not today.`,                     emoji: '🧤' },
-    { build: (n) => `Header from <strong>${n}</strong>!…`,                       setup: (n) => `Corner coming in, <strong>${n}</strong> getting across his man…`,     resolve: (n) => `…off the post! Agonising. The woodwork saves them.`,                     emoji: '😩' },
-    { build: (n) => `<strong>${n}</strong> lines up from distance…`,             setup: (n) => `<strong>${n}</strong> has space, 30 yards out, eyeing the top corner…`, resolve: (n) => `…blazes it wide. Not his finest moment.`,                               emoji: '😅' },
-    { build: (n) => `Corner coming in, <strong>${n}</strong> lurking at the back post…`, setup: (n) => `<strong>${n}</strong> peeling off his marker at the back stick…`, resolve: (n) => `…over! He'll say he got a touch.`,                                      emoji: '🙈' },
+    { setup: (n) => `<strong>${n}</strong> picks it up on the edge of the box, nobody closing him down…`,        build: (n) => `<strong>${n}</strong> shaping up for a shot here…`,                resolve: (n) => `…just over the bar. <strong>${n}</strong> puts his hands on his head.`,                    emoji: '😬' },
+    { setup: (n) => `<strong>${n}</strong> driving at goal, defenders backing off, inviting the shot…`,          build: (n) => `<strong>${n}</strong> cuts inside, pulls the trigger…`,              resolve: (n) => `…straight at the keeper. He'll be disappointed with that.`,                                emoji: '🧤' },
+    { setup: (n) => `Free kick awarded, dangerous position. <strong>${n}</strong> standing over it…`,            build: (n) => `<strong>${n}</strong> steps up from the free kick…`,                resolve: (n) => `…into the wall. Nothing comes of it. The wall does its one job.`,                          emoji: '🧱' },
+    { setup: (n) => `<strong>${n}</strong> played in behind — it's just him and the keeper now…`,                build: (n) => `<strong>${n}</strong> through on goal here, one on one…`,            resolve: (n) => `…keeper spreads himself and saves it. Not today, not ever.`,                               emoji: '🧤' },
+    { setup: (n) => `Corner coming in, <strong>${n}</strong> getting across his man at the back stick…`,         build: (n) => `Header from <strong>${n}</strong>!`,                                resolve: (n) => `…off the post! Agonising. The woodwork saves them once again.`,                            emoji: '😩' },
+    { setup: (n) => `<strong>${n}</strong> has space, 30 yards out, eyeing up the top corner…`,                  build: (n) => `<strong>${n}</strong> lines up from distance, worth a go…`,          resolve: (n) => `…blazes it wide. Not his finest moment. Not his finest day, frankly.`,                    emoji: '😅' },
+    { setup: (n) => `<strong>${n}</strong> peeling off his marker at the back post, corner coming…`,             build: (n) => `<strong>${n}</strong> lurking at the back post, free header…`,      resolve: (n) => `…over! He'll say he got a touch. Nobody believes him.`,                                   emoji: '🙈' },
+    { setup: (n) => `<strong>${n}</strong> receives it in the channel, one touch to set himself…`,               build: (n) => `<strong>${n}</strong> into the area, going for goal…`,              resolve: (n) => `…blocked! Last-ditch defending. The ball bounces clear.`,                                  emoji: '🙅' },
   ],
   card: [
-    { build: (n) => `Ooh, <strong>${n}</strong> goes in late there, referee has a look…`,   setup: (n) => `<strong>${n}</strong> charging in — he's going to be late on this…`,   resolve: (n) => `…plays on. Ref keeps his cards in his pocket. Lucky escape.`,     emoji: '😤' },
-    { build: (n) => `<strong>${n}</strong> not happy, getting in the ref's face here…`,     setup: (n) => `<strong>${n}</strong> fuming after that decision, storming over…`,      resolve: (n) => `…just a word. He's getting away with that.`,                       emoji: '🫣' },
-    { build: (n) => `Bit of handbags near the touchline, <strong>${n}</strong> involved…`, setup: (n) => `Tempers fraying here, <strong>${n}</strong> right in the middle of it…`, resolve: (n) => `…ref steps in. No card, but he's noted the name.`,                 emoji: '📋' },
-    { build: (n) => `Nasty challenge from <strong>${n}</strong>, crowd baying for a card…`, setup: (n) => `<strong>${n}</strong> sliding in, studs showing — this looks bad…`,     resolve: (n) => `…ref says play on. Remarkable decision.`,                          emoji: '🤯' },
-    { build: (n) => `<strong>${n}</strong> catches his man studs up, ref coming over…`,     setup: (n) => `<strong>${n}</strong> going in high, the ref is running across…`,        resolve: (n) => `…talking to him but no card. He won't be told twice.`,             emoji: '😬' },
+    { setup: (n) => `<strong>${n}</strong> charging in — he's going to be late on this…`,                        build: (n) => `Ooh, <strong>${n}</strong> goes in late there, referee has a look…`,  resolve: (n) => `…plays on. Ref keeps his cards in his pocket. Lucky escape. Very lucky.`,                emoji: '😤' },
+    { setup: (n) => `<strong>${n}</strong> fuming after that decision, storming over to the referee…`,           build: (n) => `<strong>${n}</strong> not happy, getting in the ref's face here…`,   resolve: (n) => `…just a word. He's getting away with that. This time.`,                                   emoji: '🫣' },
+    { setup: (n) => `Tempers fraying, <strong>${n}</strong> right in the middle of it near the touchline…`,      build: (n) => `Bit of handbags near the touchline, <strong>${n}</strong> involved…`, resolve: (n) => `…ref steps in. No card, but he's noted the name. The notebook is out.`,                  emoji: '📋' },
+    { setup: (n) => `<strong>${n}</strong> sliding in, studs showing — this looks bad from here…`,               build: (n) => `Nasty challenge from <strong>${n}</strong>, crowd baying for a card…`, resolve: (n) => `…ref says play on. Remarkable decision. Truly remarkable.`,                             emoji: '🤯' },
+    { setup: (n) => `<strong>${n}</strong> going in high, the ref is running across from the other side…`,       build: (n) => `<strong>${n}</strong> catches his man studs up, ref coming over…`,   resolve: (n) => `…talking to him. Pointing. No card. He won't be told twice. He's already been told twice.`, emoji: '😬' },
+    { setup: (n) => `<strong>${n}</strong> has been walking a tightrope all afternoon. Already on a yellow.`,    build: (n) => `<strong>${n}</strong> goes in again — he cannot do this…`,           resolve: (n) => `…ref waves it away. Incredible. The laws of physics and football have both been suspended.`, emoji: '😱' },
   ],
   var: [
-    { build: (n) => `Hold on — they're checking the VAR monitor. <strong>${n}</strong> might be in trouble here…`, setup: (n) => `Play stopped. The officials are huddling, looking at the screen…`, resolve: (n) => `…no action. They're waving play on.`, emoji: '📺' },
-    { build: (n) => `Referee goes to the screen to check <strong>${n}</strong>'s challenge…`, setup: (n) => `VAR intervenes. Everyone's waiting…`,                          resolve: (n) => `…no card. Close, though. Very close.`,                          emoji: '📺' },
+    { setup: (n) => `Play stopped. The officials are huddling, looking at the screen. <strong>${n}</strong> waiting.`, build: (n) => `Hold on — VAR check. <strong>${n}</strong> might be in trouble here…`, resolve: (n) => `…no action. They're waving play on. The crowd express an opinion about this.`, emoji: '📺' },
+    { setup: (n) => `VAR intervenes. Everyone's waiting. <strong>${n}</strong> looking at the big screen.`,      build: (n) => `Referee goes to the monitor to review <strong>${n}</strong>'s challenge…`, resolve: (n) => `…no card. Close. Very close. The technology has spoken and the technology is forgiving today.`, emoji: '📺' },
   ],
   injury: [
-    { build: (n) => `<strong>${n}</strong> down injured, physios running on…`,   setup: (n) => `<strong>${n}</strong> pulling up short, holding his hamstring…`,    resolve: (n) => `…up on his feet. He'll be okay, just cramp.`,                               emoji: '🩺' },
-    { build: (n) => `<strong>${n}</strong> taking a knock here, looking sore…`,  setup: (n) => `<strong>${n}</strong> takes a heavy challenge, doesn't look right…`, resolve: (n) => `…back on his feet. Gets on with it.`,                                       emoji: '💪' },
+    { setup: (n) => `<strong>${n}</strong> pulling up short, holding his hamstring…`,                            build: (n) => `<strong>${n}</strong> down injured, physios running on…`,             resolve: (n) => `…up on his feet. Just cramp, apparently. He'll be fine. He doesn't look fine.`,           emoji: '🩺' },
+    { setup: (n) => `<strong>${n}</strong> takes a heavy challenge, doesn't look right, staying down…`,          build: (n) => `<strong>${n}</strong> taking a knock, looking sore…`,               resolve: (n) => `…back on his feet. Gets on with it. Hard as nails, apparently.`,                          emoji: '💪' },
+    { setup: (n) => `<strong>${n}</strong> holding his ankle after that collision, wincing…`,                    build: (n) => `<strong>${n}</strong> down, referee stops play…`,                  resolve: (n) => `…magic sponge applied. He's back up. The magic sponge remains undefeated.`,              emoji: '🩺' },
   ],
   chance: [
-    { build: (n) => `Penalty shout! <strong>${n}</strong> goes down in the box…`, setup: (n) => `<strong>${n}</strong> twisting in the area — contact there, surely…`, resolve: (n) => `…nothing given. Referee not interested. <strong>${n}</strong> furious.`,   emoji: '😡' },
-    { build: (n) => `<strong>${n}</strong> appeals for handball, arms waving everywhere…`, setup: (n) => `Ball strikes an arm in the area — <strong>${n}</strong> already appealing…`, resolve: (n) => `…play continues. The ref isn't buying it.`,                        emoji: '🙅' },
+    { setup: (n) => `<strong>${n}</strong> twisting in the area — contact there, surely, arm across him…`,       build: (n) => `Penalty shout! <strong>${n}</strong> goes down in the box…`,          resolve: (n) => `…nothing given. Referee not interested. <strong>${n}</strong> absolutely furious. Rightly so.`, emoji: '😡' },
+    { setup: (n) => `Ball strikes an arm in the area — <strong>${n}</strong> already appealing…`,                build: (n) => `<strong>${n}</strong> appeals for handball, both arms in the air…`,  resolve: (n) => `…play continues. The ref isn't buying it. Nobody is buying it. Except <strong>${n}</strong>.`, emoji: '🙅' },
+    { setup: (n) => `<strong>${n}</strong> found in acres of space, nobody tracking his run…`,                   build: (n) => `<strong>${n}</strong> arriving late into the box — this looks dangerous…`, resolve: (n) => `…offside! Flag's up. Fractional. He'll be livid. Rightfully so.`,                       emoji: '🚩' },
   ],
 };
 
@@ -4774,26 +5073,29 @@ function pickNearMiss(playerName, allowVar = true) {
   };
 }
 
-// Pre-event teasers — shown 1-2 mins before a real dramatic event to build anticipation
-// Each has a setup line (atmosphere) and a trigger line (the action, ending "…")
+// Pre-event teasers — planted 1-2 mins before a real dramatic event
 const PRE_EVENT_TEASERS = {
   red: [
-    { setup: (n) => `<strong>${n}</strong> has been walking a tightrope all afternoon…`,      trigger: (n) => `<strong>${n}</strong> goes in late — this time the referee's not letting it go…` },
-    { setup: (n) => `<strong>${n}</strong> already booked, and he's still flying into challenges…`, trigger: (n) => `Another reckless foul from <strong>${n}</strong>, referee reaching for his pocket…` },
-    { setup: (n) => `The crowd on <strong>${n}</strong>'s back every time he touches it…`,     trigger: (n) => `<strong>${n}</strong> snaps — challenge from behind, referee blowing immediately…` },
+    { setup: (n) => `<strong>${n}</strong> has been walking a tightrope all afternoon — already in the book, still flying in…`,    trigger: (n) => `<strong>${n}</strong> goes in late again — this time the referee is not letting it go…` },
+    { setup: (n) => `<strong>${n}</strong> and the referee have been having words since the first whistle…`,                       trigger: (n) => `Another reckless foul from <strong>${n}</strong>, referee reaching for his pocket…` },
+    { setup: (n) => `The crowd on <strong>${n}</strong>'s back every time he touches it. He's not helping himself…`,              trigger: (n) => `<strong>${n}</strong> snaps — challenge from behind, referee blowing immediately…` },
+    { setup: (n) => `<strong>${n}</strong> on a yellow, and he's still going into every tackle like it's the last one…`,         trigger: (n) => `Oh here we go — <strong>${n}</strong> in on the keeper, studs up, that cannot be legal…` },
   ],
   yellow: [
-    { setup: (n) => `<strong>${n}</strong> has been giving the referee problems all game…`,    trigger: (n) => `<strong>${n}</strong> pulls back his man cynically, referee's had enough…` },
-    { setup: (n) => `Frustration building in <strong>${n}</strong>'s game…`,                   trigger: (n) => `<strong>${n}</strong> clatters into the challenge — no attempt to play the ball…` },
+    { setup: (n) => `<strong>${n}</strong> has been giving the referee problems all game — this can only go one way…`,           trigger: (n) => `<strong>${n}</strong> pulls back his man cynically, referee's had enough…` },
+    { setup: (n) => `Frustration building in <strong>${n}</strong>'s body language — something's coming here…`,                  trigger: (n) => `<strong>${n}</strong> clatters into the challenge — no attempt to play the ball…` },
+    { setup: (n) => `<strong>${n}</strong> arguing with the fourth official now. The fourth official. The one with no power.`,   trigger: (n) => `And <strong>${n}</strong> is at it again — goes right through the back of him…` },
   ],
   goal: [
-    { setup: (n) => `<strong>${n}</strong> has looked sharp today — something is brewing here…`, trigger: (n) => `<strong>${n}</strong> picks it up in space, carries it forward, beats his man…` },
-    { setup: (n) => `The ball keeps finding <strong>${n}</strong> in dangerous positions…`,     trigger: (n) => `<strong>${n}</strong> through on goal — the defender's lost him completely…` },
-    { setup: (n) => `<strong>${n}</strong> dropping deep, getting involved, building something…`, trigger: (n) => `<strong>${n}</strong> plays it one-two and bursts into the box…` },
+    { setup: (n) => `<strong>${n}</strong> has looked sharp all afternoon — something is definitely building here…`,              trigger: (n) => `<strong>${n}</strong> picks it up in space, carries it forward, beats his man…` },
+    { setup: (n) => `The ball keeps finding <strong>${n}</strong> in dangerous positions. It's only a matter of time…`,          trigger: (n) => `<strong>${n}</strong> through on goal — the defender's completely lost him…` },
+    { setup: (n) => `<strong>${n}</strong> dropping deep, linking things together, dictating. Something's brewing.`,             trigger: (n) => `<strong>${n}</strong> plays the one-two and bursts into the box…` },
+    { setup: (n) => `<strong>${n}</strong> winning every header, dominating this channel — pressure building…`,                  trigger: (n) => `Ball drops to <strong>${n}</strong> in the area, six yards out, first time…` },
   ],
   own_goal: [
-    { setup: (n) => `<strong>${n}</strong> has been nervy today, miscontrolling, misdirecting…`, trigger: (n) => `Cross comes in — <strong>${n}</strong> has to deal with this under pressure…` },
-    { setup: (n) => `The back line looks shaky. <strong>${n}</strong> hasn't been convincing…`, trigger: (n) => `<strong>${n}</strong> attempting to clear — awkward bounce, going wrong way…` },
+    { setup: (n) => `<strong>${n}</strong> has been nervy today — miscontrolling, misdirecting, under pressure constantly…`,     trigger: (n) => `Cross comes in — <strong>${n}</strong> has to deal with this under pressure…` },
+    { setup: (n) => `The back line looks shaky. <strong>${n}</strong> hasn't been convincing at all this half.`,                 trigger: (n) => `<strong>${n}</strong> attempting to clear — awkward bounce, going the wrong way…` },
+    { setup: (n) => `<strong>${n}</strong> has been miscommunicating with his keeper all game. This is dangerous.`,              trigger: (n) => `Keeper comes — <strong>${n}</strong> goes — neither shouts, both go for it…` },
   ],
 };
 
@@ -4805,11 +5107,6 @@ function getPreTeaser(eventType, playerName) {
     setup:   entry.setup(playerName),
     trigger: entry.trigger(playerName),
   };
-}
-
-function getComment(type, name) {
-  const lines = COMMENTARY[type] || COMMENTARY.neutral;
-  return lines[Math.floor(Math.random() * lines.length)](name);
 }
 
 // Scoring per event type for a player in a given team (mine vs opp)
@@ -4866,76 +5163,82 @@ function autoCompleteMatch() {
 
 function showCaptainScreen() {
   showScreen('captain');
-  state.myCaptain = null;
+  state.myCaptain     = null;
+  state.captainRandom = false; // track whether dice was used
 
-  // AI picks its captain — highest chaos value from its team, excluding GK
-  // Use deterministic base estimates (no noise) so the AI captain is consistent
+  // ── Opponent captain: highest chaos estimate from their team ──
+  const POSITION_PRIOR = { GK:5,CB:8,RB:6,LB:6,DM:7,CM:5,AM:3,RW:2,LW:2,ST:1 };
+  const homeGoals = EVENTS.filter(e => e.type==='goal' && PLAYERS.find(q=>q.id===e.playerId&&q.team==='home')).length;
+  const awayGoals = EVENTS.filter(e => e.type==='goal' && PLAYERS.find(q=>q.id===e.playerId&&q.team==='away')).length;
   const oppCandidates = state.oppTeam
     .map(id => {
       const p = getPlayer(id);
       if (!p || p.pos === 'GK') return null;
-      // Recompute base estimate without noise for determinism
-      const POSITION_PRIOR = { GK:5,CB:8,RB:6,LB:6,DM:7,CM:5,AM:3,RW:2,LW:2,ST:1 };
-      const homeGoals = EVENTS.filter(e => e.type==='goal' && PLAYERS.find(q=>q.id===e.playerId&&q.team==='home')).length;
-      const awayGoals = EVENTS.filter(e => e.type==='goal' && PLAYERS.find(q=>q.id===e.playerId&&q.team==='away')).length;
-      const goalsAgainst = { home: awayGoals, away: homeGoals };
-      const prior = POSITION_PRIOR[p.pos] || 5;
-      const isBackline = ['CB','RB','LB'].includes(p.pos);
-      const leakyBonus = isBackline ? (goalsAgainst[p.team] || 0) * 2.5 : 0;
-      const isAttacker = ['ST','RW','LW','AM'].includes(p.pos);
-      const goalsScoredByTeam = p.team === 'home' ? homeGoals : awayGoals;
-      const attackerPenalty = isAttacker ? goalsScoredByTeam * 1.5 : 0;
-      return { id, v: prior + leakyBonus - attackerPenalty };
-    })
-    .filter(Boolean);
-  oppCandidates.sort((a, b) => b.v - a.v);
+      const prior       = POSITION_PRIOR[p.pos] || 5;
+      const isBackline  = ['CB','RB','LB'].includes(p.pos);
+      const leakyBonus  = isBackline ? ({ home: awayGoals, away: homeGoals }[p.team] || 0) * 2.5 : 0;
+      const isAttacker  = ['ST','RW','LW','AM'].includes(p.pos);
+      const attPenalty  = isAttacker ? (p.team==='home' ? homeGoals : awayGoals) * 1.5 : 0;
+      return { id, v: prior + leakyBonus - attPenalty };
+    }).filter(Boolean).sort((a,b) => b.v - a.v);
   state.oppCaptain = oppCandidates[0]?.id;
 
-  // Render my outfield players as tappable tiles (no GKs)
+  // ── Curated captain candidates: 6 from YOUR team only ──
+  // Sorted by chaos potential descending — highest chaos score first,
+  // so the player sees their most interesting options at the top.
+  const scoredMy = state.myTeam
+    .map(id => {
+      const p = getPlayer(id);
+      if (!p || p.pos === 'GK') return null;
+      const prior      = POSITION_PRIOR[p.pos] || 5;
+      const isBackline = ['CB','RB','LB'].includes(p.pos);
+      const leaky      = isBackline ? ({ home: awayGoals, away: homeGoals }[p.team] || 0) * 2.5 : 0;
+      const isAtt      = ['ST','RW','LW','AM'].includes(p.pos);
+      const attPen     = isAtt ? (p.team==='home' ? homeGoals : awayGoals) * 1.5 : 0;
+      return { id, v: prior + leaky - attPen };
+    }).filter(Boolean).sort((a,b) => b.v - a.v); // descending = highest chaos first
+
+  const myCurated = scoredMy.slice(0, 6).map(x => x.id);
+
+  // Render curated tiles
   const grid = document.getElementById('captain-grid');
   grid.innerHTML = '';
 
-  const posOrder = { CB:0, RB:0, LB:0, DM:1, CM:1, AM:2, RW:3, LW:3, ST:4 };
-  const sorted = [...state.myTeam]
-    .map(id => getPlayer(id))
-    .filter(p => p && p.pos !== 'GK')
-    .sort((a, b) => (posOrder[a.pos] || 0) - (posOrder[b.pos] || 0));
-
-  for (const p of sorted) {
+  const m = ALL_MATCHES[state.matchIdx];
+  for (const id of myCurated) {
+    const p = getPlayer(id);
+    if (!p) continue;
     const tile = document.createElement('div');
     tile.className = 'captain-tile';
     tile.dataset.id = p.id;
-
     const teamColour = p.team === 'home'
-      ? (ALL_MATCHES[state.matchIdx]?.meta.homeColour || '#6CABDD')
-      : (ALL_MATCHES[state.matchIdx]?.meta.awayColour || '#FBEE23');
-
+      ? (m?.meta.homeColour || '#6CABDD')
+      : (m?.meta.awayColour || '#FBEE23');
     tile.innerHTML = `
       <div class="captain-tile-pos">${p.pos}</div>
       <div class="captain-tile-name">${p.name.split(' ').pop()}</div>
       <div class="captain-tile-team"><span class="captain-tile-dot" style="background:${teamColour}"></span>${p.teamName}</div>
     `;
-    tile.addEventListener('click', () => selectCaptain(p.id));
+    tile.addEventListener('click', () => selectCaptain(p.id, false));
     grid.appendChild(tile);
   }
 
-  // Random captain tile (12th)
-  const randomTile = document.createElement('div');
-  randomTile.className = 'captain-tile random-tile';
-  randomTile.dataset.id = 'random';
-  randomTile.innerHTML = `<div class="captain-tile-name">🎲 Random</div>`;
-  randomTile.addEventListener('click', () => {
+  // 🎲 Dice tile — +5 flat bonus, no 2× multiplier
+  const diceTile = document.createElement('div');
+  diceTile.className = 'captain-tile random-tile';
+  diceTile.dataset.id = 'random';
+  diceTile.innerHTML = `<div class="captain-tile-name">🎲 Roll the Dice</div><div style="font-size:10px;color:#f5a623;margin-top:2px">+5 bonus pts</div>`;
+  diceTile.addEventListener('click', () => {
     const outfield = state.myTeam.filter(id => { const p = getPlayer(id); return p && p.pos !== 'GK'; });
     const randomId = outfield[Math.floor(Math.random() * outfield.length)];
     selectCaptain(randomId, true);
   });
-  grid.appendChild(randomTile);
+  grid.appendChild(diceTile);
 
   document.getElementById('captain-confirm-btn').disabled = true;
   document.getElementById('captain-hint').textContent = 'Tap a player to nominate';
   document.getElementById('captain-hint').className = 'captain-hint';
 
-  // Start 10s captain timer — auto-random on expiry
   startCaptainTimer();
 }
 
@@ -4974,11 +5277,10 @@ function startCaptainTimer() {
 }
 
 function selectCaptain(id, fromRandom = false) {
-  state.myCaptain = id;
+  state.myCaptain     = id;
+  state.captainRandom = fromRandom;
 
-  // Update tile states — highlight the actual player tile, and random tile if it was used
   document.querySelectorAll('.captain-tile').forEach(t => {
-    const tileId = t.dataset.id === 'random' ? 'random' : parseInt(t.dataset.id);
     if (fromRandom) {
       t.classList.toggle('selected', t.dataset.id === 'random');
     } else {
@@ -4986,11 +5288,11 @@ function selectCaptain(id, fromRandom = false) {
     }
   });
 
-  const p = getPlayer(id);
+  const p    = getPlayer(id);
   const hint = document.getElementById('captain-hint');
   const name = p ? p.name.split(' ').pop() : '?';
   hint.textContent = fromRandom
-    ? `🎲 ${name} drawn at random — fate decides`
+    ? `🎲 ${name} drawn — +5 bonus pts locked in`
     : `${name} will wear the armband`;
   hint.className = 'captain-hint chosen';
 
@@ -5001,15 +5303,19 @@ function confirmCaptain() {
   if (!state.myCaptain) return;
   if (captainTimerInterval) clearInterval(captainTimerInterval);
 
+  // Dice bonus: +5 flat, applied immediately to score before sim
+  if (state.captainRandom) {
+    state.captainDiceBonus = 5;
+    showToast('🎲 +5 dice bonus locked in!');
+  } else {
+    state.captainDiceBonus = 0;
+  }
+
   if (state.mp) {
-    // In mp mode: write captain to Firebase, signal ready to sim
-    mpSetCaptain(state.myCaptain);
-    showToast('Captain locked in — waiting for opponent…');
-    // Disable button to prevent double-tap
+    showToast(state.captainRandom ? '🎲 +5 dice bonus! Waiting for opponent…' : 'Captain locked in — waiting for opponent…');
     const btn = document.getElementById('captain-confirm-btn');
     if (btn) { btn.disabled = true; btn.textContent = 'Waiting…'; }
-    mpReadyToSim();
-    mpWaitForSimStart(() => startSimulation());
+    mpConfirmCaptainAndSim(state.myCaptain);
   } else {
     startSimulation();
   }
@@ -5025,12 +5331,26 @@ function captainMultiplier(playerId) {
 
 function startSimulation() {
   initPlayerData();
-  state.myScore = 0;
+  state.myScore  = state.captainDiceBonus || 0; // dice bonus applied before sim
   state.oppScore = 0;
   state.liveHomeScore = 0;
   state.liveAwayScore = 0;
   state.pendingFlashes = [];
   state.deltaHistory = [];
+  state.commentaryTier3Count    = 0;   // tier-3 "losing it" lines — max 2 per game
+  state.commentaryMeltdownUsed  = false; // tier-4 Easter egg — max 1 per game
+
+  // Reset timeline strip
+  const tl1 = document.getElementById('tl-events1');
+  const tl2 = document.getElementById('tl-events2');
+  const p1  = document.getElementById('tl-progress1');
+  const p2  = document.getElementById('tl-progress2');
+  const h2  = document.getElementById('tl-half2');
+  if (tl1) tl1.innerHTML = '';
+  if (tl2) tl2.innerHTML = '';
+  if (p1)  p1.style.width = '0%';
+  if (p2)  p2.style.width = '0%';
+  if (h2)  h2.classList.remove('active');
   showScreen('sim');
 
   // Re-apply live scoreline team names (HTML default is hardcoded, needs refresh)
@@ -5170,6 +5490,149 @@ function applyPredictionResult(playerAnswer, isReal) {
   }
 }
 
+// ══════════════════════════════════════════════════════════
+// 3-OPTION SCORER QUESTION
+// ══════════════════════════════════════════════════════════
+
+// Build plausible distractors: same position group as scorer, from same team
+function getScorerOptions(scorerId, eventType) {
+  const scorer = getPlayer(scorerId);
+  if (!scorer) return null;
+
+  // Position groups for non-trivial distractors
+  const POS_GROUP = {
+    GK: ['GK'],
+    CB: ['CB','RB','LB'], RB: ['CB','RB','LB'], LB: ['CB','RB','LB'],
+    DM: ['DM','CM'], CM: ['DM','CM'],
+    AM: ['AM','RW','LW','CM'], RW: ['AM','RW','LW','ST'], LW: ['AM','RW','LW','ST'],
+    ST: ['ST','RW','LW','AM'],
+  };
+  const group = POS_GROUP[scorer.pos] || [scorer.pos];
+
+  // Pool: same team, same position group, excluding scorer
+  const allPlayers = PLAYERS.filter(p =>
+    p.team === scorer.team &&
+    p.id !== scorer.id &&
+    group.includes(p.pos)
+  );
+
+  // Shuffle and take 2 distractors; fall back to any same-team outfield if needed
+  const shuffle = arr => [...arr].sort(() => Math.random() - 0.5);
+  let pool = shuffle(allPlayers);
+  if (pool.length < 2) {
+    const fallback = shuffle(PLAYERS.filter(p => p.team === scorer.team && p.id !== scorer.id && p.pos !== 'GK'));
+    pool = [...pool, ...fallback.filter(p => !pool.find(q => q.id === p.id))];
+  }
+
+  const distractors = pool.slice(0, 2);
+  if (distractors.length < 2) return null; // not enough players to make question
+
+  // Shuffle all 3 so correct answer isn't always first
+  const options = shuffle([scorer, ...distractors]);
+  return { options, correctId: scorer.id };
+}
+
+// onComplete(isCorrect, playerId) — playerId is what the user tapped (for mp write)
+// In single-player, onComplete fires immediately after answer and handles scoring.
+// In mp, mpShowScorerQuestion wraps this and intercepts the callback.
+function showScorerQuestion(beat, onComplete) {
+  const overlay = document.getElementById('scorer-overlay');
+  const qEl     = document.getElementById('scorer-question');
+  const labelEl = document.getElementById('scorer-label');
+  const fillEl  = document.getElementById('scorer-timer-fill');
+  const btnWrap = document.getElementById('scorer-buttons');
+  if (!overlay || !beat.scorerOptions) { onComplete(null, null); return; }
+
+  const { options, correctId } = beat.scorerOptions;
+  const isMp       = !!state.mp;
+  const eventLabel = beat.scorerEventType === 'red' ? '🟥 Red card!' : '⚽ Goal!';
+
+  qEl.textContent     = beat.scorerEventType === 'red' ? 'Who saw red?' : 'Who scored?';
+  labelEl.textContent = isMp
+    ? `${eventLabel} · Race your opponent · +15 / −5`
+    : `${eventLabel} · +15 correct · −5 wrong`;
+
+  btnWrap.innerHTML = '';
+  let answered = false;
+
+  options.forEach(p => {
+    const btn       = document.createElement('button');
+    btn.className   = 'scorer-btn';
+    btn.textContent = p.name.split(' ').pop();
+    btn.dataset.id  = p.id;
+    btn.onclick = () => {
+      if (answered) return;
+      answered = true;
+      clearTimeout(state.scorerTimerTimeout);
+      const isCorrect = (p.id === correctId);
+      // Highlight tapped button; reveal correct
+      document.querySelectorAll('.scorer-btn').forEach(b => {
+        b.disabled = true;
+        if (parseInt(b.dataset.id) === correctId) b.classList.add('correct');
+        if (b === btn && !isCorrect) b.classList.add('wrong');
+      });
+      onComplete(isCorrect, p.id);
+    };
+    btnWrap.appendChild(btn);
+  });
+
+  overlay.style.display = '';
+
+  fillEl.style.transition = 'none';
+  fillEl.style.width = '100%';
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    fillEl.style.transition = 'width 5s linear';
+    fillEl.style.width = '0%';
+  }));
+
+  state.scorerTimerTimeout = setTimeout(() => {
+    if (!answered) {
+      answered = true;
+      document.querySelectorAll('.scorer-btn').forEach(b => {
+        b.disabled = true;
+        if (parseInt(b.dataset.id) === correctId) b.classList.add('correct');
+      });
+      onComplete(null, null);
+    }
+  }, 5000);
+}
+
+// Apply scored result and close overlay. msg = optional override message (e.g. "Too slow!")
+function submitScorerAnswer(correct, correctId, onComplete, overrideMsg) {
+  const overlay = document.getElementById('scorer-overlay');
+
+  // Ensure correct answer is always highlighted when resolving
+  document.querySelectorAll('.scorer-btn').forEach(b => {
+    b.disabled = true;
+    if (parseInt(b.dataset.id) === correctId) b.classList.add('correct');
+  });
+
+  if (overrideMsg) {
+    setCommentary(overrideMsg, '⚡');
+    showToast(overrideMsg);
+  } else if (correct === null) {
+    setCommentary('No answer in time — no points.', '⏩');
+    showToast('Too slow!');
+  } else if (correct) {
+    state.myScore += 15;
+    updateScoreDisplay();
+    setCommentary('<strong>✅ Correct!</strong> +15 pts — you knew it!', '🎯');
+    showToast('+15 CORRECT!');
+    flashPredResult('+15 CORRECT!', 'correct');
+  } else {
+    state.myScore -= 5;
+    updateScoreDisplay();
+    setCommentary('<strong>❌ Wrong!</strong> −5 pts — tough one.', '💸');
+    showToast('−5 WRONG');
+    flashPredResult('−5 WRONG', 'wrong');
+  }
+
+  setTimeout(() => {
+    if (overlay) overlay.style.display = 'none';
+    onComplete();
+  }, 1800);
+}
+
 function flashPredResult(text, cls) {
   const el = document.getElementById('pred-result-flash');
   if (!el) return;
@@ -5220,6 +5683,35 @@ function buildBeats() {
         : getComment(e.type, p ? p.name : '');
       beat.emoji = isHatTrick ? EVENT_EMOJI.hat_trick : (EVENT_EMOJI[e.type] || '🏟️');
     }
+  }
+
+  // ── Inject scorer questions onto goal/red beats (max 2 per game) ──
+  // Eligible = goal or red card; must have enough players for 3 options
+  // Pick up to 2, spread across game (prefer 1st half + 2nd half if possible)
+  const scorerEligible = beats.filter(b =>
+    !b.fake &&
+    b.events.some(e => e.type === 'goal' || e.type === 'red')
+  );
+  const shuffle3 = arr => [...arr].sort(() => Math.random() - 0.5);
+  const firstHalfS  = scorerEligible.filter(b => b.matchMin < 45);
+  const secondHalfS = scorerEligible.filter(b => b.matchMin >= 45);
+  const scorerPicks = [];
+  const s1 = shuffle3(firstHalfS)[0];
+  const s2 = shuffle3(secondHalfS)[0];
+  if (s1) scorerPicks.push(s1);
+  if (s2) scorerPicks.push(s2);
+  if (scorerPicks.length < 2) {
+    const extra = shuffle3(scorerEligible.filter(b => !scorerPicks.includes(b)))[0];
+    if (extra) scorerPicks.push(extra);
+  }
+  for (const b of scorerPicks) {
+    const e = b.events.find(ev => ev.type === 'goal' || ev.type === 'red');
+    if (!e) continue;
+    const opts = getScorerOptions(e.playerId, e.type);
+    if (!opts) continue; // not enough players
+    b.isScorerQuestion = true;
+    b.scorerOptions    = opts;
+    b.scorerEventType  = e.type;
   }
 
   // ── Inject near-miss fake beats into gaps ───────────────────────
@@ -5540,6 +6032,22 @@ function runBeats(beats, idx) {
     flashes.forEach(({ id, delta }) => flashPlayer(id, delta));
     state.pendingFlashes = [];
 
+    // Scorer question: fires after commentary + 1.2s so player has read the event
+    if (beat.isScorerQuestion) {
+      simTimeout = setTimeout(() => {
+        if (state.mp) {
+          mpShowScorerQuestion(beat, () => runBeats(beats, idx + 1));
+        } else {
+          // Single player: callback gets (isCorrect, playerId), apply score then continue
+          showScorerQuestion(beat, (isCorrect, playerId) => {
+            const { correctId } = beat.scorerOptions;
+            submitScorerAnswer(isCorrect, correctId, () => runBeats(beats, idx + 1));
+          });
+        }
+      }, 1200);
+      return;
+    }
+
     runBeats(beats, idx + 1);
   }, delay);
 }
@@ -5624,16 +6132,69 @@ function chaosLabel(pts, isWinning, isTied) {
   return             { text: 'RUNNING RIOT',  cls: 'winning' };
 }
 
+// ── Event timeline strip ─────────────────────────────────────
+// Called from updateScoreDisplay on every beat.
+// Progressively reveals events as they fire — no spoilers ahead of current minute.
+function updateTimeline(currentMin, eventType) {
+  if (currentMin === undefined) return;
+
+  const isFirstHalf  = currentMin <= 45;
+  const half2El      = document.getElementById('tl-half2');
+
+  // Activate second half track once we cross HT
+  if (!isFirstHalf && half2El) {
+    half2El.classList.add('active');
+  }
+
+  // Update progress bar for current half
+  if (isFirstHalf) {
+    const pct = Math.min(100, (currentMin / 45) * 100);
+    const bar = document.getElementById('tl-progress1');
+    if (bar) bar.style.width = pct + '%';
+  } else {
+    const pct = Math.min(100, ((currentMin - 45) / 45) * 100);
+    const bar = document.getElementById('tl-progress2');
+    if (bar) bar.style.width = pct + '%';
+  }
+
+  // Map event types to emoji
+  const EMOJI = { goal: '⚽', own_goal: '⚽', red: '🟥', yellow: '🟨', sub: '🔄' };
+  const emoji = EMOJI[eventType] || null;
+  if (!emoji) return; // non-visual beat (near-miss, prediction etc.) — no dot
+
+  // Determine if this event is good or bad for the player
+  // "good" = score went up vs opp; "bad" = score went down or opp benefited
+  const delta    = state.myScore - state.oppScore;
+  const prevDelta = state.deltaHistory.length >= 2
+    ? state.deltaHistory[state.deltaHistory.length - 2].delta
+    : 0;
+  const improved = delta > prevDelta;
+  const dotClass = improved ? 'good' : 'bad';
+
+  // Pin event dot at correct horizontal position within the half track
+  const container = isFirstHalf
+    ? document.getElementById('tl-events1')
+    : document.getElementById('tl-events2');
+  if (!container) return;
+
+  const halfMin   = isFirstHalf ? currentMin : (currentMin - 45);
+  const pctPos    = Math.min(96, Math.max(2, (halfMin / 45) * 100)); // clamp so emoji doesn't clip edge
+
+  const ev = document.createElement('div');
+  ev.className = 'sim-timeline-event';
+  ev.style.left = pctPos + '%';
+  ev.innerHTML = `
+    <div class="sim-timeline-emoji">${emoji}</div>
+    <div class="sim-timeline-dot ${dotClass}"></div>
+  `;
+  container.appendChild(ev);
+}
+
 function updateScoreDisplay(matchMin, eventType) {
-  // Record delta for graph
+  // Record delta + update timeline
   if (matchMin !== undefined) {
     recordDelta(matchMin, eventType || null);
-  } else {
-    // Called without min — just redraw graph at current state
-    const lastMin = state.deltaHistory.length
-      ? state.deltaHistory[state.deltaHistory.length - 1].min
-      : 0;
-    drawLiveGraph(lastMin);
+    updateTimeline(matchMin, eventType || null);
   }
 
   const my  = state.myScore;
@@ -5812,7 +6373,7 @@ function showResults() {
       const myScore  = state.mp.role === 'A' ? d.scoreA : d.scoreB;
       const oppScore = state.mp.role === 'A' ? d.scoreB : d.scoreA;
       if (myScore !== null && oppScore !== null) {
-        window._fb.off(state.mp.sessionRef);
+        mpCleanup();
         state.oppScore = oppScore;
         _renderResults();
       }
@@ -5986,112 +6547,194 @@ function _renderResults() {
       </div>
     `;
 
-    // ── Good, Bad & Ugly tiles ────────────────────────────────────
-    // Sort by pts: highest = "ugly" (disaster = good for us), lowest = "good" (scored goals = bad), middle = "bad"
-    const sorted = [...withPts].sort((a, b) => b.pts - a.pts);
-    const ugly = sorted[0];                              // most pts — biggest disaster
-    const good = sorted[sorted.length - 1];              // lowest pts — too good, unhelpful
-    const midIdx = Math.floor(sorted.length / 2);
-    const bad  = sorted[midIdx];                         // middling — neither use nor ornament
-
-    function playerTeamLabel(item) {
-      return `${item.player.name} · ${item.player.teamName}`;
-    }
-    function ownerLabel(item) {
-      return item.mine ? `in <em>your</em> squad` : `in <em>your opponent's</em> squad`;
-    }
+    // ══════════════════════════════════════════════════════════════
+    // MATCH REPORT BOXES — your team only, rotating label sets
+    // ══════════════════════════════════════════════════════════════
 
     function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
 
-    function uglyBlurb(item) {
-      const evts = item.events;
-      const n = item.player.name;
-      const surname = n.split(' ').pop();
-      const bits = [];
-      if (evts.includes('red'))                                   bits.push(pick(['sent off','shown a straight red','given his marching orders']));
-      if (evts.includes('own_goal'))                              bits.push(pick(['put one in his own net','turned it into his own goal','gifted them one']));
-      if (evts.filter(e=>e==='yellow').length >= 2)               bits.push(pick(['booked twice','picked up a second yellow','got himself sent off via two bookings']));
-      else if (evts.includes('yellow'))                           bits.push(pick(['booked','carded','picked up a yellow']));
-      if (evts.includes('sub') && !evts.includes('red'))          bits.push(pick(['hauled off early','hooked before the hour','dragged off']));
-      if (evts.includes('missed_pen'))                            bits.push(pick(['missed a pen','ballooned it over from the spot','sent the keeper the wrong way then hit the post']));
+    // Only your drafted players, sorted by pts
+    const myOnly   = withPts.filter(item => item.mine);
+    const mySorted = [...myOnly].sort((a, b) => b.pts - a.pts);
+    const topItem  = mySorted[0];
+    const midItem  = mySorted[Math.floor(mySorted.length / 2)];
+    const botItem  = mySorted[mySorted.length - 1];
 
-      const chaos = bits.length > 0 ? bits.join(', ') : pick(['had a complete nightmare','was an absolute liability all afternoon','contributed chaos at every turn']);
-      const sign = pick([
-        `what an absolute shambles 🤌`,
-        `the gift that keeps on giving 🤌`,
-        `utterly magnificent 🤌`,
-        `a complete and utter disaster 🤌`,
-      ]);
-      const closer = pick([
-        `Finishing on <strong>+${item.pts}</strong>, ${ownerLabel(item)}.`,
-        `<strong>+${item.pts}</strong> chaos points, ${ownerLabel(item)}. Beautiful.`,
-        `${ownerLabel(item).charAt(0).toUpperCase() + ownerLabel(item).slice(1)}. <strong>+${item.pts}</strong> on the board.`,
-      ]);
-      return `<strong>${n}</strong> ${chaos} — ${sign}. ${closer}`;
+    // ── Label sets — one chosen at random per game ──
+    // [chaosLabel, mehLabel, competentLabel]
+    const LABEL_SETS = [
+      ['🔥 CHAOS KING',          '😐 JUST THERE',           '😤 TOO GOOD'],
+      ['💀 DISASTER',            '📋 PASSENGER',             '🙄 EMBARRASSINGLY GOOD'],
+      ['🌪️ BEAUTIFUL DISASTER',  '🥱 AVERAGE JOE',           '🫠 SICKENINGLY COMPETENT'],
+      ['😈 GLORIOUSLY TERRIBLE', '🤷 MEH',                   '😒 ANNOYINGLY DECENT'],
+      ['⚡ CERTIFIED MENACE',    '👻 GHOST',                  '💔 ABSOLUTE BETRAYAL'],
+      ['🏆 HALL OF FAME',        '🪑 BENCH WARMER ENERGY',   '😡 UNFORGIVABLE'],
+    ];
+    const labelSet = LABEL_SETS[Math.floor(Math.random() * LABEL_SETS.length)];
+
+    // Tier assignment — flat game means everyone drifts meh
+    const ptRange = (topItem?.pts || 0) - (botItem?.pts || 0);
+    function getTier(item) {
+      if (ptRange < 6) return 'meh';
+      if (item === topItem && item.pts > 4)  return 'chaos';
+      if (item === botItem && item.pts < 2)  return 'competent';
+      return 'meh';
+    }
+    function getLabelForTier(tier) {
+      if (tier === 'chaos')     return labelSet[0];
+      if (tier === 'competent') return labelSet[2];
+      return labelSet[1];
     }
 
-    function goodBlurb(item) {
-      const evts = item.events;
-      const n = item.player.name;
-      const goalCount   = evts.filter(e => e === 'goal').length;
-      const assistCount = evts.filter(e => e === 'assist').length;
-      const bits = [];
-      if (goalCount >= 3)       bits.push(pick([`banging in a hat-trick 🥱`,`completing a hat-trick like it's nothing 🥱`,`helping himself to three goals 🥱`]));
-      else if (goalCount === 2) bits.push(pick([`bagging a brace — typical 🥱`,`scoring twice, of all things 🥱`,`netting two — unhelpful 🥱`]));
-      else if (goalCount === 1) bits.push(pick([`scoring a goal, obviously 🙄`,`chipping in with a goal — cheers for that 🙄`,`finding the net — not what we needed 🙄`]));
-      if (assistCount >= 2)     bits.push(pick([`chipping in with ${assistCount} assists`,`laying on ${assistCount} goals`,`running the game from midfield`]));
-      else if (assistCount === 1) bits.push(pick([`laying one on a plate`,`setting one up — unhelpful`,`adding an assist for good measure`]));
-      const desc = bits.length > 0 ? bits.join(' and ') : pick([`kept themselves far too busy out there`,`decided to actually try`,`turned up and made an effort — rude`]);
-      const closer = pick([
-        `Only managed <strong>${item.pts}</strong> points, ${ownerLabel(item)}. Dead weight.`,
-        `<strong>${item.pts}</strong> points, ${ownerLabel(item)}. An utter waste of a pick.`,
-        `${ownerLabel(item).charAt(0).toUpperCase() + ownerLabel(item).slice(1)} with <strong>${item.pts}</strong> measly points. Useless.`,
+    // ── CHAOS BLURBS ──
+    function chaosBlurb(item) {
+      const evts      = item.events || [];
+      const n         = item.player.name;
+      const pts       = item.pts;
+      const redCard   = evts.includes('red');
+      const ownGoal   = evts.includes('own_goal');
+      const dblYellow = evts.filter(e => e === 'yellow').length >= 2;
+      const yellow    = evts.includes('yellow');
+      const hookedOff = evts.includes('sub') && !redCard;
+      const missedPen = evts.includes('missed_pen');
+
+      if (redCard && ownGoal) return pick([
+        `<strong>${n}</strong> managed to score an own goal AND get sent off in the same game. In the same <em>half</em>. You could not have scripted this. <strong>+${pts} pts</strong> — an all-time performance.`,
+        `<strong>${n}</strong> put one in his own net, collected a red card, and left the pitch early. A complete and utter masterpiece. <strong>+${pts} pts</strong>. Frame it.`,
       ]);
-      return `<strong>${n}</strong> — ${desc}. ${closer}`;
+      if (redCard) return pick([
+        `<strong>${n}</strong> was shown a straight red and given his marching orders before most people had finished their half-time tea. Commitment to the cause. <strong>+${pts} pts</strong>.`,
+        `<strong>${n}</strong> lasted ${pick(['58','44','51','67'])} minutes before deciding the laws of football no longer applied to him personally. Off he went. Brilliant. <strong>+${pts} pts</strong>.`,
+        `<strong>${n}</strong> went in two-footed, appealed, got booked, appealed again, got sent off, and trudged away looking furious about the whole thing. <strong>+${pts} pts</strong>. Hall of fame.`,
+        `Two yellows. Same half. <strong>${n}</strong> saw the first one coming and did it anyway. Bold. Stupid. Beautiful. <strong>+${pts} pts</strong>.`,
+        `<strong>${n}</strong> collected a straight red for something the referee described as reckless. We'd describe it as generous. <strong>+${pts} pts</strong>.`,
+      ]);
+      if (ownGoal) return pick([
+        `<strong>${n}</strong> assessed all his options, considered the situation carefully, and put the ball into his own net. Technically an assist for the other side. We're counting it. <strong>+${pts} pts</strong>.`,
+        `<strong>${n}</strong> took one touch and scored — tragically, for the wrong team. A flap, a fumble, the ball rolled over the line apologetically. Poetry. <strong>+${pts} pts</strong>.`,
+        `<strong>${n}</strong> did not mean to score. He scored anyway. This game rewards accidental genius and we are all richer for it. <strong>+${pts} pts</strong>.`,
+        `The keeper came for a cross he had absolutely no business attempting, missed it by a yard, and the rest followed naturally. <strong>${n}</strong>. Magnificent. <strong>+${pts} pts</strong>.`,
+        `<strong>${n}</strong> redirected it perfectly into his own net. Technically difficult. Entirely unwanted. Absolutely beautiful. <strong>+${pts} pts</strong>.`,
+      ]);
+      if (dblYellow) return pick([
+        `<strong>${n}</strong> picked up two yellows in nine minutes. The first was debatable. The second was a lifestyle choice. <strong>+${pts} pts</strong>.`,
+        `Booked. Booked again. Off. <strong>${n}</strong> had a complete shocker and we are here for every second of it. <strong>+${pts} pts</strong>.`,
+        `<strong>${n}</strong> somehow convinced himself a second yellow was a good idea. It was not a good idea. It was a great idea. <strong>+${pts} pts</strong>.`,
+      ]);
+      if (missedPen) return pick([
+        `<strong>${n}</strong> stepped up from the spot, sent the keeper the wrong way, and hit the post. Stood there. Walked back. An entire story told in twelve yards. <strong>+${pts} pts</strong>.`,
+        `<strong>${n}</strong> ballooned it over from twelve yards. Over the bar. From the penalty spot. An art form. <strong>+${pts} pts</strong>.`,
+        `The penalty was there for the taking. <strong>${n}</strong> chose not to take it. He chose chaos instead. Correct decision. <strong>+${pts} pts</strong>.`,
+      ]);
+      if (hookedOff) return pick([
+        `<strong>${n}</strong> was hauled off before the hour mark and the manager looked relieved about it. So were we. <strong>+${pts} pts</strong>.`,
+        `<strong>${n}</strong> lasted ${pick(['52','61','48','55','43'])} minutes before the dugout had seen enough. The feeling was mutual. <strong>+${pts} pts</strong>.`,
+        `Subbed off at half time. <strong>${n}</strong> did enough damage in 45 minutes that the manager clearly felt the rest of the team needed a rest from him. <strong>+${pts} pts</strong>.`,
+      ]);
+      if (yellow) return pick([
+        `<strong>${n}</strong> booked himself into the referee's notebook with a challenge that fooled absolutely nobody. <strong>+${pts} pts</strong>.`,
+        `<strong>${n}</strong> went in a bit there. The referee had several words. The card came out. Entirely predictable. Entirely welcome. <strong>+${pts} pts</strong>.`,
+        `A booking for <strong>${n}</strong> — something about unsporting conduct. Sporting conduct was never really the goal here. <strong>+${pts} pts</strong>.`,
+      ]);
+      return pick([
+        `<strong>${n}</strong> spent 90 minutes being an absolute liability in the most committed, professional way possible. You drafted him for this moment. He delivered. <strong>+${pts} pts</strong>.`,
+        `<strong>${n}</strong> created more problems for his own side than the opposition managed all afternoon. A rare gift. An absolute treasure. <strong>+${pts} pts</strong>.`,
+        `<strong>${n}</strong> had a complete and utter nightmare and we mean that as the highest possible compliment. <strong>+${pts} pts</strong>.`,
+        `<strong>${n}</strong> contributed chaos at every turn, in every phase of the game, with admirable consistency. The total package. <strong>+${pts} pts</strong>.`,
+      ]);
     }
 
-    function badBlurb(item) {
-      const evts = item.events;
-      const n = item.player.name;
-      if (evts.length === 0) {
-        return `<strong>${n}</strong> ` + pick([
-          `wandered around like a lost tourist, contributing precisely nothing. <strong>${item.pts >= 0 ? '+' : ''}${item.pts}</strong> points, ${ownerLabel(item)}. Baffling.`,
-          `was essentially invisible for 90 minutes. <strong>${item.pts >= 0 ? '+' : ''}${item.pts}</strong> points, ${ownerLabel(item)}. Remarkable.`,
-          `somehow managed to do absolutely nothing of note. <strong>${item.pts >= 0 ? '+' : ''}${item.pts}</strong> points, ${ownerLabel(item)}. At least they tried.`,
-          `ghosted through the match without leaving a trace. <strong>${item.pts >= 0 ? '+' : ''}${item.pts}</strong> points, ${ownerLabel(item)}. Fine. Whatever.`,
-        ]);
-      }
-      const bits = [];
-      if (evts.includes('yellow'))  bits.push(pick(['a booking','a yellow card','getting into the referee\'s notebook']));
-      if (evts.includes('sub'))     bits.push(pick(['an early exit','being hauled off','getting the hook']));
-      if (evts.includes('goal'))    bits.push(pick(['a goal — annoying','finding the net — not ideal','scoring, which helps nobody']));
-      if (evts.includes('assist'))  bits.push(pick(['an assist — worse','setting one up, brilliantly unhelpfully','laying one on']));
-      const desc = bits.length > 0 ? bits.join(', ') : pick(['a forgettable afternoon','a deeply average shift','a performance best forgotten']);
-      const closer = pick([
-        `Sitting on <strong>${item.pts >= 0 ? '+' : ''}${item.pts}</strong>, ${ownerLabel(item)}. Could've been worse. Could've been better.`,
-        `<strong>${item.pts >= 0 ? '+' : ''}${item.pts}</strong> points, ${ownerLabel(item)}. Neither one thing nor the other.`,
-        `${ownerLabel(item).charAt(0).toUpperCase() + ownerLabel(item).slice(1)}. <strong>${item.pts >= 0 ? '+' : ''}${item.pts}</strong> points. Make of that what you will.`,
+    // ── MEH BLURBS ──
+    function mehBlurb(item) {
+      const evts   = item.events || [];
+      const n      = item.player.name;
+      const pts    = item.pts;
+      const pStr   = `<strong>${pts >= 0 ? '+' : ''}${pts} pts</strong>`;
+
+      if (evts.length === 0) return pick([
+        `<strong>${n}</strong> completed his passes. Kept his shape. Went home. A man at complete peace with his own mediocrity. ${pStr}.`,
+        `<strong>${n}</strong> was technically on the pitch for 90 minutes. Spiritually, he checked out around the hour mark. ${pStr}.`,
+        `<strong>${n}</strong> touched it fourteen times. None of those touches will live long in the memory. This entry is the most attention he'll ever receive. ${pStr}.`,
+        `<strong>${n}</strong> jogged, passed sideways, jogged back. Repeat. For ninety minutes. The circle of life. ${pStr}.`,
+        `<strong>${n}</strong> positioned himself correctly on every set piece. Nothing came of any of them. A career in miniature. ${pStr}.`,
+        `<strong>${n}</strong> was available for the ball at all times. The ball was not particularly interested. A mutual understanding. ${pStr}.`,
+        `The match happened around <strong>${n}</strong> rather than involving him. Like a rock in a stream. ${pStr}.`,
+        `<strong>${n}</strong> existed. Professionally. For ninety minutes. Collected his wages and went home without incident. ${pStr}.`,
+        `<strong>${n}</strong> made one tackle. Won it. That's the whole story. That's genuinely everything. ${pStr}.`,
+        `The cameras barely found <strong>${n}</strong> all afternoon. The editors knew something we didn't. ${pStr}.`,
+        `<strong>${n}</strong> was neither a help nor a hindrance. A human traffic cone. A man-shaped placeholder. ${pStr}.`,
+        `Ninety minutes. One touch map that looks like someone dropped their phone on the pitch. <strong>${n}</strong>. ${pStr}.`,
       ]);
-      return `<strong>${n}</strong> gave us ${desc}. ${closer}`;
+      const bits = [];
+      if (evts.includes('yellow')) bits.push(pick(['a booking that surprised nobody','a yellow card, eventually','getting into the referee\'s notebook briefly']));
+      if (evts.includes('sub'))    bits.push(pick(['coming off on the hour','getting the hook — presumably for tactical reasons','being replaced, to little fanfare']));
+      if (evts.includes('goal'))   bits.push(pick(['a goal — noted, filed, forgotten','finding the net once, which is once more than expected']));
+      if (evts.includes('assist')) bits.push(pick(['an assist of sorts','laying one on, technically']));
+      const desc = bits.join(' and ') || 'a deeply average afternoon';
+      return pick([
+        `<strong>${n}</strong> gave us ${desc}. ${pStr}. Neither one thing nor the other.`,
+        `<strong>${n}</strong> — ${desc}. ${pStr}. Could have been worse. Wasn't much better.`,
+        `${desc.charAt(0).toUpperCase() + desc.slice(1)} from <strong>${n}</strong>. ${pStr}. Make of that what you will.`,
+      ]);
     }
 
-    const gbuHtml = `
-      <div class="gbu-grid">
-        <div class="gbu-tile gbu-good">
-          <div class="gbu-label">😴 The Good</div>
-          <div class="gbu-text">${goodBlurb(good)}</div>
-        </div>
-        <div class="gbu-tile gbu-bad">
-          <div class="gbu-label">😬 The Bad</div>
-          <div class="gbu-text">${badBlurb(bad)}</div>
-        </div>
-        <div class="gbu-tile gbu-ugly">
-          <div class="gbu-label">🔥 The Ugly</div>
-          <div class="gbu-text">${uglyBlurb(ugly)}</div>
-        </div>
-      </div>
-    `;
+    // ── COMPETENT BLURBS ──
+    function competentBlurb(item) {
+      const evts      = item.events || [];
+      const n         = item.player.name;
+      const pts       = item.pts;
+      const goalCount = evts.filter(e => e === 'goal').length;
+      const astCount  = evts.filter(e => e === 'assist').length;
+      const pStr      = `<strong>${pts >= 0 ? '+' : ''}${pts} pts</strong>`;
 
+      if (goalCount >= 3) return pick([
+        `<strong>${n}</strong> scored a hat-trick. A hat-trick. You drafted him to be a liability and he scored a hat-trick. You are not okay. ${pStr}.`,
+        `Three goals. <strong>${n}</strong>. In your squad. Helping the wrong cause with extraordinary efficiency and zero self-awareness. ${pStr}. Unforgivable.`,
+      ]);
+      if (goalCount === 2) return pick([
+        `<strong>${n}</strong> bagged a brace. Like someone who actually wanted to be useful. The absolute nerve. ${pStr}.`,
+        `Two goals from <strong>${n}</strong>. Two. You needed him distracted and ineffective. He had completely other ideas. ${pStr}.`,
+      ]);
+      if (goalCount === 1 && astCount >= 1) return pick([
+        `<strong>${n}</strong> scored and assisted. Contributing at both ends of the attacking phase like some kind of professional footballer. Disgusting. ${pStr}.`,
+        `A goal and an assist from <strong>${n}</strong>, who apparently did not receive the brief. ${pStr}. Composed. Useful. Completely wrong for this squad.`,
+      ]);
+      if (goalCount === 1) return pick([
+        `<strong>${n}</strong> scored a goal. Obviously. Because of course he did. You drafted him specifically to fail and he found the net. ${pStr}. Cheers for that.`,
+        `<strong>${n}</strong> chipped in with a goal like it was nothing. Like it was the most natural thing in the world. ${pStr}. It was not welcome.`,
+        `A goal from <strong>${n}</strong>. Cool. Great. Fantastic. Not what we needed at all but here we are. ${pStr}.`,
+      ]);
+      if (astCount >= 2) return pick([
+        `<strong>${n}</strong> set up ${astCount} goals. ${astCount}. Running the game, laying things on, making himself useful in ways that actively hurt you. ${pStr}.`,
+        `Two assists from <strong>${n}</strong>, who spent the afternoon doing exactly what you did not want him to do. ${pStr}. Sickeningly competent.`,
+      ]);
+      if (astCount === 1) return pick([
+        `<strong>${n}</strong> laid one on a plate and that was more than enough of a contribution. An assist. From your squad. ${pStr}.`,
+        `<strong>${n}</strong> set one up with a pass that the commentators called intelligent. Intelligent. In a Worst Eleven squad. ${pStr}.`,
+      ]);
+      return pick([
+        `<strong>${n}</strong> kept his position, won his headers, and completed passes with alarming frequency. You needed a disaster. You got a professional. ${pStr}.`,
+        `There was nothing wrong with <strong>${n}</strong>'s performance. That is the problem. That is the whole, entire problem. ${pStr}.`,
+        `<strong>${n}</strong> played the full 90, made no mistakes, and looked like he actually wanted to be there. Completely unusable. ${pStr}.`,
+        `Professional. Composed. Reliable. Three words that should never appear in a Worst Eleven report. And yet. <strong>${n}</strong>. ${pStr}.`,
+        `<strong>${n}</strong> dominated his position so thoroughly the opposition gave up trying to go through him. You did not want that. ${pStr}.`,
+        `You picked <strong>${n}</strong> specifically for his reputation for trouble. He appeared to have read the scouting report and done the opposite. ${pStr}.`,
+        `<strong>${n}</strong> read the game beautifully, stepped in at exactly the right moments, and was quietly excellent for the full 90. You are furious. He is oblivious. ${pStr}.`,
+        `<strong>${n}</strong> made his opposite number look ordinary. You did not want him making anyone look ordinary. You wanted him looking ordinary. ${pStr}.`,
+      ]);
+    }
+
+    // ── Assemble tiles ──
+    function buildTile(item) {
+      if (!item) return '';
+      const tier      = getTier(item);
+      const label     = getLabelForTier(tier);
+      const blurb     = tier === 'chaos' ? chaosBlurb(item) : tier === 'meh' ? mehBlurb(item) : competentBlurb(item);
+      const tileClass = tier === 'chaos' ? 'gbu-ugly' : tier === 'competent' ? 'gbu-good' : 'gbu-bad';
+      return `<div class="gbu-tile ${tileClass}"><div class="gbu-label">${label}</div><div class="gbu-text">${blurb}</div></div>`;
+    }
+
+    const gbuHtml = `<div class="gbu-grid">${buildTile(topItem)}${buildTile(midItem)}${buildTile(botItem)}</div>`;
     reportEl.innerHTML = statsHtml + gbuHtml;
   }
 
@@ -6141,7 +6784,10 @@ function _renderResults() {
   }
 
   showScreen('results');
-  requestAnimationFrame(() => drawResultGraph());
+  // Double rAF + small timeout ensures the canvas is laid out before we draw
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    setTimeout(() => drawResultGraph(), 50);
+  }));
 }
 
 function shareResult() {
@@ -6351,7 +6997,7 @@ function drawResultGraph() {
 
   // ── Canvas setup ──
   const wrap = canvas.parentElement;
-  const wrapW = (wrap.getBoundingClientRect().width || 320);
+  const wrapW = wrap.getBoundingClientRect().width || wrap.offsetWidth || 320;
   canvas.style.width  = '100%';
   const DPR = window.devicePixelRatio || 1;
   const w = wrapW;
@@ -6532,14 +7178,17 @@ function renderHtLists() {
   myList.innerHTML  = '';
   oppList.innerHTML = '';
 
-  // My team: worst performers first (easiest to drop at top)
-  const mySorted = [...state.myTeam].sort((a, b) =>
-    (state.playerData[a]?.score || 0) - (state.playerData[b]?.score || 0)
-  );
-  // Opp team: best performers first (best steal target at top)
-  const oppSorted = [...state.oppTeam].sort((a, b) =>
-    (state.playerData[b]?.score || 0) - (state.playerData[a]?.score || 0)
-  );
+  // My team: worst performers first, top 3 shown
+  const mySorted = [...state.myTeam]
+    .filter(id => { const p = getPlayer(id); return p && p.pos !== 'GK'; })
+    .sort((a, b) => (state.playerData[a]?.score || 0) - (state.playerData[b]?.score || 0))
+    .slice(0, 3);
+
+  // Opp team: best performers first, top 3 shown
+  const oppSorted = [...state.oppTeam]
+    .filter(id => { const p = getPlayer(id); return p && p.pos !== 'GK'; })
+    .sort((a, b) => (state.playerData[b]?.score || 0) - (state.playerData[a]?.score || 0))
+    .slice(0, 3);
 
   mySorted.forEach(id => {
     const p = getPlayer(id);
@@ -6552,6 +7201,20 @@ function renderHtLists() {
     myList.appendChild(card);
   });
 
+  // Dice/random swap option at bottom of my list
+  const diceCard = document.createElement('div');
+  diceCard.className = 'ht-swap-card' + (state.htSwapOut === 'random' ? ' selected-out' : '');
+  diceCard.style.background = state.htSwapOut === 'random' ? '#2a2500' : '';
+  diceCard.innerHTML = `<span class="sc-pos">🎲</span><span class="sc-name">Random</span><span class="sc-pts" style="color:#f5a623">+5</span>`;
+  diceCard.onclick = () => {
+    // Pick random from full my-team (not just the curated 3)
+    const outfield = state.myTeam.filter(id => { const p = getPlayer(id); return p && p.pos !== 'GK'; });
+    const picked = outfield[Math.floor(Math.random() * outfield.length)];
+    state.htSwapRandomOut = picked;
+    selectHtOut('random');
+  };
+  myList.appendChild(diceCard);
+
   oppSorted.forEach(id => {
     const p = getPlayer(id);
     if (!p) return;
@@ -6562,6 +7225,18 @@ function renderHtLists() {
     card.onclick = () => selectHtIn(id);
     oppList.appendChild(card);
   });
+
+  // Dice/random steal option
+  const diceIn = document.createElement('div');
+  diceIn.className = 'ht-swap-card' + (state.htSwapIn === 'random' ? ' selected-in' : '');
+  diceIn.innerHTML = `<span class="sc-pos">🎲</span><span class="sc-name">Random</span><span class="sc-pts" style="color:#f5a623">+5</span>`;
+  diceIn.onclick = () => {
+    const outfield = state.oppTeam.filter(id => { const p = getPlayer(id); return p && p.pos !== 'GK'; });
+    const picked = outfield[Math.floor(Math.random() * outfield.length)];
+    state.htSwapRandomIn = picked;
+    selectHtIn('random');
+  };
+  oppList.appendChild(diceIn);
 }
 
 function selectHtOut(id) {
@@ -6583,10 +7258,14 @@ function updateHtConfirmBtn() {
   const status = document.getElementById('ht-swap-status');
   if (!btn) return;
   if (state.htSwapOut && state.htSwapIn) {
-    const out = getPlayer(state.htSwapOut);
-    const inn = getPlayer(state.htSwapIn);
+    const outId = state.htSwapOut === 'random' ? state.htSwapRandomOut : state.htSwapOut;
+    const inId  = state.htSwapIn  === 'random' ? state.htSwapRandomIn  : state.htSwapIn;
+    const out = outId ? getPlayer(outId) : null;
+    const inn = inId  ? getPlayer(inId)  : null;
+    const outName = state.htSwapOut === 'random' ? '🎲 Random' : (out?.name.split(' ').pop() || '?');
+    const inName  = state.htSwapIn  === 'random' ? '🎲 Random' : (inn?.name.split(' ').pop() || '?');
     btn.style.display = '';
-    if (status) status.textContent = `${out?.name.split(' ').pop()} → ${inn?.name.split(' ').pop()}`;
+    if (status) status.textContent = `${outName} → ${inName}`;
   } else {
     btn.style.display = 'none';
     if (status) status.textContent = '';
@@ -6598,10 +7277,23 @@ function confirmHtSwap() {
   clearInterval(state.htTimerInterval);
   state.htSwapDone = true;
 
+  // Resolve 'random' sentinel to actual player ids
+  const outId = state.htSwapOut === 'random' ? state.htSwapRandomOut : state.htSwapOut;
+  const inId  = state.htSwapIn  === 'random' ? state.htSwapRandomIn  : state.htSwapIn;
+  if (!outId || !inId) { finishHtSwap(); return; }
+
+  // +5 bonus if either dice was used
+  const usedDice = state.htSwapOut === 'random' || state.htSwapIn === 'random';
+  if (usedDice) {
+    state.myScore += 5;
+    updateScoreDisplay();
+    showToast('🎲 +5 dice bonus!');
+  }
+
   if (state.mp) {
-    mpWriteHtSwap(state.htSwapOut, state.htSwapIn);
+    mpWriteHtSwap(outId, inId);
   } else {
-    applyHtSwap(state.htSwapOut, state.htSwapIn, true);
+    applyHtSwap(outId, inId, true);
   }
 }
 
@@ -6675,7 +7367,7 @@ function mpListenForHtSwap() {
   window._fb.onValue(window._fb.ref('sessions/' + mp.code + '/' + oppField), (snap) => {
     const d = snap.val();
     if (!d) return;
-    window._fb.off(window._fb.ref('sessions/' + mp.code + '/' + oppField));
+    mpCleanup();
     // Opp swap: their outId comes to us (we don't apply it — it's their team)
     // But we need to know so we can lock that player on our screen
     const lockedMsg = document.getElementById('ht-locked-msg');
@@ -6730,10 +7422,7 @@ function openLobby() {
 }
 
 function leaveLobby() {
-  // Detach any Firebase listeners and clean up
-  if (state.mp && state.mp.sessionRef) {
-    window._fb.off(state.mp.sessionRef);
-  }
+  mpCleanup();
   state.mp = null;
   showScreen('home');
 }
@@ -6788,11 +7477,15 @@ async function createGame() {
   document.getElementById('lobby-name-a').textContent = profile.emoji + ' ' + profile.name;
   showLobbyPhase('waiting');
 
-  // Listen for Player B joining
-  window._fb.onValue(state.mp.sessionRef, (snap) => {
+  // Single listener handles both: B joining UI update + auto-start
+  let bJoined = false;
+  window._fb.onValue(state.mp.sessionRef, async (snap) => {
     const data = snap.val();
     if (!data) return;
-    if (data.playerB) {
+
+    // Update UI when B appears
+    if (data.playerB && !bJoined) {
+      bJoined = true;
       const nameEl = document.getElementById('lobby-name-b');
       if (nameEl) nameEl.textContent = data.playerB.emoji + ' ' + data.playerB.name;
       const dot = document.querySelector('#lobby-phase-waiting .lobby-player-row:last-child .lobby-player-dot');
@@ -6802,18 +7495,14 @@ async function createGame() {
         const t = document.createElement('span'); t.className = 'lobby-ready-tag'; t.textContent = 'Ready';
         tag.appendChild(t);
       }
+      // Auto-start after brief pause for UI
+      await new Promise(r => setTimeout(r, 1200));
+      await window._fb.update(window._fb.ref('sessions/' + code), { status: 'drafting' });
     }
-    if (data.status === 'drafting') {
-      mpStartDraft(data);
-    }
-  });
 
-  // Auto-start when B joins — give it 1s for UI to update
-  window._fb.onValue(window._fb.ref('sessions/' + code + '/playerB'), async (snap) => {
-    if (!snap.val()) return;
-    await new Promise(r => setTimeout(r, 1200));
-    // Transition to drafting
-    await window._fb.update(window._fb.ref('sessions/' + code), { status: 'drafting' });
+    if (data.status === 'drafting') {
+      mpStartDraft(data); // internally calls mpCleanup() first
+    }
   });
 }
 
@@ -6871,8 +7560,8 @@ function mpStartDraft(sessionData) {
   // Guard against double-fire from the Firebase listener
   if (state.mp && state.mp._draftStarted) return;
 
-  // Detach lobby listener so it doesn't fire again
-  if (state.mp && state.mp.sessionRef) window._fb.off(state.mp.sessionRef);
+  // Kill ALL lobby listeners before entering draft phase
+  mpCleanup();
 
   const mp = state.mp;
   if (!mp) return;
@@ -6925,7 +7614,7 @@ function mpStartDraft(sessionData) {
         window._fb.onValue(mp.sessionRef, function readStart(snap) {
           const d = snap.val();
           if (d && d.coinFlipStart) {
-            window._fb.off(mp.sessionRef);
+            mpCleanup(); // detach this one-shot listener
             resolve(d.coinFlipStart);
           }
         });
@@ -6983,7 +7672,7 @@ function mpStartDraft(sessionData) {
 
         // When result arrives, show it then go to draft
         if (d.gkWinner) {
-          window._fb.off(mp.sessionRef);
+          mpCleanup();
           const iWinGK = (mp.role === d.gkWinner);
           const coin = document.getElementById('coin');
           const status = document.getElementById('coin-status');
@@ -7243,54 +7932,151 @@ function mpDraftComplete() {
   setTimeout(() => showCaptainScreen(), 600);
 }
 
-// ── Captain selection + simulation sync ──────────────────────
-// Called by confirmCaptain(). Writes our captain, reads opponent's captain,
-// signals ready, waits for shared sim timestamp, then fires callback.
-async function mpSetCaptain(playerId) {
+// ── Captain + sim sync — single merged function ──────────────
+// Writes captain, signals ready, waits for both players + shared timestamp.
+// Uses ONE listener so nothing can interfere with or kill another.
+async function mpConfirmCaptainAndSim(captainId) {
   const mp = state.mp;
-  if (!mp) return;
-  const myField  = mp.role === 'A' ? 'captainA' : 'captainB';
-  const oppField = mp.role === 'A' ? 'captainB' : 'captainA';
-  await window._fb.update(mp.sessionRef, { [myField]: playerId });
+  if (!mp) { startSimulation(); return; }
+
+  const myCapField  = mp.role === 'A' ? 'captainA'  : 'captainB';
+  const oppCapField = mp.role === 'A' ? 'captainB'  : 'captainA';
+  const myReadyField= mp.role === 'A' ? 'simReadyA' : 'simReadyB';
+
+  // Write our captain + ready flag atomically
+  await window._fb.update(mp.sessionRef, {
+    [myCapField]:   captainId,
+    [myReadyField]: true,
+  });
+
+  // ONE listener that handles everything remaining
+  let simFired = false;
+  window._fb.onValue(mp.sessionRef, async (snap) => {
+    const d = snap.val();
+    if (!d || simFired) return;
+
+    // Grab opponent captain whenever it arrives
+    if (d[oppCapField]) state.oppCaptain = d[oppCapField];
+
+    // Player A: once both ready, write the shared start timestamp
+    if (mp.role === 'A' && d.simReadyA && d.simReadyB && !d.simStartTimestamp) {
+      await window._fb.update(mp.sessionRef, {
+        simStartTimestamp: Date.now(),
+        status: 'simulating',
+      });
+      return; // listener will fire again with the timestamp
+    }
+
+    // Both players: once timestamp exists and we have opp captain, start sim
+    if (d.simStartTimestamp && state.oppCaptain) {
+      simFired = true;
+      mpCleanup();
+      const delay = Math.max(0, d.simStartTimestamp + 500 - Date.now());
+      setTimeout(() => startSimulation(), delay);
+    }
+  });
 }
 
-async function mpReadyToSim() {
-  const mp = state.mp;
-  if (!mp) return;
-  const readyField = mp.role === 'A' ? 'simReadyA' : 'simReadyB';
-  await window._fb.update(mp.sessionRef, { [readyField]: true });
+// Legacy stubs kept so nothing else breaks if called
+function mpSetCaptain(id)          { /* merged into mpConfirmCaptainAndSim */ }
+function mpReadyToSim()            { /* merged into mpConfirmCaptainAndSim */ }
+function mpWaitForSimStart(cb)     { /* merged into mpConfirmCaptainAndSim */ }
 
-  // Player A is responsible for writing the shared start timestamp once both are ready
-  if (mp.role === 'A') {
-    window._fb.onValue(mp.sessionRef, async (snap) => {
-      const d = snap.val();
-      if (d && d.simReadyA && d.simReadyB && !d.simStartTimestamp) {
-        window._fb.off(mp.sessionRef);
-        await window._fb.update(mp.sessionRef, {
-          simStartTimestamp: Date.now(),
-          status: 'simulating',
-        });
+// ── Multiplayer scorer question ───────────────────────────────
+// Both clients see the question (sim is time-synced).
+// Each player writes their answer to Firebase with a local timestamp.
+// First answer wins; tie window = 300ms; both get their result regardless.
+function mpShowScorerQuestion(beat, onComplete) {
+  const mp = state.mp;
+  if (!mp) { showScorerQuestion(beat, onComplete); return; }
+
+  const questionId  = 'sq_' + beat.matchMin + '_' + (beat.scorerEventType || 'g');
+  const myField     = mp.role === 'A' ? 'sqAnswerA' : 'sqAnswerB';
+  const oppField    = mp.role === 'A' ? 'sqAnswerB' : 'sqAnswerA';
+  const questionRef = window._fb.ref('sessions/' + mp.code + '/scorerQ/' + questionId);
+
+  // Clear any previous answer for this question
+  window._fb.update(questionRef, { [myField]: null });
+
+  let myAnsweredAt  = null;
+  let myCorrect     = null;
+  let resolved      = false;
+
+  function resolveQuestion(myAns, oppAns) {
+    if (resolved) return;
+    resolved = true;
+    mpCleanup(); // detach the watcher
+
+    // Determine outcome
+    const { correctId } = beat.scorerOptions;
+    const myRight  = myAns  !== null && myAns  !== undefined && myAns.playerId  === correctId;
+    const oppRight = oppAns !== null && oppAns !== undefined && oppAns.playerId === correctId;
+
+    // Tie check: both answered within 300ms
+    const tie = myAns && oppAns &&
+      Math.abs((myAns.ts || 0) - (oppAns.ts || 0)) < 300;
+
+    // Apply score — in a tie both get their result
+    // In a race, first answerer wins (already applied locally); second gets nothing
+    if (!myAns) {
+      // didn't answer
+      submitScorerAnswer(null, correctId, onComplete);
+      return;
+    }
+    if (tie || !oppAns) {
+      // Tie or opponent didn't answer — apply normally
+      submitScorerAnswer(myRight, correctId, onComplete);
+    } else {
+      // Race: did I win?
+      if (myAns.ts <= oppAns.ts) {
+        submitScorerAnswer(myRight, correctId, onComplete);
+      } else {
+        // I was slower — no points either way
+        submitScorerAnswer(null, correctId, onComplete, '⚡ Opponent answered first!');
+      }
+    }
+  }
+
+  // Watch for both answers
+  window._fb.onValue(questionRef, (snap) => {
+    const d = snap.val() || {};
+    const myAns  = d[myField]  || null;
+    const oppAns = d[oppField] || null;
+
+    // If both answered, resolve immediately
+    if (myAns && oppAns) {
+      resolveQuestion(myAns, oppAns);
+      return;
+    }
+
+    // If only opponent answered and I haven't, start a 1.5s window for me to still answer
+    if (oppAns && !myAns && !myAnsweredAt) {
+      setTimeout(() => {
+        if (!resolved && !myAnsweredAt) resolveQuestion(null, oppAns);
+      }, 1500);
+    }
+  });
+
+  // Auto-resolve after 6s (1s grace beyond the 5s UI timer)
+  const autoResolve = setTimeout(() => {
+    window._fb.get(questionRef).then(snap => {
+      if (!resolved) {
+        const d = snap.val() || {};
+        resolveQuestion(d[myField] || null, d[oppField] || null);
       }
     });
-  }
-}
+  }, 6000);
 
-// Wait for the shared sim start timestamp, read opponent captain, then fire callback
-function mpWaitForSimStart(callback) {
-  const mp = state.mp;
-  if (!mp) { callback(); return; }
-  const oppField = mp.role === 'A' ? 'captainB' : 'captainA';
-  window._fb.onValue(mp.sessionRef, (snap) => {
-    const d = snap.val();
-    if (!d) return;
-    // Capture opponent captain as soon as it appears in Firebase
-    if (d[oppField]) state.oppCaptain = d[oppField];
-    // Fire simulation once shared timestamp is written
-    if (d.simStartTimestamp) {
-      window._fb.off(mp.sessionRef);
-      const delay = Math.max(0, d.simStartTimestamp + 500 - Date.now());
-      setTimeout(callback, delay);
-    }
+  // Show the question UI — on answer, write to Firebase
+  showScorerQuestion(beat, (isCorrect, playerId) => {
+    // This callback fires when the player taps a button (before resolveQuestion)
+    if (resolved) return;
+    myAnsweredAt = Date.now();
+    myCorrect    = isCorrect;
+    window._fb.update(questionRef, {
+      [myField]: { playerId, ts: myAnsweredAt, correct: isCorrect }
+    });
+    // Don't call onComplete here — wait for resolveQuestion
   });
 }
 

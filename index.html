@@ -696,6 +696,99 @@
     padding: 16px 32px;
   }
 
+  /* ═══════════════════════════════════════════
+     PITCH VIEW
+  ═══════════════════════════════════════════ */
+  .sim-pitch-wrap {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+    display: none;
+    min-height: 0;
+  }
+  .sim-pitch-wrap.active { display: block; }
+
+  .pitch-field {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(180deg, #2d7a3a 0%, #267034 50%, #2d7a3a 100%);
+    position: relative;
+    overflow: hidden;
+  }
+  .pitch-svg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+  }
+  .pitch-half-label {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.3);
+    pointer-events: none;
+    z-index: 2;
+  }
+  .pitch-half-label.top    { top: 10px; }
+  .pitch-half-label.bottom { bottom: 10px; }
+
+  .pitch-event-tile {
+    position: absolute;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 12px;
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 700;
+    white-space: nowrap;
+    pointer-events: none;
+    z-index: 10;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+    will-change: transform, opacity;
+    max-width: 200px;
+  }
+  .pitch-event-tile.col-green { background: #16a34a; color: white; }
+  .pitch-event-tile.col-red   { background: #dc2626; color: white; }
+
+  .pitch-tile-name {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 15px;
+    letter-spacing: 0.5px;
+    line-height: 1;
+  }
+  .pitch-tile-pts {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    opacity: 0.85;
+  }
+  .pitch-tile-emoji { font-size: 13px; line-height: 1; }
+
+  @keyframes pitch-fly-right {
+    0%   { transform: translateX(-120%); opacity: 0; }
+    12%  { opacity: 1; }
+    65%  { transform: translateX(0); opacity: 1; }
+    100% { transform: translateX(0); opacity: 0; }
+  }
+  @keyframes pitch-fly-left {
+    0%   { transform: translateX(120%); opacity: 0; }
+    12%  { opacity: 1; }
+    65%  { transform: translateX(0); opacity: 1; }
+    100% { transform: translateX(0); opacity: 0; }
+  }
+  .pitch-event-tile.fly-right {
+    animation: pitch-fly-right 1.9s cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
+  }
+  .pitch-event-tile.fly-left {
+    animation: pitch-fly-left 1.9s cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
+  }
+
+
   #screen-sim {
     background: white;
     flex-direction: column;
@@ -724,14 +817,14 @@
     font-family: 'DM Mono', monospace;
     font-size: 9px;
     letter-spacing: 2px;
-    color: #555;
+    color: #aaa;
     text-transform: uppercase;
   }
   .sim-score-status {
     font-family: 'Bebas Neue', sans-serif;
-    font-size: 20px;
+    font-size: 26px;
     letter-spacing: 1px;
-    color: #666;
+    color: white;
     line-height: 1;
   }
   .sim-score-status.winning { color: #4ade80; }
@@ -751,9 +844,9 @@
   }
   .sim-opp-pts {
     font-family: 'Bebas Neue', sans-serif;
-    font-size: 20px;
+    font-size: 26px;
     letter-spacing: 1px;
-    color: #555;
+    color: #ccc;
     line-height: 1;
     text-align: right;
   }
@@ -3008,11 +3101,48 @@ function mpCleanup() {
   </div>
 
   <div class="sim-view-toggle">
-    <button class="active" onclick="setSimView('me')" id="sim-tab-me">Your XI</button>
+    <button onclick="setSimView('me')" id="sim-tab-me">Your XI</button>
+    <button class="active" onclick="setSimView('pitch')" id="sim-tab-pitch">⚽ The Pitch</button>
     <button onclick="setSimView('opp')" id="sim-tab-opp">Their XI</button>
   </div>
 
-  <div class="sim-players" id="sim-players-list"></div>
+  <!-- Pitch view -->
+  <div class="sim-pitch-wrap active" id="sim-pitch-wrap">
+    <div class="pitch-field" id="pitch-field">
+      <svg class="pitch-svg" id="pitch-svg" viewBox="0 0 100 160" preserveAspectRatio="none">
+        <!-- Outer boundary -->
+        <rect x="6" y="4" width="88" height="152" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="0.8"/>
+        <!-- Halfway line -->
+        <line x1="6" y1="80" x2="94" y2="80" stroke="rgba(255,255,255,0.25)" stroke-width="0.8"/>
+        <!-- Centre circle -->
+        <circle cx="50" cy="80" r="12" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="0.8"/>
+        <circle cx="50" cy="80" r="0.8" fill="rgba(255,255,255,0.3)"/>
+        <!-- Top penalty area (opponent) -->
+        <rect x="24" y="4" width="52" height="22" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="0.7"/>
+        <!-- Top 6-yard box -->
+        <rect x="36" y="4" width="28" height="8" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="0.6"/>
+        <!-- Top penalty spot -->
+        <circle cx="50" cy="17" r="0.7" fill="rgba(255,255,255,0.25)"/>
+        <!-- Bottom penalty area (you) -->
+        <rect x="24" y="134" width="52" height="22" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="0.7"/>
+        <!-- Bottom 6-yard box -->
+        <rect x="36" y="148" width="28" height="8" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="0.6"/>
+        <!-- Bottom penalty spot -->
+        <circle cx="50" cy="143" r="0.7" fill="rgba(255,255,255,0.25)"/>
+        <!-- Grass stripe effect (alternating slightly lighter bands) -->
+        <rect x="6" y="4"   width="88" height="19" fill="rgba(255,255,255,0.03)"/>
+        <rect x="6" y="42"  width="88" height="19" fill="rgba(255,255,255,0.03)"/>
+        <rect x="6" y="80"  width="88" height="19" fill="rgba(255,255,255,0.03)"/>
+        <rect x="6" y="118" width="88" height="19" fill="rgba(255,255,255,0.03)"/>
+      </svg>
+      <!-- Half labels -->
+      <div class="pitch-half-label top" id="pitch-opp-label">OPPONENT</div>
+      <div class="pitch-half-label bottom" id="pitch-my-label">YOU</div>
+      <!-- Tiles injected here by JS -->
+    </div>
+  </div>
+
+  <div class="sim-players" id="sim-players-list" style="display:none;"></div>
 
   <!-- Event timeline strip — half 1 | HT | half 2 -->
   <div class="sim-timeline" id="sim-timeline">
@@ -4870,7 +5000,7 @@ let state = {
   oppCaptain: null,
   timerInterval: null,
   timerSecs: 30,
-  simView: 'me',
+  simView: 'pitch',
   myScore: 0,
   oppScore: 0,
   playerData: {},
@@ -5520,7 +5650,7 @@ function restart() {
     gkPickerIsMe: true,
     draftDone: false, timerInterval: null, timerSecs: 30,
     myCaptain: null, oppCaptain: null, captainRandom: false, captainDiceBonus: 0,
-    simView: 'me', myScore: 0, oppScore: 0, playerData: {},
+    simView: 'pitch', myScore: 0, oppScore: 0, playerData: {},
     teamName: '', teamEmoji: '', matchIdx: null,
     tipTaken: false, predictionPending: null, predictionAnswer: null, predictionTimerTimeout: null,
     _tutShownCard: false, _tutShownGoal: false, _tutShownQuestion: false,
@@ -6619,8 +6749,7 @@ function startSimulation() {
   if (myTab) myTab.textContent = (teamEmoji ? teamEmoji + ' ' : '') + 'Your XI';
 
   updateScoreDisplay();
-  renderSimPlayers();
-  setSimView('me');
+  setSimView('pitch');
 
   const beats = buildBeats();
   runBeats(beats, 0);
@@ -7725,8 +7854,20 @@ function updateScoreDisplay(matchMin, eventType) {
 function setSimView(view) {
   state.simView = view;
   document.getElementById('sim-tab-me').classList.toggle('active', view === 'me');
+  document.getElementById('sim-tab-pitch').classList.toggle('active', view === 'pitch');
   document.getElementById('sim-tab-opp').classList.toggle('active', view === 'opp');
-  renderSimPlayers();
+
+  const pitchWrap = document.getElementById('sim-pitch-wrap');
+  const playerList = document.getElementById('sim-players-list');
+
+  if (view === 'pitch') {
+    if (pitchWrap) pitchWrap.classList.add('active');
+    if (playerList) playerList.style.display = 'none';
+  } else {
+    if (pitchWrap) pitchWrap.classList.remove('active');
+    if (playerList) playerList.style.display = '';
+    renderSimPlayers();
+  }
 }
 
 function renderSimPlayers() {
@@ -7803,6 +7944,90 @@ function setCommentary(text, emoji, subText) {
   }, 200);
 }
 
+// ── Pitch event tile animation ───────────────────────────────
+// Spawns a flying tile on the pitch for significant events (|delta| >= 3)
+let _pitchTileQueue = []; // stagger multiple simultaneous tiles
+let _pitchTileTimer = null;
+
+const PITCH_EVENT_EMOJI = {
+  goal: '⚽', assist: '🎯', yellow: '🟨', red: '🟥',
+  own_goal: '🤦', missed_pen: '❌', sub: '🔄', full_90: '💪',
+};
+
+function spawnPitchTile(playerId, delta) {
+  const field = document.getElementById('pitch-field');
+  if (!field) return;
+
+  const player    = getPlayer(playerId);
+  if (!player) return;
+
+  const inMyTeam  = state.myTeam.includes(playerId);
+  const inOppTeam = state.oppTeam.includes(playerId);
+  if (!inMyTeam && !inOppTeam) return;
+
+  // Determine which half of the pitch (top = opp, bottom = me)
+  const isMyTeam  = inMyTeam;
+  const isOppTeam = inOppTeam && !inMyTeam; // could be in both if something weird
+
+  // Positive delta = good for the team that owns them
+  // Green = positive points, Red = negative points
+  const isPositive = delta > 0;
+  const colClass = isPositive ? 'col-green' : 'col-red';
+
+  // Direction: fly from left or right, alternate to avoid clumps
+  const flyClass = (Math.random() < 0.5) ? 'fly-right' : 'fly-left';
+  
+  // Vertical position: opp half = top 40%, my half = bottom 40%
+  // Add some random jitter within the half
+  let topPct;
+  if (isMyTeam && !isOppTeam) {
+    topPct = 55 + Math.random() * 30; // 55–85% (bottom half)
+  } else if (isOppTeam) {
+    topPct = 10 + Math.random() * 30; // 10–40% (top half)  
+  } else {
+    topPct = 40 + Math.random() * 20; // both? middle
+  }
+
+  // Horizontal start position (left edge if fly-right, right edge if fly-left)
+  // but we animate from off-screen so just set a middle landing zone
+  const leftPct = 15 + Math.random() * 55; // land anywhere in 15–70% width
+
+  // Get last event type for emoji
+  const pd = state.playerData[playerId];
+  const lastEvt = pd?.events?.[pd.events.length - 1];
+  const emoji = PITCH_EVENT_EMOJI[lastEvt] || '';
+
+  const name = player.name.split(' ').pop();
+  const ptsStr = (delta > 0 ? '+' : '') + Math.round(delta);
+
+  const tile = document.createElement('div');
+  tile.className = `pitch-event-tile ${colClass} ${flyClass}`;
+  tile.style.top  = topPct + '%';
+  tile.style.left = leftPct + '%';
+  tile.innerHTML = `
+    <span class="pitch-tile-name">${name}</span>
+    <span class="pitch-tile-pts">${ptsStr}</span>
+    ${emoji ? `<span class="pitch-tile-emoji">${emoji}</span>` : ''}
+  `;
+
+  field.appendChild(tile);
+  // Remove after animation completes
+  setTimeout(() => tile.remove(), 2000);
+}
+
+function _drainPitchQueue() {
+  if (_pitchTileQueue.length === 0) { _pitchTileTimer = null; return; }
+  const { id, delta } = _pitchTileQueue.shift();
+  spawnPitchTile(id, delta);
+  _pitchTileTimer = setTimeout(_drainPitchQueue, 320);
+}
+
+function queuePitchTile(playerId, delta) {
+  if (Math.abs(delta) < 3) return; // threshold: only ±3 or more
+  _pitchTileQueue.push({ id: playerId, delta });
+  if (!_pitchTileTimer) _drainPitchQueue();
+}
+
 function flashPlayer(playerId, delta) {
   // Always flash the commentary bar so something always visible reacts
   const feed = document.querySelector('.commentary-feed');
@@ -7827,6 +8052,9 @@ function flashPlayer(playerId, delta) {
     row.appendChild(popup);
     setTimeout(() => popup.remove(), 1200);
   }
+
+  // Spawn a pitch tile animation for significant events
+  queuePitchTile(playerId, delta);
 }
 
 // ═══════════════════════════════════════════════════════════════

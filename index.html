@@ -8123,6 +8123,9 @@ function showResults() {
       const oppScore = state.mp.role === 'A' ? d.scoreB : d.scoreA;
       if (myScore !== null && oppScore !== null) {
         mpCleanup();
+        // Use Firebase scores as source of truth for both players
+        // so winner/loser is always consistent across devices
+        state.myScore  = myScore;
         state.oppScore = oppScore;
         _renderResults();
       }

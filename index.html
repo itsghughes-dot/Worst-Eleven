@@ -760,7 +760,7 @@
 
   /* ─── EVENT TIMELINE STRIP ─── */
   .sim-timeline {
-    padding: 6px 16px 8px;
+    padding: 4px 16px 6px;
     background: var(--black);
     flex-shrink: 0;
   }
@@ -1086,6 +1086,7 @@
 
   /* ─── RESULTS GRAPH ─── */
   .result-graph-wrap {
+    position: relative;
     width: 100%;
     max-width: 400px;
     margin: 0 auto 24px;
@@ -1411,10 +1412,11 @@
 
   /* Player list during sim — this is the only scrolling zone */
   .sim-players {
-    flex: 1;
     overflow-y: auto;
-    padding: 6px 12px;
+    padding: 4px 12px;
     min-height: 0;
+    flex-shrink: 1;
+    flex-grow: 0;
   }
   .sim-player-row {
     display: flex;
@@ -1546,12 +1548,12 @@
   }
   .autocomplete-btn:hover { color: #fff; }
 
-  /* Commentary feed — pinned to bottom */
+  /* Commentary feed — pinned to bottom, larger and more prominent */
   .commentary-feed {
     background: var(--black);
-    padding: 10px 16px;
-    min-height: 48px;
-    max-height: 48px;
+    padding: 12px 16px;
+    min-height: 72px;
+    max-height: 72px;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -1561,8 +1563,8 @@
     overflow: hidden;
   }
   .commentary-feed.feed-building {
-    max-height: 120px;
-    padding: 14px 16px;
+    max-height: 140px;
+    padding: 16px 16px;
     background: #0a0a0a;
   }
   .commentary-feed.feed-building .commentary-line {
@@ -1907,6 +1909,12 @@
   .badge-name { font-size: 11px; font-weight: 600; display: block; }
   .badge-desc { font-size: 10px; color: var(--muted); display: block; }
 
+  .cta-newgame {
+    background: #111;
+    color: white;
+    border: 1.5px solid #333 !important;
+  }
+  .cta-newgame:hover { background: #222; }
   .cta-row {
     display: flex;
     gap: 10px;
@@ -3001,8 +3009,9 @@ function mpCleanup() {
     </div>
 
     <div class="cta-row">
-      <button class="cta-rematch" onclick="restart()">↩ Rematch</button>
-      <button class="cta-share" onclick="shareResult()">Share Result</button>
+      <button class="cta-rematch" onclick="replayMatch()">↩ Replay</button>
+      <button class="cta-newgame" onclick="newGame()">🎲 New Game</button>
+      <button class="cta-share" onclick="shareResult()">📤 Share</button>
     </div>
   </div>
 </div>
@@ -4363,6 +4372,30 @@ function restart() {
   showScreen('home');
 }
 
+
+// Replay the same match from scratch
+function replayMatch() {
+  const savedIdx = state.matchIdx;
+  restart();
+  // restart() goes to home; re-enter the match flow with same index
+  setTimeout(() => {
+    if (savedIdx !== null && ALL_MATCHES[savedIdx]) {
+      revealMatch(ALL_MATCHES[savedIdx]);
+    }
+  }, 100);
+}
+
+// New game — pick a random different match
+function newGame() {
+  const oldIdx = state.matchIdx;
+  restart();
+  setTimeout(() => {
+    let idx;
+    do { idx = Math.floor(Math.random() * ALL_MATCHES.length); }
+    while (ALL_MATCHES.length > 1 && idx === oldIdx);
+    revealMatch(ALL_MATCHES[idx]);
+  }, 100);
+}
 
 /*
   EXACT DRAFT SEQUENCE:
@@ -5873,30 +5906,38 @@ function buildBeats() {
     }
   }
 
-  // ── Half-time beat ──────────────────────────────────────────────
+  // ── Half-time beat — always inserted ───────────────────────────
+  // Nudge any non-HT beats that fall within 2500ms of HT real time
+  // so they don't collide with the swap screen
   const htRealTime = mapMatchMinToReal(45);
-  const tooCloseToHT = beats.some(b => !b.isHalfTime && Math.abs(b.realTime - htRealTime) < 1500);
-  if (!tooCloseToHT) {
-    beats.push({
-      realTime:   htRealTime,
-      matchMin:   45,
-      events:     [],
-      isHalfTime: true,
-      fake:       true,
-      commentary: `<strong>Half time.</strong> Referee blows for the break.`,
-      emoji:      '🟡',
-    });
+  for (const b of beats) {
+    if (b.isHalfTime) continue;
+    const diff = b.realTime - htRealTime;
+    if (Math.abs(diff) < 2500) {
+      b.realTime = diff < 0
+        ? htRealTime - 2800  // push before HT
+        : htRealTime + 2800; // push after HT
+    }
   }
+  beats.push({
+    realTime:   htRealTime,
+    matchMin:   45,
+    events:     [],
+    isHalfTime: true,
+    fake:       true,
+    commentary: `<strong>Half time.</strong> Referee blows for the break.`,
+    emoji:      '🟡',
+  });
 
-  beats.push({ realTime: 40000, matchMin: 88, events: [], commentary: m ? m.meta.lateCommentary : "Late pressure. Time running out.", emoji: '⏱️' });
-  beats.push({ realTime: 43500, matchMin: 90, events: [], commentary: m ? m.meta.finalCommentary : "<strong>Full time.</strong>", emoji: '🏁' });
+  beats.push({ realTime: 57500, matchMin: 88, events: [], commentary: m ? m.meta.lateCommentary : "Late pressure. Time running out.", emoji: '⏱️' });
+  beats.push({ realTime: 62000, matchMin: 90, events: [], commentary: m ? m.meta.finalCommentary : "<strong>Full time.</strong>", emoji: '🏁' });
 
   beats.sort((a, b) => a.realTime - b.realTime);
   return beats;
 }
 
 function mapMatchMinToReal(min) {
-  return Math.round((min / 90) * 43500);
+  return Math.round((min / 90) * 62000);
 }
 
 function runBeats(beats, idx) {
@@ -6207,38 +6248,32 @@ function updateScoreDisplay(matchMin, eventType) {
   const oppPts  = document.getElementById('sim-opp-pts');
   const gapLine = document.getElementById('sim-gap-line');
 
+  // Left: YOUR score with status colour
   if (myEl) {
-    if (tied) {
-      myEl.textContent = 'LEVEL';
-      myEl.className = 'sim-score-status level';
-    } else if (meWin) {
-      // Pick tier label for winning
-      let label = 'AHEAD';
-      if (gap < 5)  label = 'EDGING IT';
-      else if (gap < 12) label = 'AHEAD';
-      else if (gap < 22) label = 'PULLING AWAY';
-      else label = 'RUNNING RIOT';
-      myEl.textContent = label;
-      myEl.className = 'sim-score-status winning';
-    } else {
-      myEl.textContent = 'BEHIND';
-      myEl.className = 'sim-score-status losing';
-    }
+    const myRounded = Math.round(my);
+    myEl.textContent = (myRounded >= 0 ? '+' : '') + myRounded;
+    if (tied)   myEl.className = 'sim-score-status level';
+    else if (meWin) myEl.className = 'sim-score-status winning';
+    else        myEl.className = 'sim-score-status losing';
   }
 
-  // Opponent just shows their raw pts — small, understated
+  // Right: opponent raw score
   if (oppPts) {
-    oppPts.textContent = opp >= 0 ? `+${opp} pts` : `${opp} pts`;
+    const oppRounded = Math.round(opp);
+    oppPts.textContent = (oppRounded >= 0 ? '+' : '') + oppRounded;
   }
 
-  // Middle: single contextual line about the gap
+  // Middle: gap label
   if (gapLine) {
     if (tied) {
-      gapLine.textContent = 'All square';
+      gapLine.textContent = 'level';
     } else if (meWin) {
-      gapLine.textContent = `ahead by ${gap} pt${gap === 1 ? '' : 's'}`;
+      if (gap < 5)       gapLine.textContent = 'edging it';
+      else if (gap < 12) gapLine.textContent = 'ahead';
+      else if (gap < 22) gapLine.textContent = 'pulling away';
+      else               gapLine.textContent = 'running riot';
     } else {
-      gapLine.textContent = `behind by ${gap} pt${gap === 1 ? '' : 's'}`;
+      gapLine.textContent = `behind by ${Math.round(gap)}`;
     }
   }
 
@@ -6730,7 +6765,7 @@ function _renderResults() {
       const tier      = getTier(item);
       const label     = getLabelForTier(tier);
       const blurb     = tier === 'chaos' ? chaosBlurb(item) : tier === 'meh' ? mehBlurb(item) : competentBlurb(item);
-      const tileClass = tier === 'chaos' ? 'gbu-ugly' : tier === 'competent' ? 'gbu-good' : 'gbu-bad';
+      const tileClass = tier === 'chaos' ? 'gbu-good' : tier === 'competent' ? 'gbu-ugly' : 'gbu-bad';
       return `<div class="gbu-tile ${tileClass}"><div class="gbu-label">${label}</div><div class="gbu-text">${blurb}</div></div>`;
     }
 
@@ -7108,14 +7143,23 @@ function drawResultGraph() {
   ctx.lineCap = 'round';
   ctx.stroke();
 
-  // ── Event dots on the line ──
+  // ── Event icons — DOM overlays (canvas emoji unreliable on mobile) ──
+  const chartWrap = canvas.parentElement;
+  chartWrap.querySelectorAll('.rc-event-icon').forEach(el => el.remove());
   for (const p of scaledPts) {
     if (!p.eventType) continue;
-    const icon = p.eventType === 'red' ? '🟥' : p.eventType === 'goal' ? '⚽' : p.eventType === 'yellow' ? '🟨' : null;
+    const icon = p.eventType === 'red' ? '🟥'
+               : p.eventType === 'goal' ? '⚽'
+               : p.eventType === 'own_goal' ? '🤦'
+               : p.eventType === 'yellow' ? '🟨' : null;
     if (!icon) continue;
-    ctx.font = '12px serif';
-    ctx.textAlign = 'center';
-    ctx.fillText(icon, xPos(p.min), yPos(p.sv) - 8);
+    const pctX = (xPos(p.min) / w) * 100;
+    const pctY = ((yPos(p.sv) - 16) / h) * 100;
+    const span = document.createElement('span');
+    span.className = 'rc-event-icon';
+    span.textContent = icon;
+    span.style.cssText = \`position:absolute;left:\${pctX}%;top:\${pctY}%;transform:translateX(-50%);font-size:12px;line-height:1;pointer-events:none;z-index:2;\`;
+    chartWrap.appendChild(span);
   }
 
   // ── Emoji at the END of the line (not overlaid on canvas — use DOM element) ──

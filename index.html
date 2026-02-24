@@ -706,11 +706,18 @@
     display: none;
     min-height: 0;
   }
-  .sim-pitch-wrap.active { display: block; }
+  .sim-pitch-wrap.active { 
+    display: flex;
+    flex-direction: column;
+  }
+  .sim-pitch-wrap.active .pitch-field {
+    flex: 1;
+  }
 
   .pitch-field {
     width: 100%;
     height: 100%;
+    min-height: 200px;
     background: linear-gradient(180deg, #2d7a3a 0%, #267034 50%, #2d7a3a 100%);
     position: relative;
     overflow: hidden;
@@ -1739,18 +1746,6 @@
     font-weight: 700;
     color: #aaa;
   }
-  .autocomplete-btn {
-    background: none;
-    border: none;
-    color: #666;
-    font-size: 18px;
-    padding: 2px 4px;
-    cursor: pointer;
-    line-height: 1;
-    transition: color 0.15s;
-    flex-shrink: 0;
-  }
-  .autocomplete-btn:hover { color: #fff; }
 
   /* Commentary feed — pinned to bottom, larger and more prominent */
   .commentary-feed {
@@ -3135,9 +3130,7 @@ function mpCleanup() {
         <rect x="6" y="80"  width="88" height="19" fill="rgba(255,255,255,0.03)"/>
         <rect x="6" y="118" width="88" height="19" fill="rgba(255,255,255,0.03)"/>
       </svg>
-      <!-- Half labels -->
-      <div class="pitch-half-label top" id="pitch-opp-label">OPPONENT</div>
-      <div class="pitch-half-label bottom" id="pitch-my-label">YOU</div>
+
       <!-- Tiles injected here by JS -->
     </div>
   </div>
@@ -3173,7 +3166,7 @@ function mpCleanup() {
     <span class="live-pill">LIVE</span>
     <span class="live-teams">Man City <strong id="live-home-score">0</strong> – <strong id="live-away-score">0</strong> Watford</span>
     <span class="live-clock" id="match-clock">0'</span>
-    <button class="autocomplete-btn" id="autocomplete-btn" onclick="autoCompleteMatch()" title="Skip to result">⏭</button>
+
   </div>
 
   <div class="commentary-feed" id="commentary-feed">
@@ -3710,7 +3703,7 @@ const ALL_MATCHES = [
     meta: {
       home: 'Man United', away: 'Arsenal', score: '8-2', homeColour: '#DA291C', awayColour: '#EF0107',
       date: '28 Aug 2011', label: `Premier League · Sun 28 Aug 2011 · 1:30pm BST`,
-      blurb: `Old Trafford. <strong>Arsenal arrived in turmoil</strong> — no net spend, Cesc Fàbregas sold to Barcelona, Nasri to Man City. United were champions. What followed was the most humiliating away defeat in Arsenal's modern history.`,
+      blurb: `Old Trafford. <strong>Arsenal arrived in turmoil</strong> — Cesc Fàbregas sold to Barcelona, Nasri to Man City, no net spend. <strong>Ferguson's United were champions</strong> and ruthless at home. Young and Welbeck sharp all summer. Arsenal's depleted, fragile backline faces a stern test against the best team in England.`,
       finalCommentary: `<strong>Full time.</strong> Manchester United 8–2 Arsenal. The scoreline that defined a summer.`,
       lateCommentary: `Young with another. Eight. This is extraordinary.`,
     },
@@ -3761,7 +3754,7 @@ const ALL_MATCHES = [
     meta: {
       home: 'Leicester', away: 'Southampton', score: '9-0', homeColour: '#003090', awayColour: '#D71920',
       date: '25 Oct 2019', label: `Premier League · Fri 25 Oct 2019 · 8:00pm BST`,
-      blurb: `King Power Stadium. <strong>Southampton were in freefall</strong> — one win in eight. Hasenhüttl under enormous pressure. Leicester were flying under Rodgers. What followed was the joint biggest win in Premier League history.`,
+      blurb: `King Power Stadium. <strong>Southampton were in freefall</strong> — one win in eight, Hasenhüttl under enormous pressure. <strong>Leicester were flying under Brendan Rodgers</strong>, with Vardy and Pérez in frightening form. An away side in crisis visiting a team at full throttle.`,
       finalCommentary: `<strong>Full time.</strong> Leicester 9–0 Southampton. A Premier League record. Pérez with a hat-trick.`,
       lateCommentary: `Pérez again! Nine! A Premier League record equalled!`,
     },
@@ -3811,7 +3804,7 @@ const ALL_MATCHES = [
     meta: {
       home: 'Liverpool', away: 'Bournemouth', score: '9-0', homeColour: '#C8102E', awayColour: '#DA291C',
       date: '27 Aug 2022', label: `Premier League · Sat 27 Aug 2022 · 3:00pm BST`,
-      blurb: `Anfield. <strong>Liverpool were stuttering</strong> — three draws in their opening three games. Bournemouth were newly promoted. Liverpool needed a statement. Nine goals later, they had one. Núñez on debut from the bench.`,
+      blurb: `Anfield. <strong>Liverpool were stuttering</strong> — three draws in their opening three games, already under pressure. <strong>Bournemouth were newly promoted</strong> and untested at this level. Klopp needed a response. Núñez is on the bench, waiting for his debut.`,
       finalCommentary: `<strong>Full time.</strong> Liverpool 9–0 Bournemouth. A Premier League record equalled.`,
       lateCommentary: `Nine! Liverpool are relentless. Anfield in raptures.`,
     },
@@ -3859,7 +3852,7 @@ const ALL_MATCHES = [
     meta: {
       home: 'Aston Villa', away: 'Liverpool', score: '7-2', homeColour: '#95BFE5', awayColour: '#C8102E',
       date: '4 Oct 2020', label: `Premier League · Sun 4 Oct 2020 · 7:15pm BST`,
-      blurb: `Villa Park. <strong>Liverpool were reigning champions.</strong> Aston Villa had just survived relegation by a point. Alisson was injured — Adrian started. Watkins made his home debut. What followed was the greatest upset of the Klopp era.`,
+      blurb: `Villa Park. <strong>Liverpool were reigning champions</strong> and heavy favourites. Aston Villa had barely survived relegation the previous season. <strong>Alisson is injured</strong> — backup Adrian starts. Watkins makes his home debut for Villa. Everything points to a routine away win.`,
       finalCommentary: `<strong>Full time.</strong> Aston Villa 7–2 Liverpool. The champions obliterated. Watkins hat-trick.`,
       lateCommentary: `Watkins again! Seven! This is extraordinary.`,
     },
@@ -3908,7 +3901,7 @@ const ALL_MATCHES = [
     meta: {
       home: 'Man City', away: 'Man United', score: '6-3', homeColour: '#6CABDD', awayColour: '#DA291C',
       date: '23 Oct 2011', label: `Premier League · Sun 23 Oct 2011 · 1:30pm BST`,
-      blurb: `The Etihad. <strong>City hadn't beaten United at home since 1969.</strong> Balotelli lifted his shirt — "Why Always Me?" United led 1-0 at half time. City scored five in the second half. The most emphatic Manchester Derby in a generation.`,
+      blurb: `The Etihad. <strong>City hadn't beaten United at home since 1969</strong> — a psychological monkey on their backs. Balotelli starts up front wearing a T-shirt under his kit that nobody's seen yet. <strong>United led by Ferguson</strong> are slight favourites. Both squads packed with quality. Derby day at the Etihad.`,
       finalCommentary: `<strong>Full time.</strong> Manchester City 6–3 Manchester United. Why Always Me.`,
       lateCommentary: `Balotelli scores again! The Etihad is erupting!`,
     },
@@ -3956,7 +3949,7 @@ const ALL_MATCHES = [
     meta: {
       home: 'Man City', away: 'Man United', score: '6-3', homeColour: '#6CABDD', awayColour: '#DA291C',
       date: '29 Oct 2023', label: `Premier League · Sun 29 Oct 2023 · 4:30pm GMT`,
-      blurb: `The Etihad. <strong>The second 6-3.</strong> Haaland hat-trick. Foden brilliant. Ten Hag's United were in crisis — their worst derby defeat since 1926. City were playing some of the best football in Europe.`,
+      blurb: `The Etihad. <strong>Haaland has been unstoppable</strong> all season — hat-tricks feel routine now. <strong>Ten Hag's United are finding their feet</strong> but inconsistent away from home. City's midfield trio of Rodri, De Bruyne and Bernardo Silva may be the best in Europe. A Manchester Derby with contrasting form lines.`,
       finalCommentary: `<strong>Full time.</strong> Manchester City 6–3 Manchester United. Haaland hat-trick. History repeating.`,
       lateCommentary: `Six! City are relentless. United have no answers.`,
     },
@@ -6492,6 +6485,7 @@ function getEventDelta(event, player) {
 }
 
 let simTimeout = null;
+let _clockTicker = null;
 let simBeats = null; // store beats reference for autocomplete
 
 function autoCompleteMatch() {
@@ -7506,7 +7500,30 @@ function runBeats(beats, idx) {
   const delay = idx === 0 ? 500 : (beat.realTime - beats[idx-1].realTime);
 
   simTimeout = setTimeout(() => {
-    document.getElementById('match-clock').textContent = beat.matchMin + "'";
+    // Animate clock from previous minute to current beat minute
+    const clockEl = document.getElementById('match-clock');
+    if (clockEl) {
+      const prevMin = idx === 0 ? 0 : beats[idx-1].matchMin;
+      const targetMin = beat.matchMin;
+      const spanMins = Math.max(1, targetMin - prevMin);
+      // Speed up when gap is large (sparse events), slow when tight (busy)
+      // delay = ms between beats; we fill it with smooth ticking
+      const tickDuration = idx === 0 ? 400 : Math.max(400, delay - 300);
+      const msPerMin = tickDuration / spanMins;
+      
+      if (_clockTicker) clearInterval(_clockTicker);
+      let tickMin = prevMin;
+      _clockTicker = setInterval(() => {
+        tickMin = Math.min(tickMin + 1, targetMin);
+        // Show 46' for first minute of second half 
+        const displayMin = tickMin;
+        clockEl.textContent = displayMin + "'";
+        if (tickMin >= targetMin) {
+          clearInterval(_clockTicker);
+          _clockTicker = null;
+        }
+      }, Math.max(40, msPerMin)); // never faster than 40ms/tick
+    }
 
     if (beat.fake) {
       if (beat.isHalfTime) {
@@ -7529,6 +7546,7 @@ function runBeats(beats, idx) {
 
         if (htOverlay) htOverlay.style.display = '';
         if (feed) feed.classList.add('feed-halftime');
+        if (_clockTicker) { clearInterval(_clockTicker); _clockTicker = null; }
         setCommentary('<strong>Half time.</strong> Referee blows for the break.', '🟡');
 
         // Start multiplayer swap listener
@@ -7871,7 +7889,9 @@ function setSimView(view) {
 }
 
 function renderSimPlayers() {
+  if (state.simView === 'pitch') return; // pitch view handles its own display
   const list = document.getElementById('sim-players-list');
+  if (!list) return;
   const teamIds = state.simView === 'me' ? state.myTeam : state.oppTeam;
 
   // Sort by position: GK → DEF → MID → ATT

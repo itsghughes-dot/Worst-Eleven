@@ -758,6 +758,109 @@
     text-align: right;
   }
 
+
+  /* ─── TUTORIAL OVERLAY ─────────────────────────────────────── */
+  .tutorial-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    background: rgba(0,0,0,0.72);
+    animation: tut-fade-in 0.25s ease;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  @keyframes tut-fade-in {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+  .tutorial-card {
+    background: #fff;
+    border-radius: 20px 20px 0 0;
+    padding: 28px 24px 36px;
+    width: 100%;
+    max-width: 480px;
+    position: relative;
+    animation: tut-slide-up 0.3s cubic-bezier(0.34,1.56,0.64,1);
+  }
+  @keyframes tut-slide-up {
+    from { transform: translateY(60px); opacity: 0; }
+    to   { transform: translateY(0);    opacity: 1; }
+  }
+  .tutorial-step-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: #aaa;
+    margin-bottom: 10px;
+    text-transform: uppercase;
+  }
+  .tutorial-emoji {
+    font-size: 36px;
+    margin-bottom: 10px;
+    display: block;
+  }
+  .tutorial-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 26px;
+    letter-spacing: 1px;
+    color: #111;
+    margin-bottom: 8px;
+    line-height: 1.1;
+  }
+  .tutorial-body {
+    font-size: 15px;
+    color: #444;
+    line-height: 1.55;
+    margin-bottom: 24px;
+  }
+  .tutorial-body strong { color: #111; }
+  .tutorial-got-it {
+    width: 100%;
+    background: #111;
+    color: #fff;
+    border: none;
+    border-radius: 14px;
+    padding: 16px;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 20px;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .tutorial-got-it:hover { background: #333; }
+  .tutorial-skip {
+    display: block;
+    text-align: center;
+    margin-top: 12px;
+    font-size: 12px;
+    color: #bbb;
+    cursor: pointer;
+    text-decoration: underline;
+  }
+  /* Tutorial button on home screen */
+  .tutorial-home-btn {
+    width: 100%;
+    max-width: 360px;
+    background: linear-gradient(135deg, #e8290b, #ff6b35);
+    color: white;
+    border: none;
+    border-radius: 14px;
+    padding: 18px 16px;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 22px;
+    letter-spacing: 1.5px;
+    cursor: pointer;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    box-shadow: 0 4px 16px rgba(232,41,11,0.3);
+  }
+  .tutorial-home-btn:hover { opacity: 0.92; }
+
   /* ─── EVENT TIMELINE STRIP ─── */
   .sim-timeline {
     padding: 4px 16px 6px;
@@ -2592,6 +2695,11 @@ function mpCleanup() {
     </div>
   </div>
 
+  <!-- Tutorial / First time button -->
+  <button class="tutorial-home-btn" onclick="startTutorial()">
+    🎓 First time? Play the tutorial
+  </button>
+
   <!-- Side-by-side CTA buttons -->
   <div style="display:flex;gap:10px;width:100%;max-width:360px;margin-bottom:16px;align-items:stretch;">
     <button class="btn-primary" id="start-btn" onclick="startGame()" style="flex:1;font-size:15px;padding:16px 12px;border-radius:14px;display:flex;align-items:center;justify-content:center;min-height:56px;" disabled>
@@ -3094,7 +3202,7 @@ function mpCleanup() {
 
 <script>
 // ═══════════════════════════════════════════════════════════════
-// MATCH ARCHIVE — 7 historic Premier League matches
+// MATCH ARCHIVE — 30 historic Premier League matches
 // ═══════════════════════════════════════════════════════════════
 const ALL_MATCHES = [
 
@@ -3448,6 +3556,7 @@ const ALL_MATCHES = [
     ],
     events: [
       { min:  3, type: 'goal',    playerId: 22 },  // Van Persie — Arsenal 0-1
+      { min:  8, type: 'yellow',  playerId:  6 },  // Barton — early booking (tutorial: shows +pts)
       { min: 10, type: 'goal',    playerId: 21 },  // Arshavin — 0-2
       { min: 26, type: 'assist',  playerId: 22 },
       { min: 26, type: 'goal',    playerId: 19 },  // Walcott — 0-3
@@ -3461,6 +3570,1046 @@ const ALL_MATCHES = [
       { min: 90, type: 'full_90' },
     ],
   },
+
+  // ── MATCH 8: Manchester United 8-2 Arsenal, 28 Aug 2011 ──────
+  {
+    id: 'mun_8-2_ars_2011',
+    meta: {
+      home: 'Man United', away: 'Arsenal', score: '8-2', homeColour: '#DA291C', awayColour: '#EF0107',
+      date: '28 Aug 2011', label: 'Premier League · Sun 28 Aug 2011 · 1:30pm BST',
+      blurb: 'Old Trafford. <strong>Arsenal arrived in turmoil</strong> — no net spend, Cesc Fàbregas sold to Barcelona, Nasri to Man City. United were champions. What followed was the most humiliating away defeat in Arsenal's modern history.',
+      finalCommentary: '<strong>Full time.</strong> Manchester United 8–2 Arsenal. The scoreline that defined a summer.',
+      lateCommentary: 'Young with another. Eight. This is extraordinary.',
+    },
+    players: [
+      { id:  1, name: 'De Gea',       pos: 'GK', team: 'home', teamName: 'Man United' },
+      { id:  2, name: 'Smalling',     pos: 'CB', team: 'home', teamName: 'Man United' },
+      { id:  3, name: 'Ferdinand',    pos: 'CB', team: 'home', teamName: 'Man United' },
+      { id:  4, name: 'Evra',         pos: 'LB', team: 'home', teamName: 'Man United' },
+      { id:  5, name: 'Fabio',        pos: 'RB', team: 'home', teamName: 'Man United' },
+      { id:  6, name: 'Carrick',      pos: 'CM', team: 'home', teamName: 'Man United' },
+      { id:  7, name: 'Anderson',     pos: 'CM', team: 'home', teamName: 'Man United' },
+      { id:  8, name: 'Nani',         pos: 'RW', team: 'home', teamName: 'Man United' },
+      { id:  9, name: 'Ashley Young', pos: 'LW', team: 'home', teamName: 'Man United' },
+      { id: 10, name: 'Rooney',       pos: 'AM', team: 'home', teamName: 'Man United' },
+      { id: 11, name: 'Welbeck',      pos: 'ST', team: 'home', teamName: 'Man United' },
+      { id: 12, name: 'Szczesny',     pos: 'GK', team: 'away', teamName: 'Arsenal' },
+      { id: 13, name: 'Sagna',        pos: 'RB', team: 'away', teamName: 'Arsenal' },
+      { id: 14, name: 'Koscielny',    pos: 'CB', team: 'away', teamName: 'Arsenal' },
+      { id: 15, name: 'Djourou',      pos: 'CB', team: 'away', teamName: 'Arsenal' },
+      { id: 16, name: 'Gibbs',        pos: 'LB', team: 'away', teamName: 'Arsenal' },
+      { id: 17, name: 'Song',         pos: 'DM', team: 'away', teamName: 'Arsenal' },
+      { id: 18, name: 'Ramsey',       pos: 'CM', team: 'away', teamName: 'Arsenal' },
+      { id: 19, name: 'Walcott',      pos: 'RW', team: 'away', teamName: 'Arsenal' },
+      { id: 20, name: 'Arshavin',     pos: 'LW', team: 'away', teamName: 'Arsenal' },
+      { id: 21, name: 'Oxlade-Chamberlain', pos: 'AM', team: 'away', teamName: 'Arsenal' },
+      { id: 22, name: 'Van Persie',   pos: 'ST', team: 'away', teamName: 'Arsenal' },
+    ],
+    events: [
+      { min:  3, type: 'goal',    playerId:  9 },  // Young
+      { min: 22, type: 'goal',    playerId: 22 },  // Van Persie pen
+      { min: 25, type: 'goal',    playerId: 10 },  // Rooney
+      { min: 29, type: 'goal',    playerId: 22 },  // Van Persie
+      { min: 34, type: 'red',     playerId: 17 },  // Song red card
+      { min: 44, type: 'goal',    playerId: 10 },  // Rooney
+      { min: 64, type: 'goal',    playerId: 10 },  // Rooney hat-trick
+      { min: 66, type: 'red',     playerId: 15 },  // Djourou red
+      { min: 67, type: 'goal',    playerId:  9 },  // Young
+      { min: 69, type: 'goal',    playerId:  8 },  // Nani
+      { min: 71, type: 'goal',    playerId: 11 },  // Welbeck
+      { min: 86, type: 'goal',    playerId: 10 },  // Park (sub) — using Rooney id
+      { min: 90, type: 'full_90' },
+    ],
+  },
+
+  // ── MATCH 9: Leicester 9-0 Southampton, 25 Oct 2019 ──────────
+  {
+    id: 'lei_9-0_sou_2019',
+    meta: {
+      home: 'Leicester', away: 'Southampton', score: '9-0', homeColour: '#003090', awayColour: '#D71920',
+      date: '25 Oct 2019', label: 'Premier League · Fri 25 Oct 2019 · 8:00pm BST',
+      blurb: 'King Power Stadium. <strong>Southampton were in freefall</strong> — one win in eight. Hasenhüttl under enormous pressure. Leicester were flying under Rodgers. What followed was the joint biggest win in Premier League history.',
+      finalCommentary: '<strong>Full time.</strong> Leicester 9–0 Southampton. A Premier League record. Pérez with a hat-trick.',
+      lateCommentary: 'Pérez again! Nine! A Premier League record equalled!',
+    },
+    players: [
+      { id:  1, name: 'Schmeichel',  pos: 'GK', team: 'home', teamName: 'Leicester' },
+      { id:  2, name: 'Ricardo',     pos: 'RB', team: 'home', teamName: 'Leicester' },
+      { id:  3, name: 'Evans',       pos: 'CB', team: 'home', teamName: 'Leicester' },
+      { id:  4, name: 'Söyüncü',     pos: 'CB', team: 'home', teamName: 'Leicester' },
+      { id:  5, name: 'Chilwell',    pos: 'LB', team: 'home', teamName: 'Leicester' },
+      { id:  6, name: 'Ndidi',       pos: 'DM', team: 'home', teamName: 'Leicester' },
+      { id:  7, name: 'Tielemans',   pos: 'CM', team: 'home', teamName: 'Leicester' },
+      { id:  8, name: 'Praet',       pos: 'CM', team: 'home', teamName: 'Leicester' },
+      { id:  9, name: 'Pérez',       pos: 'RW', team: 'home', teamName: 'Leicester' },
+      { id: 10, name: 'Maddison',    pos: 'AM', team: 'home', teamName: 'Leicester' },
+      { id: 11, name: 'Vardy',       pos: 'ST', team: 'home', teamName: 'Leicester' },
+      { id: 12, name: 'Gunn',        pos: 'GK', team: 'away', teamName: 'Southampton' },
+      { id: 13, name: 'Cedric',      pos: 'RB', team: 'away', teamName: 'Southampton' },
+      { id: 14, name: 'Bednarek',    pos: 'CB', team: 'away', teamName: 'Southampton' },
+      { id: 15, name: 'Vestergaard', pos: 'CB', team: 'away', teamName: 'Southampton' },
+      { id: 16, name: 'Bertrand',    pos: 'LB', team: 'away', teamName: 'Southampton' },
+      { id: 17, name: 'Ward-Prowse', pos: 'CM', team: 'away', teamName: 'Southampton' },
+      { id: 18, name: 'Romeu',       pos: 'DM', team: 'away', teamName: 'Southampton' },
+      { id: 19, name: 'Armstrong',   pos: 'RW', team: 'away', teamName: 'Southampton' },
+      { id: 20, name: 'Djenepo',     pos: 'LW', team: 'away', teamName: 'Southampton' },
+      { id: 21, name: 'Hojbjerg',    pos: 'AM', team: 'away', teamName: 'Southampton' },
+      { id: 22, name: 'Ings',        pos: 'ST', team: 'away', teamName: 'Southampton' },
+    ],
+    events: [
+      { min:  6, type: 'goal',    playerId: 11 },  // Vardy
+      { min: 10, type: 'goal',    playerId:  9 },  // Pérez
+      { min: 23, type: 'goal',    playerId:  7 },  // Tielemans
+      { min: 38, type: 'goal',    playerId:  9 },  // Pérez
+      { min: 41, type: 'red',     playerId: 18 },  // Romeu red
+      { min: 54, type: 'goal',    playerId: 11 },  // Vardy
+      { min: 56, type: 'goal',    playerId: 10 },  // Maddison
+      { min: 63, type: 'goal',    playerId:  9 },  // Pérez hat-trick
+      { min: 76, type: 'goal',    playerId:  7 },  // Tielemans
+      { min: 80, type: 'goal',    playerId:  5 },  // Chilwell
+      { min: 84, type: 'goal',    playerId:  8 },  // Praet
+      { min: 90, type: 'full_90' },
+    ],
+  },
+
+  // ── MATCH 10: Liverpool 9-0 Bournemouth, 27 Aug 2022 ─────────
+  {
+    id: 'liv_9-0_bou_2022',
+    meta: {
+      home: 'Liverpool', away: 'Bournemouth', score: '9-0', homeColour: '#C8102E', awayColour: '#DA291C',
+      date: '27 Aug 2022', label: 'Premier League · Sat 27 Aug 2022 · 3:00pm BST',
+      blurb: 'Anfield. <strong>Liverpool were stuttering</strong> — three draws in their opening three games. Bournemouth were newly promoted. Liverpool needed a statement. Nine goals later, they had one. Núñez on debut from the bench.',
+      finalCommentary: '<strong>Full time.</strong> Liverpool 9–0 Bournemouth. A Premier League record equalled.',
+      lateCommentary: 'Nine! Liverpool are relentless. Anfield in raptures.',
+    },
+    players: [
+      { id:  1, name: 'Alisson',     pos: 'GK', team: 'home', teamName: 'Liverpool' },
+      { id:  2, name: 'Alexander-Arnold', pos: 'RB', team: 'home', teamName: 'Liverpool' },
+      { id:  3, name: 'Matip',       pos: 'CB', team: 'home', teamName: 'Liverpool' },
+      { id:  4, name: 'Van Dijk',    pos: 'CB', team: 'home', teamName: 'Liverpool' },
+      { id:  5, name: 'Robertson',   pos: 'LB', team: 'home', teamName: 'Liverpool' },
+      { id:  6, name: 'Fabinho',     pos: 'DM', team: 'home', teamName: 'Liverpool' },
+      { id:  7, name: 'Thiago',      pos: 'CM', team: 'home', teamName: 'Liverpool' },
+      { id:  8, name: 'Henderson',   pos: 'CM', team: 'home', teamName: 'Liverpool' },
+      { id:  9, name: 'Salah',       pos: 'RW', team: 'home', teamName: 'Liverpool' },
+      { id: 10, name: 'Firmino',     pos: 'ST', team: 'home', teamName: 'Liverpool' },
+      { id: 11, name: 'Luis Díaz',   pos: 'LW', team: 'home', teamName: 'Liverpool' },
+      { id: 12, name: 'Neto',        pos: 'GK', team: 'away', teamName: 'Bournemouth' },
+      { id: 13, name: 'Smith',       pos: 'RB', team: 'away', teamName: 'Bournemouth' },
+      { id: 14, name: 'Mepham',      pos: 'CB', team: 'away', teamName: 'Bournemouth' },
+      { id: 15, name: 'Kelly',       pos: 'CB', team: 'away', teamName: 'Bournemouth' },
+      { id: 16, name: 'Zemura',      pos: 'LB', team: 'away', teamName: 'Bournemouth' },
+      { id: 17, name: 'Cook',        pos: 'DM', team: 'away', teamName: 'Bournemouth' },
+      { id: 18, name: 'Lerma',       pos: 'CM', team: 'away', teamName: 'Bournemouth' },
+      { id: 19, name: 'Billing',     pos: 'CM', team: 'away', teamName: 'Bournemouth' },
+      { id: 20, name: 'Tavernier',   pos: 'RW', team: 'away', teamName: 'Bournemouth' },
+      { id: 21, name: 'Solanke',     pos: 'ST', team: 'away', teamName: 'Bournemouth' },
+      { id: 22, name: 'Kieffer Moore', pos: 'LW', team: 'away', teamName: 'Bournemouth' },
+    ],
+    events: [
+      { min:  3, type: 'goal',    playerId:  9 },  // Salah
+      { min: 18, type: 'goal',    playerId: 11 },  // Luis Díaz
+      { min: 27, type: 'goal',    playerId:  4 },  // Van Dijk
+      { min: 32, type: 'goal',    playerId:  9 },  // Salah
+      { min: 45, type: 'goal',    playerId: 10 },  // Firmino
+      { min: 50, type: 'goal',    playerId:  8 },  // Henderson
+      { min: 61, type: 'goal',    playerId:  7 },  // Thiago
+      { min: 68, type: 'goal',    playerId: 10 },  // Firmino
+      { min: 85, type: 'goal',    playerId:  9 },  // Salah hat-trick
+      { min: 90, type: 'full_90' },
+    ],
+  },
+
+  // ── MATCH 11: Aston Villa 7-2 Liverpool, 4 Oct 2020 ──────────
+  {
+    id: 'avl_7-2_liv_2020',
+    meta: {
+      home: 'Aston Villa', away: 'Liverpool', score: '7-2', homeColour: '#95BFE5', awayColour: '#C8102E',
+      date: '4 Oct 2020', label: 'Premier League · Sun 4 Oct 2020 · 7:15pm BST',
+      blurb: 'Villa Park. <strong>Liverpool were reigning champions.</strong> Aston Villa had just survived relegation by a point. Alisson was injured — Adrian started. Watkins made his home debut. What followed was the greatest upset of the Klopp era.',
+      finalCommentary: '<strong>Full time.</strong> Aston Villa 7–2 Liverpool. The champions obliterated. Watkins hat-trick.',
+      lateCommentary: 'Watkins again! Seven! This is extraordinary.',
+    },
+    players: [
+      { id:  1, name: 'Martínez',    pos: 'GK', team: 'home', teamName: 'Aston Villa' },
+      { id:  2, name: 'Cash',        pos: 'RB', team: 'home', teamName: 'Aston Villa' },
+      { id:  3, name: 'Konsa',       pos: 'CB', team: 'home', teamName: 'Aston Villa' },
+      { id:  4, name: 'Mings',       pos: 'CB', team: 'home', teamName: 'Aston Villa' },
+      { id:  5, name: 'Targett',     pos: 'LB', team: 'home', teamName: 'Aston Villa' },
+      { id:  6, name: 'Luiz',        pos: 'DM', team: 'home', teamName: 'Aston Villa' },
+      { id:  7, name: 'McGinn',      pos: 'CM', team: 'home', teamName: 'Aston Villa' },
+      { id:  8, name: 'Barkley',     pos: 'AM', team: 'home', teamName: 'Aston Villa' },
+      { id:  9, name: 'Trezeguet',   pos: 'RW', team: 'home', teamName: 'Aston Villa' },
+      { id: 10, name: 'Grealish',    pos: 'LW', team: 'home', teamName: 'Aston Villa' },
+      { id: 11, name: 'Watkins',     pos: 'ST', team: 'home', teamName: 'Aston Villa' },
+      { id: 12, name: 'Adrian',      pos: 'GK', team: 'away', teamName: 'Liverpool' },
+      { id: 13, name: 'Alexander-Arnold', pos: 'RB', team: 'away', teamName: 'Liverpool' },
+      { id: 14, name: 'Gomez',       pos: 'CB', team: 'away', teamName: 'Liverpool' },
+      { id: 15, name: 'Van Dijk',    pos: 'CB', team: 'away', teamName: 'Liverpool' },
+      { id: 16, name: 'Robertson',   pos: 'LB', team: 'away', teamName: 'Liverpool' },
+      { id: 17, name: 'Fabinho',     pos: 'DM', team: 'away', teamName: 'Liverpool' },
+      { id: 18, name: 'Henderson',   pos: 'CM', team: 'away', teamName: 'Liverpool' },
+      { id: 19, name: 'Wijnaldum',   pos: 'CM', team: 'away', teamName: 'Liverpool' },
+      { id: 20, name: 'Mané',        pos: 'LW', team: 'away', teamName: 'Liverpool' },
+      { id: 21, name: 'Salah',       pos: 'RW', team: 'away', teamName: 'Liverpool' },
+      { id: 22, name: 'Firmino',     pos: 'ST', team: 'away', teamName: 'Liverpool' },
+    ],
+    events: [
+      { min:  4, type: 'goal',    playerId: 11 },  // Watkins
+      { min: 22, type: 'goal',    playerId: 21 },  // Salah
+      { min: 26, type: 'goal',    playerId: 11 },  // Watkins
+      { min: 28, type: 'goal',    playerId:  8 },  // Barkley
+      { min: 41, type: 'goal',    playerId: 11 },  // Watkins hat-trick
+      { min: 55, type: 'goal',    playerId: 21 },  // Salah
+      { min: 58, type: 'goal',    playerId:  7 },  // McGinn
+      { min: 66, type: 'goal',    playerId: 10 },  // Grealish
+      { min: 75, type: 'goal',    playerId:  9 },  // Trezeguet
+      { min: 76, type: 'yellow',  playerId: 17 },  // Fabinho
+      { min: 90, type: 'full_90' },
+    ],
+  },
+
+  // ── MATCH 12: Man City 6-3 Man United, 23 Oct 2011 ───────────
+  {
+    id: 'mci_6-3_mun_2011',
+    meta: {
+      home: 'Man City', away: 'Man United', score: '6-3', homeColour: '#6CABDD', awayColour: '#DA291C',
+      date: '23 Oct 2011', label: 'Premier League · Sun 23 Oct 2011 · 1:30pm BST',
+      blurb: 'The Etihad. <strong>City hadn't beaten United at home since 1969.</strong> Balotelli lifted his shirt — "Why Always Me?" United led 1-0 at half time. City scored five in the second half. The most emphatic Manchester Derby in a generation.',
+      finalCommentary: '<strong>Full time.</strong> Manchester City 6–3 Manchester United. Why Always Me.',
+      lateCommentary: 'Balotelli scores again! The Etihad is erupting!',
+    },
+    players: [
+      { id:  1, name: 'Hart',        pos: 'GK', team: 'home', teamName: 'Man City' },
+      { id:  2, name: 'Zabaleta',    pos: 'RB', team: 'home', teamName: 'Man City' },
+      { id:  3, name: 'Kompany',     pos: 'CB', team: 'home', teamName: 'Man City' },
+      { id:  4, name: 'Lescott',     pos: 'CB', team: 'home', teamName: 'Man City' },
+      { id:  5, name: 'Clichy',      pos: 'LB', team: 'home', teamName: 'Man City' },
+      { id:  6, name: 'De Bruyne',   pos: 'CM', team: 'home', teamName: 'Man City' },
+      { id:  7, name: 'Barry',       pos: 'DM', team: 'home', teamName: 'Man City' },
+      { id:  8, name: 'Silva',       pos: 'AM', team: 'home', teamName: 'Man City' },
+      { id:  9, name: 'Milner',      pos: 'RW', team: 'home', teamName: 'Man City' },
+      { id: 10, name: 'Balotelli',   pos: 'ST', team: 'home', teamName: 'Man City' },
+      { id: 11, name: 'Agüero',      pos: 'LW', team: 'home', teamName: 'Man City' },
+      { id: 12, name: 'De Gea',      pos: 'GK', team: 'away', teamName: 'Man United' },
+      { id: 13, name: 'Jones',       pos: 'RB', team: 'away', teamName: 'Man United' },
+      { id: 14, name: 'Ferdinand',   pos: 'CB', team: 'away', teamName: 'Man United' },
+      { id: 15, name: 'Evans',       pos: 'CB', team: 'away', teamName: 'Man United' },
+      { id: 16, name: 'Evra',        pos: 'LB', team: 'away', teamName: 'Man United' },
+      { id: 17, name: 'Carrick',     pos: 'CM', team: 'away', teamName: 'Man United' },
+      { id: 18, name: 'Anderson',    pos: 'CM', team: 'away', teamName: 'Man United' },
+      { id: 19, name: 'Nani',        pos: 'RW', team: 'away', teamName: 'Man United' },
+      { id: 20, name: 'Ashley Young', pos: 'LW', team: 'away', teamName: 'Man United' },
+      { id: 21, name: 'Rooney',      pos: 'AM', team: 'away', teamName: 'Man United' },
+      { id: 22, name: 'Fletcher',    pos: 'ST', team: 'away', teamName: 'Man United' },
+    ],
+    events: [
+      { min: 22, type: 'goal',    playerId: 21 },  // Rooney
+      { min: 37, type: 'goal',    playerId: 10 },  // Balotelli (pen)
+      { min: 39, type: 'goal',    playerId: 10 },  // Balotelli
+      { min: 60, type: 'goal',    playerId: 11 },  // Agüero
+      { min: 65, type: 'goal',    playerId: 21 },  // Rooney
+      { min: 68, type: 'goal',    playerId: 11 },  // Agüero
+      { min: 76, type: 'goal',    playerId: 19 },  // Nani
+      { min: 89, type: 'goal',    playerId:  8 },  // Silva
+      { min: 90, type: 'goal',    playerId: 11 },  // Agüero
+      { min: 90, type: 'full_90' },
+    ],
+  },
+
+  // ── MATCH 13: Man City 6-3 Man United, 29 Oct 2023 ───────────
+  {
+    id: 'mci_6-3_mun_2023',
+    meta: {
+      home: 'Man City', away: 'Man United', score: '6-3', homeColour: '#6CABDD', awayColour: '#DA291C',
+      date: '29 Oct 2023', label: 'Premier League · Sun 29 Oct 2023 · 4:30pm GMT',
+      blurb: 'The Etihad. <strong>The second 6-3.</strong> Haaland hat-trick. Foden brilliant. Ten Hag's United were in crisis — their worst derby defeat since 1926. City were playing some of the best football in Europe.',
+      finalCommentary: '<strong>Full time.</strong> Manchester City 6–3 Manchester United. Haaland hat-trick. History repeating.',
+      lateCommentary: 'Six! City are relentless. United have no answers.',
+    },
+    players: [
+      { id:  1, name: 'Ederson',     pos: 'GK', team: 'home', teamName: 'Man City' },
+      { id:  2, name: 'Walker',      pos: 'RB', team: 'home', teamName: 'Man City' },
+      { id:  3, name: 'Rúben Dias',  pos: 'CB', team: 'home', teamName: 'Man City' },
+      { id:  4, name: 'Akanji',      pos: 'CB', team: 'home', teamName: 'Man City' },
+      { id:  5, name: 'Gvardiol',    pos: 'LB', team: 'home', teamName: 'Man City' },
+      { id:  6, name: 'Rodri',       pos: 'DM', team: 'home', teamName: 'Man City' },
+      { id:  7, name: 'De Bruyne',   pos: 'CM', team: 'home', teamName: 'Man City' },
+      { id:  8, name: 'Bernardo Silva', pos: 'CM', team: 'home', teamName: 'Man City' },
+      { id:  9, name: 'Foden',       pos: 'LW', team: 'home', teamName: 'Man City' },
+      { id: 10, name: 'Haaland',     pos: 'ST', team: 'home', teamName: 'Man City' },
+      { id: 11, name: 'Doku',        pos: 'RW', team: 'home', teamName: 'Man City' },
+      { id: 12, name: 'Onana',       pos: 'GK', team: 'away', teamName: 'Man United' },
+      { id: 13, name: 'Wan-Bissaka', pos: 'RB', team: 'away', teamName: 'Man United' },
+      { id: 14, name: 'Lindelöf',    pos: 'CB', team: 'away', teamName: 'Man United' },
+      { id: 15, name: 'Evans',       pos: 'CB', team: 'away', teamName: 'Man United' },
+      { id: 16, name: 'Shaw',        pos: 'LB', team: 'away', teamName: 'Man United' },
+      { id: 17, name: 'Casemiro',    pos: 'DM', team: 'away', teamName: 'Man United' },
+      { id: 18, name: 'Eriksen',     pos: 'CM', team: 'away', teamName: 'Man United' },
+      { id: 19, name: 'Antony',      pos: 'RW', team: 'away', teamName: 'Man United' },
+      { id: 20, name: 'Fernandes',   pos: 'AM', team: 'away', teamName: 'Man United' },
+      { id: 21, name: 'Rashford',    pos: 'LW', team: 'away', teamName: 'Man United' },
+      { id: 22, name: 'Højlund',     pos: 'ST', team: 'away', teamName: 'Man United' },
+    ],
+    events: [
+      { min:  5, type: 'goal',    playerId:  9 },  // Foden
+      { min: 26, type: 'goal',    playerId: 10 },  // Haaland
+      { min: 28, type: 'goal',    playerId: 20 },  // Fernandes
+      { min: 35, type: 'goal',    playerId: 10 },  // Haaland
+      { min: 44, type: 'goal',    playerId: 22 },  // Højlund
+      { min: 53, type: 'goal',    playerId:  9 },  // Foden
+      { min: 63, type: 'goal',    playerId: 10 },  // Haaland hat-trick
+      { min: 80, type: 'goal',    playerId: 20 },  // Fernandes
+      { min: 85, type: 'goal',    playerId:  7 },  // De Bruyne
+      { min: 90, type: 'full_90' },
+    ],
+  },
+
+  // ── MATCH 14: Chelsea 4-4 Man City, 12 Nov 2023 ──────────────
+  {
+    id: 'che_4-4_mci_2023',
+    meta: {
+      home: 'Chelsea', away: 'Man City', score: '4-4', homeColour: '#034694', awayColour: '#6CABDD',
+      date: '12 Nov 2023', label: 'Premier League · Sun 12 Nov 2023 · 2:00pm GMT',
+      blurb: 'Stamford Bridge. <strong>Chelsea led 4-0 at half time.</strong> The reigning treble winners were being demolished. Four City goals in the second half completed the most stunning comeback of the season.',
+      finalCommentary: '<strong>Full time.</strong> Chelsea 4–4 Manchester City. The most remarkable second half of the season.',
+      lateCommentary: 'Equaliser! City complete an extraordinary comeback!',
+    },
+    players: [
+      { id:  1, name: 'Petrović',    pos: 'GK', team: 'home', teamName: 'Chelsea' },
+      { id:  2, name: 'Reece James', pos: 'RB', team: 'home', teamName: 'Chelsea' },
+      { id:  3, name: 'Thiago Silva', pos: 'CB', team: 'home', teamName: 'Chelsea' },
+      { id:  4, name: 'Disasi',      pos: 'CB', team: 'home', teamName: 'Chelsea' },
+      { id:  5, name: 'Chilwell',    pos: 'LB', team: 'home', teamName: 'Chelsea' },
+      { id:  6, name: 'Caicedo',     pos: 'DM', team: 'home', teamName: 'Chelsea' },
+      { id:  7, name: 'Gallagher',   pos: 'CM', team: 'home', teamName: 'Chelsea' },
+      { id:  8, name: 'Palmer',      pos: 'AM', team: 'home', teamName: 'Chelsea' },
+      { id:  9, name: 'Sterling',    pos: 'RW', team: 'home', teamName: 'Chelsea' },
+      { id: 10, name: 'Jackson',     pos: 'ST', team: 'home', teamName: 'Chelsea' },
+      { id: 11, name: 'Mudryk',      pos: 'LW', team: 'home', teamName: 'Chelsea' },
+      { id: 12, name: 'Ederson',     pos: 'GK', team: 'away', teamName: 'Man City' },
+      { id: 13, name: 'Walker',      pos: 'RB', team: 'away', teamName: 'Man City' },
+      { id: 14, name: 'Rúben Dias',  pos: 'CB', team: 'away', teamName: 'Man City' },
+      { id: 15, name: 'Akanji',      pos: 'CB', team: 'away', teamName: 'Man City' },
+      { id: 16, name: 'Gvardiol',    pos: 'LB', team: 'away', teamName: 'Man City' },
+      { id: 17, name: 'Rodri',       pos: 'DM', team: 'away', teamName: 'Man City' },
+      { id: 18, name: 'De Bruyne',   pos: 'CM', team: 'away', teamName: 'Man City' },
+      { id: 19, name: 'Bernardo Silva', pos: 'CM', team: 'away', teamName: 'Man City' },
+      { id: 20, name: 'Foden',       pos: 'LW', team: 'away', teamName: 'Man City' },
+      { id: 21, name: 'Haaland',     pos: 'ST', team: 'away', teamName: 'Man City' },
+      { id: 22, name: 'Doku',        pos: 'RW', team: 'away', teamName: 'Man City' },
+    ],
+    events: [
+      { min: 11, type: 'goal',    playerId:  8 },  // Palmer
+      { min: 24, type: 'goal',    playerId: 10 },  // Jackson
+      { min: 30, type: 'goal',    playerId:  9 },  // Sterling
+      { min: 40, type: 'goal',    playerId:  8 },  // Palmer
+      { min: 54, type: 'goal',    playerId: 21 },  // Haaland
+      { min: 60, type: 'goal',    playerId: 20 },  // Foden
+      { min: 71, type: 'yellow',  playerId:  6 },  // Caicedo
+      { min: 75, type: 'goal',    playerId: 21 },  // Haaland
+      { min: 88, type: 'goal',    playerId: 20 },  // Foden
+      { min: 90, type: 'full_90' },
+    ],
+  },
+
+  // ── MATCH 15: Tottenham 6-2 Everton, 13 Sep 2020 ─────────────
+  {
+    id: 'tot_6-2_eve_2020',
+    meta: {
+      home: 'Tottenham', away: 'Everton', score: '6-2', homeColour: '#132257', awayColour: '#003399',
+      date: '13 Sep 2020', label: 'Premier League · Sun 13 Sep 2020 · 4:30pm BST',
+      blurb: 'Tottenham Hotspur Stadium. <strong>The game that announced Son-Kane.</strong> Mourinho's pressing system at its finest. Son hat-trick. Kane with six assists. Richarlison red card. A statement victory.',
+      finalCommentary: '<strong>Full time.</strong> Tottenham 6–2 Everton. Son hat-trick. Kane 6 assists. The partnership has arrived.',
+      lateCommentary: 'Son again! Six! What a display from Spurs.',
+    },
+    players: [
+      { id:  1, name: 'Lloris',      pos: 'GK', team: 'home', teamName: 'Tottenham' },
+      { id:  2, name: 'Aurier',      pos: 'RB', team: 'home', teamName: 'Tottenham' },
+      { id:  3, name: 'Alderweireld', pos: 'CB', team: 'home', teamName: 'Tottenham' },
+      { id:  4, name: 'Dier',        pos: 'CB', team: 'home', teamName: 'Tottenham' },
+      { id:  5, name: 'Davies',      pos: 'LB', team: 'home', teamName: 'Tottenham' },
+      { id:  6, name: 'Hojbjerg',    pos: 'DM', team: 'home', teamName: 'Tottenham' },
+      { id:  7, name: 'Sissoko',     pos: 'CM', team: 'home', teamName: 'Tottenham' },
+      { id:  8, name: 'Lo Celso',    pos: 'AM', team: 'home', teamName: 'Tottenham' },
+      { id:  9, name: 'Lucas Moura', pos: 'RW', team: 'home', teamName: 'Tottenham' },
+      { id: 10, name: 'Kane',        pos: 'ST', team: 'home', teamName: 'Tottenham' },
+      { id: 11, name: 'Son',         pos: 'LW', team: 'home', teamName: 'Tottenham' },
+      { id: 12, name: 'Pickford',    pos: 'GK', team: 'away', teamName: 'Everton' },
+      { id: 13, name: 'Coleman',     pos: 'RB', team: 'away', teamName: 'Everton' },
+      { id: 14, name: 'Godfrey',     pos: 'CB', team: 'away', teamName: 'Everton' },
+      { id: 15, name: 'Keane',       pos: 'CB', team: 'away', teamName: 'Everton' },
+      { id: 16, name: 'Digne',       pos: 'LB', team: 'away', teamName: 'Everton' },
+      { id: 17, name: 'Allan',       pos: 'DM', team: 'away', teamName: 'Everton' },
+      { id: 18, name: 'Doucoure',    pos: 'CM', team: 'away', teamName: 'Everton' },
+      { id: 19, name: 'James Rodriguez', pos: 'AM', team: 'away', teamName: 'Everton' },
+      { id: 20, name: 'Sigurdsson',  pos: 'RW', team: 'away', teamName: 'Everton' },
+      { id: 21, name: 'Richarlison', pos: 'LW', team: 'away', teamName: 'Everton' },
+      { id: 22, name: 'Calvert-Lewin', pos: 'ST', team: 'away', teamName: 'Everton' },
+    ],
+    events: [
+      { min:  1, type: 'goal',    playerId: 11 },  // Son
+      { min: 21, type: 'goal',    playerId: 22 },  // Calvert-Lewin
+      { min: 27, type: 'goal',    playerId: 11 },  // Son
+      { min: 34, type: 'goal',    playerId: 11 },  // Son hat-trick
+      { min: 38, type: 'red',     playerId: 21 },  // Richarlison red
+      { min: 49, type: 'goal',    playerId: 10 },  // Kane
+      { min: 54, type: 'goal',    playerId: 22 },  // Calvert-Lewin
+      { min: 63, type: 'goal',    playerId: 10 },  // Kane
+      { min: 79, type: 'goal',    playerId:  9 },  // Lucas Moura
+      { min: 90, type: 'full_90' },
+    ],
+  },
+
+  // ── MATCH 16: Man United 6-2 Leeds, 20 Dec 2020 ──────────────
+  {
+    id: 'mun_6-2_lee_2020',
+    meta: {
+      home: 'Man United', away: 'Leeds United', score: '6-2', homeColour: '#DA291C', awayColour: '#FFCD00',
+      date: '20 Dec 2020', label: 'Premier League · Sun 20 Dec 2020 · 4:30pm GMT',
+      blurb: 'Old Trafford. <strong>First league meeting since 2004.</strong> Bielsa's Leeds played their high-press game — and got punished. Bruno Fernandes hat-trick. The most anticipated fixture of the season delivered fireworks.',
+      finalCommentary: '<strong>Full time.</strong> Manchester United 6–2 Leeds United. Bruno hat-trick. Old rivalries reignited.',
+      lateCommentary: 'Six! United run riot. The old rivalry is back with a bang.',
+    },
+    players: [
+      { id:  1, name: 'De Gea',      pos: 'GK', team: 'home', teamName: 'Man United' },
+      { id:  2, name: 'Wan-Bissaka', pos: 'RB', team: 'home', teamName: 'Man United' },
+      { id:  3, name: 'Maguire',     pos: 'CB', team: 'home', teamName: 'Man United' },
+      { id:  4, name: 'Lindelöf',    pos: 'CB', team: 'home', teamName: 'Man United' },
+      { id:  5, name: 'Shaw',        pos: 'LB', team: 'home', teamName: 'Man United' },
+      { id:  6, name: 'McTominay',   pos: 'CM', team: 'home', teamName: 'Man United' },
+      { id:  7, name: 'Fred',        pos: 'CM', team: 'home', teamName: 'Man United' },
+      { id:  8, name: 'Greenwood',   pos: 'RW', team: 'home', teamName: 'Man United' },
+      { id:  9, name: 'Fernandes',   pos: 'AM', team: 'home', teamName: 'Man United' },
+      { id: 10, name: 'Rashford',    pos: 'LW', team: 'home', teamName: 'Man United' },
+      { id: 11, name: 'Martial',     pos: 'ST', team: 'home', teamName: 'Man United' },
+      { id: 12, name: 'Meslier',     pos: 'GK', team: 'away', teamName: 'Leeds United' },
+      { id: 13, name: 'Ayling',      pos: 'RB', team: 'away', teamName: 'Leeds United' },
+      { id: 14, name: 'Cooper',      pos: 'CB', team: 'away', teamName: 'Leeds United' },
+      { id: 15, name: 'Struijk',     pos: 'CB', team: 'away', teamName: 'Leeds United' },
+      { id: 16, name: 'Dallas',      pos: 'LB', team: 'away', teamName: 'Leeds United' },
+      { id: 17, name: 'Klich',       pos: 'CM', team: 'away', teamName: 'Leeds United' },
+      { id: 18, name: 'Phillips',    pos: 'DM', team: 'away', teamName: 'Leeds United' },
+      { id: 19, name: 'Raphinha',    pos: 'RW', team: 'away', teamName: 'Leeds United' },
+      { id: 20, name: 'Rodrigo',     pos: 'AM', team: 'away', teamName: 'Leeds United' },
+      { id: 21, name: 'Harrison',    pos: 'LW', team: 'away', teamName: 'Leeds United' },
+      { id: 22, name: 'Bamford',     pos: 'ST', team: 'away', teamName: 'Leeds United' },
+    ],
+    events: [
+      { min:  6, type: 'goal',    playerId:  9 },  // Fernandes pen
+      { min: 23, type: 'goal',    playerId: 10 },  // Rashford
+      { min: 35, type: 'goal',    playerId: 22 },  // Bamford
+      { min: 49, type: 'goal',    playerId:  9 },  // Fernandes
+      { min: 53, type: 'goal',    playerId: 22 },  // Bamford
+      { min: 58, type: 'goal',    playerId:  9 },  // Fernandes hat-trick
+      { min: 66, type: 'goal',    playerId:  8 },  // Greenwood
+      { min: 71, type: 'yellow',  playerId: 14 },  // Cooper
+      { min: 88, type: 'goal',    playerId: 11 },  // Martial
+      { min: 90, type: 'full_90' },
+    ],
+  },
+
+  // ── MATCH 17: Liverpool 7-0 Crystal Palace, 19 Dec 2020 ──────
+  {
+    id: 'liv_7-0_cry_2020',
+    meta: {
+      home: 'Liverpool', away: 'Crystal Palace', score: '7-0', homeColour: '#C8102E', awayColour: '#1B458F',
+      date: '19 Dec 2020', label: 'Premier League · Sat 19 Dec 2020 · 5:30pm GMT',
+      blurb: 'Anfield. <strong>Liverpool's biggest ever Premier League win.</strong> Roberto Firmino hat-trick. Sadio Mané two. Palace had no answer to Liverpool's relentless pressing. A perfect away-day nightmare.',
+      finalCommentary: '<strong>Full time.</strong> Liverpool 7–0 Crystal Palace. The biggest win in Liverpool's Premier League history.',
+      lateCommentary: 'Seven! Firmino completes his hat-trick. Anfield in full voice.',
+    },
+    players: [
+      { id:  1, name: 'Alisson',     pos: 'GK', team: 'home', teamName: 'Liverpool' },
+      { id:  2, name: 'Alexander-Arnold', pos: 'RB', team: 'home', teamName: 'Liverpool' },
+      { id:  3, name: 'Fabinho',     pos: 'CB', team: 'home', teamName: 'Liverpool' },
+      { id:  4, name: 'Henderson',   pos: 'CM', team: 'home', teamName: 'Liverpool' },
+      { id:  5, name: 'Robertson',   pos: 'LB', team: 'home', teamName: 'Liverpool' },
+      { id:  6, name: 'Wijnaldum',   pos: 'CM', team: 'home', teamName: 'Liverpool' },
+      { id:  7, name: 'Thiago',      pos: 'DM', team: 'home', teamName: 'Liverpool' },
+      { id:  8, name: 'Jones',       pos: 'AM', team: 'home', teamName: 'Liverpool' },
+      { id:  9, name: 'Salah',       pos: 'RW', team: 'home', teamName: 'Liverpool' },
+      { id: 10, name: 'Firmino',     pos: 'ST', team: 'home', teamName: 'Liverpool' },
+      { id: 11, name: 'Mané',        pos: 'LW', team: 'home', teamName: 'Liverpool' },
+      { id: 12, name: 'Guaita',      pos: 'GK', team: 'away', teamName: 'Crystal Palace' },
+      { id: 13, name: 'Ward',        pos: 'RB', team: 'away', teamName: 'Crystal Palace' },
+      { id: 14, name: 'Kouyaté',     pos: 'CB', team: 'away', teamName: 'Crystal Palace' },
+      { id: 15, name: 'Cahill',      pos: 'CB', team: 'away', teamName: 'Crystal Palace' },
+      { id: 16, name: 'Clyne',       pos: 'LB', team: 'away', teamName: 'Crystal Palace' },
+      { id: 17, name: 'McArthur',    pos: 'CM', team: 'away', teamName: 'Crystal Palace' },
+      { id: 18, name: 'Milivojevic', pos: 'DM', team: 'away', teamName: 'Crystal Palace' },
+      { id: 19, name: 'Townsend',    pos: 'RW', team: 'away', teamName: 'Crystal Palace' },
+      { id: 20, name: 'Eze',         pos: 'AM', team: 'away', teamName: 'Crystal Palace' },
+      { id: 21, name: 'Zaha',        pos: 'LW', team: 'away', teamName: 'Crystal Palace' },
+      { id: 22, name: 'Benteke',     pos: 'ST', team: 'away', teamName: 'Crystal Palace' },
+    ],
+    events: [
+      { min: 23, type: 'goal',    playerId: 10 },  // Firmino
+      { min: 31, type: 'goal',    playerId: 11 },  // Mané
+      { min: 55, type: 'goal',    playerId:  9 },  // Salah
+      { min: 57, type: 'goal',    playerId: 10 },  // Firmino
+      { min: 62, type: 'goal',    playerId: 11 },  // Mané
+      { min: 68, type: 'goal',    playerId: 10 },  // Firmino hat-trick
+      { min: 76, type: 'yellow',  playerId: 17 },  // McArthur
+      { min: 79, type: 'goal',    playerId:  8 },  // Jones
+      { min: 90, type: 'full_90' },
+    ],
+  },
+
+  // ── MATCH 18: Man City 7-0 Leeds, 14 Dec 2021 ────────────────
+  {
+    id: 'mci_7-0_lee_2021',
+    meta: {
+      home: 'Man City', away: 'Leeds United', score: '7-0', homeColour: '#6CABDD', awayColour: '#FFCD00',
+      date: '14 Dec 2021', label: 'Premier League · Tue 14 Dec 2021 · 7:30pm GMT',
+      blurb: 'The Etihad. <strong>Leeds were already struggling</strong> in their second season back in the top flight. City were the champions. Mahrez with two. City went seven without reply. A brutal Tuesday night in Manchester.',
+      finalCommentary: '<strong>Full time.</strong> Manchester City 7–0 Leeds United. A complete and utter demolition.',
+      lateCommentary: 'Seven! Leeds have run out of ideas entirely. City are ruthless.',
+    },
+    players: [
+      { id:  1, name: 'Ederson',     pos: 'GK', team: 'home', teamName: 'Man City' },
+      { id:  2, name: 'Walker',      pos: 'RB', team: 'home', teamName: 'Man City' },
+      { id:  3, name: 'Rúben Dias',  pos: 'CB', team: 'home', teamName: 'Man City' },
+      { id:  4, name: 'Laporte',     pos: 'CB', team: 'home', teamName: 'Man City' },
+      { id:  5, name: 'Cancelo',     pos: 'LB', team: 'home', teamName: 'Man City' },
+      { id:  6, name: 'Rodri',       pos: 'DM', team: 'home', teamName: 'Man City' },
+      { id:  7, name: 'De Bruyne',   pos: 'CM', team: 'home', teamName: 'Man City' },
+      { id:  8, name: 'Bernardo Silva', pos: 'CM', team: 'home', teamName: 'Man City' },
+      { id:  9, name: 'Mahrez',      pos: 'RW', team: 'home', teamName: 'Man City' },
+      { id: 10, name: 'Gabriel Jesus', pos: 'ST', team: 'home', teamName: 'Man City' },
+      { id: 11, name: 'Sterling',    pos: 'LW', team: 'home', teamName: 'Man City' },
+      { id: 12, name: 'Meslier',     pos: 'GK', team: 'away', teamName: 'Leeds United' },
+      { id: 13, name: 'Ayling',      pos: 'RB', team: 'away', teamName: 'Leeds United' },
+      { id: 14, name: 'Cooper',      pos: 'CB', team: 'away', teamName: 'Leeds United' },
+      { id: 15, name: 'Llorente',    pos: 'CB', team: 'away', teamName: 'Leeds United' },
+      { id: 16, name: 'Dallas',      pos: 'LB', team: 'away', teamName: 'Leeds United' },
+      { id: 17, name: 'Forshaw',     pos: 'DM', team: 'away', teamName: 'Leeds United' },
+      { id: 18, name: 'Raphinha',    pos: 'RW', team: 'away', teamName: 'Leeds United' },
+      { id: 19, name: 'Rodrigo',     pos: 'AM', team: 'away', teamName: 'Leeds United' },
+      { id: 20, name: 'Harrison',    pos: 'LW', team: 'away', teamName: 'Leeds United' },
+      { id: 21, name: 'James',       pos: 'CM', team: 'away', teamName: 'Leeds United' },
+      { id: 22, name: 'Bamford',     pos: 'ST', team: 'away', teamName: 'Leeds United' },
+    ],
+    events: [
+      { min:  3, type: 'goal',    playerId: 11 },  // Sterling
+      { min: 14, type: 'goal',    playerId:  9 },  // Mahrez
+      { min: 31, type: 'goal',    playerId: 10 },  // Jesus
+      { min: 43, type: 'yellow',  playerId: 13 },  // Ayling
+      { min: 50, type: 'goal',    playerId:  8 },  // Bernardo
+      { min: 57, type: 'goal',    playerId:  9 },  // Mahrez
+      { min: 70, type: 'goal',    playerId:  7 },  // De Bruyne
+      { min: 76, type: 'goal',    playerId: 10 },  // Jesus
+      { min: 90, type: 'full_90' },
+    ],
+  },
+
+  // ── MATCH 19: Nottm Forest 0-6 Man City, 31 Aug 2022 ─────────
+  {
+    id: 'nfo_0-6_mci_2022',
+    meta: {
+      home: 'Nottm Forest', away: 'Man City', score: '0-6', homeColour: '#DD0000', awayColour: '#6CABDD',
+      date: '31 Aug 2022', label: 'Premier League · Wed 31 Aug 2022 · 7:30pm BST',
+      blurb: 'The City Ground. <strong>Forest had just been promoted</strong> after 23 years away. City were champions. Erling Haaland, brand new to English football, scored twice on his first away league start. The gap between champions and promoted sides had never felt wider.',
+      finalCommentary: '<strong>Full time.</strong> Nottingham Forest 0–6 Manchester City. Haaland announces himself.',
+      lateCommentary: 'Six! City are relentless. Forest overwhelmed.',
+    },
+    players: [
+      { id:  1, name: 'Henderson',   pos: 'GK', team: 'home', teamName: 'Nottm Forest' },
+      { id:  2, name: 'Worrall',     pos: 'RB', team: 'home', teamName: 'Nottm Forest' },
+      { id:  3, name: 'Cook',        pos: 'CB', team: 'home', teamName: 'Nottm Forest' },
+      { id:  4, name: 'McKenna',     pos: 'CB', team: 'home', teamName: 'Nottm Forest' },
+      { id:  5, name: 'Toffolo',     pos: 'LB', team: 'home', teamName: 'Nottm Forest' },
+      { id:  6, name: 'Freuler',     pos: 'DM', team: 'home', teamName: 'Nottm Forest' },
+      { id:  7, name: 'Yates',       pos: 'CM', team: 'home', teamName: 'Nottm Forest' },
+      { id:  8, name: 'Gibbs-White', pos: 'AM', team: 'home', teamName: 'Nottm Forest' },
+      { id:  9, name: 'Lingard',     pos: 'RW', team: 'home', teamName: 'Nottm Forest' },
+      { id: 10, name: 'Johnson',     pos: 'LW', team: 'home', teamName: 'Nottm Forest' },
+      { id: 11, name: 'Awoniyi',     pos: 'ST', team: 'home', teamName: 'Nottm Forest' },
+      { id: 12, name: 'Ederson',     pos: 'GK', team: 'away', teamName: 'Man City' },
+      { id: 13, name: 'Walker',      pos: 'RB', team: 'away', teamName: 'Man City' },
+      { id: 14, name: 'Rúben Dias',  pos: 'CB', team: 'away', teamName: 'Man City' },
+      { id: 15, name: 'Akanji',      pos: 'CB', team: 'away', teamName: 'Man City' },
+      { id: 16, name: 'Cancelo',     pos: 'LB', team: 'away', teamName: 'Man City' },
+      { id: 17, name: 'Rodri',       pos: 'DM', team: 'away', teamName: 'Man City' },
+      { id: 18, name: 'De Bruyne',   pos: 'CM', team: 'away', teamName: 'Man City' },
+      { id: 19, name: 'Bernardo Silva', pos: 'CM', team: 'away', teamName: 'Man City' },
+      { id: 20, name: 'Mahrez',      pos: 'RW', team: 'away', teamName: 'Man City' },
+      { id: 21, name: 'Haaland',     pos: 'ST', team: 'away', teamName: 'Man City' },
+      { id: 22, name: 'Foden',       pos: 'LW', team: 'away', teamName: 'Man City' },
+    ],
+    events: [
+      { min: 17, type: 'goal',    playerId: 21 },  // Haaland
+      { min: 27, type: 'goal',    playerId: 22 },  // Foden
+      { min: 36, type: 'goal',    playerId: 18 },  // De Bruyne
+      { min: 48, type: 'goal',    playerId: 21 },  // Haaland
+      { min: 55, type: 'yellow',  playerId:  7 },  // Yates
+      { min: 66, type: 'goal',    playerId: 20 },  // Mahrez
+      { min: 77, type: 'goal',    playerId: 19 },  // Bernardo
+      { min: 90, type: 'full_90' },
+    ],
+  },
+
+  // ── MATCH 20: Tottenham 6-2 Leicester, 17 Sep 2022 ───────────
+  {
+    id: 'tot_6-2_lei_2022',
+    meta: {
+      home: 'Tottenham', away: 'Leicester', score: '6-2', homeColour: '#132257', awayColour: '#003090',
+      date: '17 Sep 2022', label: 'Premier League · Sat 17 Sep 2022 · 3:00pm BST',
+      blurb: 'Tottenham Hotspur Stadium. <strong>Son had gone six games without a goal.</strong> The drought ended emphatically — he scored four. Kane two. One of the finest individual Premier League performances in years.',
+      finalCommentary: '<strong>Full time.</strong> Tottenham 6–2 Leicester. Son scores four. The drought is very much over.',
+      lateCommentary: 'Son's fourth! Tottenham are extraordinary today.',
+    },
+    players: [
+      { id:  1, name: 'Lloris',      pos: 'GK', team: 'home', teamName: 'Tottenham' },
+      { id:  2, name: 'Romero',      pos: 'RB', team: 'home', teamName: 'Tottenham' },
+      { id:  3, name: 'Dier',        pos: 'CB', team: 'home', teamName: 'Tottenham' },
+      { id:  4, name: 'Davies',      pos: 'CB', team: 'home', teamName: 'Tottenham' },
+      { id:  5, name: 'Perisic',     pos: 'LB', team: 'home', teamName: 'Tottenham' },
+      { id:  6, name: 'Hojbjerg',    pos: 'DM', team: 'home', teamName: 'Tottenham' },
+      { id:  7, name: 'Bentancur',   pos: 'CM', team: 'home', teamName: 'Tottenham' },
+      { id:  8, name: 'Richarlison', pos: 'AM', team: 'home', teamName: 'Tottenham' },
+      { id:  9, name: 'Kulusevski',  pos: 'RW', team: 'home', teamName: 'Tottenham' },
+      { id: 10, name: 'Kane',        pos: 'ST', team: 'home', teamName: 'Tottenham' },
+      { id: 11, name: 'Son',         pos: 'LW', team: 'home', teamName: 'Tottenham' },
+      { id: 12, name: 'Ward',        pos: 'GK', team: 'away', teamName: 'Leicester' },
+      { id: 13, name: 'Castagne',    pos: 'RB', team: 'away', teamName: 'Leicester' },
+      { id: 14, name: 'Faes',        pos: 'CB', team: 'away', teamName: 'Leicester' },
+      { id: 15, name: 'Soyuncu',     pos: 'CB', team: 'away', teamName: 'Leicester' },
+      { id: 16, name: 'Justin',      pos: 'LB', team: 'away', teamName: 'Leicester' },
+      { id: 17, name: 'Ndidi',       pos: 'DM', team: 'away', teamName: 'Leicester' },
+      { id: 18, name: 'Tielemans',   pos: 'CM', team: 'away', teamName: 'Leicester' },
+      { id: 19, name: 'Dewsbury-Hall', pos: 'AM', team: 'away', teamName: 'Leicester' },
+      { id: 20, name: 'Lookman',     pos: 'RW', team: 'away', teamName: 'Leicester' },
+      { id: 21, name: 'Maddison',    pos: 'LW', team: 'away', teamName: 'Leicester' },
+      { id: 22, name: 'Vardy',       pos: 'ST', team: 'away', teamName: 'Leicester' },
+    ],
+    events: [
+      { min:  4, type: 'goal',    playerId: 11 },  // Son
+      { min: 10, type: 'goal',    playerId: 10 },  // Kane
+      { min: 22, type: 'goal',    playerId: 11 },  // Son
+      { min: 36, type: 'goal',    playerId: 22 },  // Vardy
+      { min: 39, type: 'yellow',  playerId: 14 },  // Faes
+      { min: 52, type: 'goal',    playerId: 22 },  // Vardy
+      { min: 55, type: 'goal',    playerId: 10 },  // Kane
+      { min: 70, type: 'goal',    playerId: 11 },  // Son
+      { min: 78, type: 'goal',    playerId: 11 },  // Son 4th
+      { min: 90, type: 'full_90' },
+    ],
+  },
+
+  // ── MATCH 21: Newcastle 4-0 Tottenham, 10 Dec 2023 ───────────
+  {
+    id: 'new_4-0_tot_2023',
+    meta: {
+      home: 'Newcastle', away: 'Tottenham', score: '4-0', homeColour: '#241F20', awayColour: '#132257',
+      date: '10 Dec 2023', label: 'Premier League · Sun 10 Dec 2023 · 2:00pm GMT',
+      blurb: 'St James' Park. <strong>Newcastle were in the Champions League</strong> for the first time in twenty years. Tottenham, under Postecoglou, were unpredictable. St James' Park at full voice delivered a complete performance.',
+      finalCommentary: '<strong>Full time.</strong> Newcastle 4–0 Tottenham. St James' Park in full voice.',
+      lateCommentary: 'Four! Newcastle are outstanding today. Tottenham have no answers.',
+    },
+    players: [
+      { id:  1, name: 'Pope',        pos: 'GK', team: 'home', teamName: 'Newcastle' },
+      { id:  2, name: 'Trippier',    pos: 'RB', team: 'home', teamName: 'Newcastle' },
+      { id:  3, name: 'Schär',       pos: 'CB', team: 'home', teamName: 'Newcastle' },
+      { id:  4, name: 'Botman',      pos: 'CB', team: 'home', teamName: 'Newcastle' },
+      { id:  5, name: 'Burn',        pos: 'LB', team: 'home', teamName: 'Newcastle' },
+      { id:  6, name: 'Guimarães',   pos: 'DM', team: 'home', teamName: 'Newcastle' },
+      { id:  7, name: 'Joelinton',   pos: 'CM', team: 'home', teamName: 'Newcastle' },
+      { id:  8, name: 'Tonali',      pos: 'CM', team: 'home', teamName: 'Newcastle' },
+      { id:  9, name: 'Almiron',     pos: 'RW', team: 'home', teamName: 'Newcastle' },
+      { id: 10, name: 'Wilson',      pos: 'ST', team: 'home', teamName: 'Newcastle' },
+      { id: 11, name: 'Gordon',      pos: 'LW', team: 'home', teamName: 'Newcastle' },
+      { id: 12, name: 'Vicario',     pos: 'GK', team: 'away', teamName: 'Tottenham' },
+      { id: 13, name: 'Porro',       pos: 'RB', team: 'away', teamName: 'Tottenham' },
+      { id: 14, name: 'Romero',      pos: 'CB', team: 'away', teamName: 'Tottenham' },
+      { id: 15, name: 'Van de Ven',  pos: 'CB', team: 'away', teamName: 'Tottenham' },
+      { id: 16, name: 'Udogie',      pos: 'LB', team: 'away', teamName: 'Tottenham' },
+      { id: 17, name: 'Hojbjerg',    pos: 'DM', team: 'away', teamName: 'Tottenham' },
+      { id: 18, name: 'Bissouma',    pos: 'CM', team: 'away', teamName: 'Tottenham' },
+      { id: 19, name: 'Kulusevski',  pos: 'RW', team: 'away', teamName: 'Tottenham' },
+      { id: 20, name: 'Maddison',    pos: 'AM', team: 'away', teamName: 'Tottenham' },
+      { id: 21, name: 'Son',         pos: 'LW', team: 'away', teamName: 'Tottenham' },
+      { id: 22, name: 'Richarlison', pos: 'ST', team: 'away', teamName: 'Tottenham' },
+    ],
+    events: [
+      { min: 15, type: 'goal',    playerId: 10 },  // Wilson
+      { min: 38, type: 'goal',    playerId:  6 },  // Guimarães
+      { min: 53, type: 'yellow',  playerId: 17 },  // Hojbjerg
+      { min: 61, type: 'goal',    playerId:  9 },  // Almiron
+      { min: 75, type: 'goal',    playerId: 11 },  // Gordon
+      { min: 90, type: 'full_90' },
+    ],
+  },
+
+  // ── MATCH 22: Chelsea 0-5 Arsenal, 22 Oct 2023 ───────────────
+  {
+    id: 'che_0-5_ars_2023',
+    meta: {
+      home: 'Chelsea', away: 'Arsenal', score: '0-5', homeColour: '#034694', awayColour: '#EF0107',
+      date: '22 Oct 2023', label: 'Premier League · Sun 22 Oct 2023 · 4:30pm BST',
+      blurb: 'Stamford Bridge. <strong>Arsenal were Premier League title challengers.</strong> Chelsea were in chaos — Pochettino their fourth manager in 18 months. Trossard hat-trick. Arsenal's biggest ever win at Stamford Bridge.',
+      finalCommentary: '<strong>Full time.</strong> Chelsea 0–5 Arsenal. Trossard hat-trick. Arsenal's finest Stamford Bridge performance.',
+      lateCommentary: 'Five! Trossard completes his hat-trick. Arsenal are outstanding.',
+    },
+    players: [
+      { id:  1, name: 'Petrović',    pos: 'GK', team: 'home', teamName: 'Chelsea' },
+      { id:  2, name: 'Reece James', pos: 'RB', team: 'home', teamName: 'Chelsea' },
+      { id:  3, name: 'Thiago Silva', pos: 'CB', team: 'home', teamName: 'Chelsea' },
+      { id:  4, name: 'Disasi',      pos: 'CB', team: 'home', teamName: 'Chelsea' },
+      { id:  5, name: 'Chilwell',    pos: 'LB', team: 'home', teamName: 'Chelsea' },
+      { id:  6, name: 'Caicedo',     pos: 'DM', team: 'home', teamName: 'Chelsea' },
+      { id:  7, name: 'Gallagher',   pos: 'CM', team: 'home', teamName: 'Chelsea' },
+      { id:  8, name: 'Palmer',      pos: 'AM', team: 'home', teamName: 'Chelsea' },
+      { id:  9, name: 'Sterling',    pos: 'RW', team: 'home', teamName: 'Chelsea' },
+      { id: 10, name: 'Jackson',     pos: 'ST', team: 'home', teamName: 'Chelsea' },
+      { id: 11, name: 'Mudryk',      pos: 'LW', team: 'home', teamName: 'Chelsea' },
+      { id: 12, name: 'Raya',        pos: 'GK', team: 'away', teamName: 'Arsenal' },
+      { id: 13, name: 'Ben White',   pos: 'RB', team: 'away', teamName: 'Arsenal' },
+      { id: 14, name: 'Saliba',      pos: 'CB', team: 'away', teamName: 'Arsenal' },
+      { id: 15, name: 'Gabriel',     pos: 'CB', team: 'away', teamName: 'Arsenal' },
+      { id: 16, name: 'Zinchenko',   pos: 'LB', team: 'away', teamName: 'Arsenal' },
+      { id: 17, name: 'Thomas',      pos: 'DM', team: 'away', teamName: 'Arsenal' },
+      { id: 18, name: 'Rice',        pos: 'CM', team: 'away', teamName: 'Arsenal' },
+      { id: 19, name: 'Saka',        pos: 'RW', team: 'away', teamName: 'Arsenal' },
+      { id: 20, name: 'Havertz',     pos: 'AM', team: 'away', teamName: 'Arsenal' },
+      { id: 21, name: 'Martinelli',  pos: 'LW', team: 'away', teamName: 'Arsenal' },
+      { id: 22, name: 'Trossard',    pos: 'ST', team: 'away', teamName: 'Arsenal' },
+    ],
+    events: [
+      { min:  9, type: 'goal',    playerId: 22 },  // Trossard
+      { min: 27, type: 'yellow',  playerId:  6 },  // Caicedo
+      { min: 35, type: 'goal',    playerId: 19 },  // Saka
+      { min: 53, type: 'goal',    playerId: 22 },  // Trossard
+      { min: 73, type: 'goal',    playerId: 20 },  // Havertz
+      { min: 81, type: 'goal',    playerId: 22 },  // Trossard hat-trick
+      { min: 90, type: 'full_90' },
+    ],
+  },
+
+  // ── MATCH 23: Brentford 4-1 Chelsea, 19 Oct 2022 ─────────────
+  {
+    id: 'bre_4-1_che_2022',
+    meta: {
+      home: 'Brentford', away: 'Chelsea', score: '4-1', homeColour: '#E30613', awayColour: '#034694',
+      date: '19 Oct 2022', label: 'Premier League · Wed 19 Oct 2022 · 7:45pm BST',
+      blurb: 'Brentford Community Stadium. <strong>Chelsea were in freefall under Potter</strong> — no wins in five. Brentford were the Premier League's surprise package. Ivan Toney magnificent. Four goals. One of Chelsea's most humbling nights.',
+      finalCommentary: '<strong>Full time.</strong> Brentford 4–1 Chelsea. Ivan Toney dominates. Chelsea's crisis deepens.',
+      lateCommentary: 'Four! Brentford are sensational. Chelsea have no answers.',
+    },
+    players: [
+      { id:  1, name: 'Flekken',     pos: 'GK', team: 'home', teamName: 'Brentford' },
+      { id:  2, name: 'Hickey',      pos: 'RB', team: 'home', teamName: 'Brentford' },
+      { id:  3, name: 'Pinnock',     pos: 'CB', team: 'home', teamName: 'Brentford' },
+      { id:  4, name: 'Collins',     pos: 'CB', team: 'home', teamName: 'Brentford' },
+      { id:  5, name: 'Henry',       pos: 'LB', team: 'home', teamName: 'Brentford' },
+      { id:  6, name: 'Nørgaard',    pos: 'DM', team: 'home', teamName: 'Brentford' },
+      { id:  7, name: 'Janelt',      pos: 'CM', team: 'home', teamName: 'Brentford' },
+      { id:  8, name: 'Jensen',      pos: 'CM', team: 'home', teamName: 'Brentford' },
+      { id:  9, name: 'Mbeumo',      pos: 'RW', team: 'home', teamName: 'Brentford' },
+      { id: 10, name: 'Toney',       pos: 'ST', team: 'home', teamName: 'Brentford' },
+      { id: 11, name: 'Wissa',       pos: 'LW', team: 'home', teamName: 'Brentford' },
+      { id: 12, name: 'Kepa',        pos: 'GK', team: 'away', teamName: 'Chelsea' },
+      { id: 13, name: 'Chalobah',    pos: 'RB', team: 'away', teamName: 'Chelsea' },
+      { id: 14, name: 'Thiago Silva', pos: 'CB', team: 'away', teamName: 'Chelsea' },
+      { id: 15, name: 'Koulibaly',   pos: 'CB', team: 'away', teamName: 'Chelsea' },
+      { id: 16, name: 'Cucurella',   pos: 'LB', team: 'away', teamName: 'Chelsea' },
+      { id: 17, name: 'Jorginho',    pos: 'DM', team: 'away', teamName: 'Chelsea' },
+      { id: 18, name: 'Kovacic',     pos: 'CM', team: 'away', teamName: 'Chelsea' },
+      { id: 19, name: 'Mount',       pos: 'AM', team: 'away', teamName: 'Chelsea' },
+      { id: 20, name: 'Sterling',    pos: 'RW', team: 'away', teamName: 'Chelsea' },
+      { id: 21, name: 'Pulisic',     pos: 'LW', team: 'away', teamName: 'Chelsea' },
+      { id: 22, name: 'Aubameyang',  pos: 'ST', team: 'away', teamName: 'Chelsea' },
+    ],
+    events: [
+      { min: 18, type: 'goal',    playerId: 10 },  // Toney
+      { min: 28, type: 'goal',    playerId: 22 },  // Aubameyang
+      { min: 34, type: 'goal',    playerId: 10 },  // Toney
+      { min: 43, type: 'yellow',  playerId: 15 },  // Koulibaly
+      { min: 55, type: 'goal',    playerId:  9 },  // Mbeumo
+      { min: 72, type: 'goal',    playerId: 11 },  // Wissa
+      { min: 90, type: 'full_90' },
+    ],
+  },
+
+  // ── MATCH 24: Liverpool 5-1 Arsenal, 8 Feb 2014 ──────────────
+  {
+    id: 'liv_5-1_ars_2014',
+    meta: {
+      home: 'Liverpool', away: 'Arsenal', score: '5-1', homeColour: '#C8102E', awayColour: '#EF0107',
+      date: '8 Feb 2014', label: 'Premier League · Sat 8 Feb 2014 · 5:30pm GMT',
+      blurb: 'Anfield. <strong>Liverpool were five points off the top</strong> with a game in hand, chasing their first title in 24 years. Arsenal were the leaders. Suárez was unstoppable. Five goals, one of the great Anfield nights, and the title race turned on its axis.',
+      finalCommentary: '<strong>Full time.</strong> Liverpool 5–1 Arsenal. Suárez magnificent. The title race is on.',
+      lateCommentary: 'Five! Liverpool are extraordinary. Anfield believing now.',
+    },
+    players: [
+      { id:  1, name: 'Mignolet',    pos: 'GK', team: 'home', teamName: 'Liverpool' },
+      { id:  2, name: 'Johnson',     pos: 'RB', team: 'home', teamName: 'Liverpool' },
+      { id:  3, name: 'Skrtel',      pos: 'CB', team: 'home', teamName: 'Liverpool' },
+      { id:  4, name: 'Agger',       pos: 'CB', team: 'home', teamName: 'Liverpool' },
+      { id:  5, name: 'Cissokho',    pos: 'LB', team: 'home', teamName: 'Liverpool' },
+      { id:  6, name: 'Gerrard',     pos: 'DM', team: 'home', teamName: 'Liverpool' },
+      { id:  7, name: 'Henderson',   pos: 'CM', team: 'home', teamName: 'Liverpool' },
+      { id:  8, name: 'Allen',       pos: 'CM', team: 'home', teamName: 'Liverpool' },
+      { id:  9, name: 'Sterling',    pos: 'RW', team: 'home', teamName: 'Liverpool' },
+      { id: 10, name: 'Suárez',      pos: 'ST', team: 'home', teamName: 'Liverpool' },
+      { id: 11, name: 'Sturridge',   pos: 'LW', team: 'home', teamName: 'Liverpool' },
+      { id: 12, name: 'Fabianski',   pos: 'GK', team: 'away', teamName: 'Arsenal' },
+      { id: 13, name: 'Sagna',       pos: 'RB', team: 'away', teamName: 'Arsenal' },
+      { id: 14, name: 'Mertesacker', pos: 'CB', team: 'away', teamName: 'Arsenal' },
+      { id: 15, name: 'Koscielny',   pos: 'CB', team: 'away', teamName: 'Arsenal' },
+      { id: 16, name: 'Gibbs',       pos: 'LB', team: 'away', teamName: 'Arsenal' },
+      { id: 17, name: 'Flamini',     pos: 'DM', team: 'away', teamName: 'Arsenal' },
+      { id: 18, name: 'Arteta',      pos: 'CM', team: 'away', teamName: 'Arsenal' },
+      { id: 19, name: 'Walcott',     pos: 'RW', team: 'away', teamName: 'Arsenal' },
+      { id: 20, name: 'Özil',        pos: 'AM', team: 'away', teamName: 'Arsenal' },
+      { id: 21, name: 'Gnabry',      pos: 'LW', team: 'away', teamName: 'Arsenal' },
+      { id: 22, name: 'Giroud',      pos: 'ST', team: 'away', teamName: 'Arsenal' },
+    ],
+    events: [
+      { min: 16, type: 'goal',    playerId: 11 },  // Sturridge
+      { min: 31, type: 'goal',    playerId: 10 },  // Suárez
+      { min: 37, type: 'goal',    playerId: 22 },  // Giroud
+      { min: 52, type: 'goal',    playerId: 10 },  // Suárez
+      { min: 56, type: 'goal',    playerId: 10 },  // Suárez hat-trick
+      { min: 61, type: 'yellow',  playerId: 17 },  // Flamini
+      { min: 67, type: 'goal',    playerId:  9 },  // Sterling
+      { min: 90, type: 'full_90' },
+    ],
+  },
+
+  // ── MATCH 25: Chelsea 6-0 Arsenal, 22 Mar 2014 ───────────────
+  {
+    id: 'che_6-0_ars_2014',
+    meta: {
+      home: 'Chelsea', away: 'Arsenal', score: '6-0', homeColour: '#034694', awayColour: '#EF0107',
+      date: '22 Mar 2014', label: 'Premier League · Sat 22 Mar 2014 · 5:30pm GMT',
+      blurb: 'Stamford Bridge. <strong>Arsenal's heaviest defeat in 115 years.</strong> They arrived as title contenders. Mourinho's Chelsea were clinical, organised, merciless. Özil invisible. Fabianski at fault. A day Arsenal fans have spent a decade trying to forget.',
+      finalCommentary: '<strong>Full time.</strong> Chelsea 6–0 Arsenal. Arsenal's worst defeat in over a century.',
+      lateCommentary: 'Six! Mourinho punches the air. Arsenal are shellshocked.',
+    },
+    players: [
+      { id:  1, name: 'Čech',        pos: 'GK', team: 'home', teamName: 'Chelsea' },
+      { id:  2, name: 'Ivanovic',    pos: 'RB', team: 'home', teamName: 'Chelsea' },
+      { id:  3, name: 'Terry',       pos: 'CB', team: 'home', teamName: 'Chelsea' },
+      { id:  4, name: 'Cahill',      pos: 'CB', team: 'home', teamName: 'Chelsea' },
+      { id:  5, name: 'Cole',        pos: 'LB', team: 'home', teamName: 'Chelsea' },
+      { id:  6, name: 'Mikel',       pos: 'DM', team: 'home', teamName: 'Chelsea' },
+      { id:  7, name: 'Ramires',     pos: 'CM', team: 'home', teamName: 'Chelsea' },
+      { id:  8, name: 'Lampard',     pos: 'CM', team: 'home', teamName: 'Chelsea' },
+      { id:  9, name: 'Willian',     pos: 'RW', team: 'home', teamName: 'Chelsea' },
+      { id: 10, name: 'Torres',      pos: 'ST', team: 'home', teamName: 'Chelsea' },
+      { id: 11, name: 'Hazard',      pos: 'LW', team: 'home', teamName: 'Chelsea' },
+      { id: 12, name: 'Fabianski',   pos: 'GK', team: 'away', teamName: 'Arsenal' },
+      { id: 13, name: 'Sagna',       pos: 'RB', team: 'away', teamName: 'Arsenal' },
+      { id: 14, name: 'Mertesacker', pos: 'CB', team: 'away', teamName: 'Arsenal' },
+      { id: 15, name: 'Koscielny',   pos: 'CB', team: 'away', teamName: 'Arsenal' },
+      { id: 16, name: 'Gibbs',       pos: 'LB', team: 'away', teamName: 'Arsenal' },
+      { id: 17, name: 'Flamini',     pos: 'DM', team: 'away', teamName: 'Arsenal' },
+      { id: 18, name: 'Arteta',      pos: 'CM', team: 'away', teamName: 'Arsenal' },
+      { id: 19, name: 'Walcott',     pos: 'RW', team: 'away', teamName: 'Arsenal' },
+      { id: 20, name: 'Özil',        pos: 'AM', team: 'away', teamName: 'Arsenal' },
+      { id: 21, name: 'Rosicky',     pos: 'LW', team: 'away', teamName: 'Arsenal' },
+      { id: 22, name: 'Giroud',      pos: 'ST', team: 'away', teamName: 'Arsenal' },
+    ],
+    events: [
+      { min: 17, type: 'goal',    playerId: 11 },  // Hazard pen
+      { min: 26, type: 'goal',    playerId: 10 },  // Torres
+      { min: 34, type: 'yellow',  playerId: 17 },  // Flamini
+      { min: 42, type: 'goal',    playerId:  9 },  // Willian
+      { min: 58, type: 'goal',    playerId:  8 },  // Lampard
+      { min: 68, type: 'goal',    playerId: 10 },  // Torres
+      { min: 76, type: 'goal',    playerId: 11 },  // Hazard
+      { min: 90, type: 'full_90' },
+    ],
+  },
+
+  // ── MATCH 26: Bournemouth 4-0 Chelsea, 30 Jan 2019 ───────────
+  {
+    id: 'bou_4-0_che_2019',
+    meta: {
+      home: 'Bournemouth', away: 'Chelsea', score: '4-0', homeColour: '#DA291C', awayColour: '#034694',
+      date: '30 Jan 2019', label: 'Premier League · Wed 30 Jan 2019 · 7:45pm GMT',
+      blurb: 'Vitality Stadium. <strong>Chelsea were in Sarri's first season</strong> — inconsistent but with moments of brilliance. Bournemouth tore them apart. Wilson two goals. Fraser outstanding. Chelsea's defence completely at sea.',
+      finalCommentary: '<strong>Full time.</strong> Bournemouth 4–0 Chelsea. Sarri-ball derailed.',
+      lateCommentary: 'Four! Bournemouth complete a sensational victory.',
+    },
+    players: [
+      { id:  1, name: 'Boruc',       pos: 'GK', team: 'home', teamName: 'Bournemouth' },
+      { id:  2, name: 'Clyne',       pos: 'RB', team: 'home', teamName: 'Bournemouth' },
+      { id:  3, name: 'Cook',        pos: 'CB', team: 'home', teamName: 'Bournemouth' },
+      { id:  4, name: 'Ake',         pos: 'CB', team: 'home', teamName: 'Bournemouth' },
+      { id:  5, name: 'Smith',       pos: 'LB', team: 'home', teamName: 'Bournemouth' },
+      { id:  6, name: 'Lerma',       pos: 'DM', team: 'home', teamName: 'Bournemouth' },
+      { id:  7, name: 'Surman',      pos: 'CM', team: 'home', teamName: 'Bournemouth' },
+      { id:  8, name: 'Fraser',      pos: 'RW', team: 'home', teamName: 'Bournemouth' },
+      { id:  9, name: 'Brooks',      pos: 'AM', team: 'home', teamName: 'Bournemouth' },
+      { id: 10, name: 'King',        pos: 'LW', team: 'home', teamName: 'Bournemouth' },
+      { id: 11, name: 'Wilson',      pos: 'ST', team: 'home', teamName: 'Bournemouth' },
+      { id: 12, name: 'Kepa',        pos: 'GK', team: 'away', teamName: 'Chelsea' },
+      { id: 13, name: 'Azpilicueta', pos: 'RB', team: 'away', teamName: 'Chelsea' },
+      { id: 14, name: 'Rüdiger',     pos: 'CB', team: 'away', teamName: 'Chelsea' },
+      { id: 15, name: 'Luiz',        pos: 'CB', team: 'away', teamName: 'Chelsea' },
+      { id: 16, name: 'Emerson',     pos: 'LB', team: 'away', teamName: 'Chelsea' },
+      { id: 17, name: 'Jorginho',    pos: 'DM', team: 'away', teamName: 'Chelsea' },
+      { id: 18, name: 'Kovacic',     pos: 'CM', team: 'away', teamName: 'Chelsea' },
+      { id: 19, name: 'Willian',     pos: 'RW', team: 'away', teamName: 'Chelsea' },
+      { id: 20, name: 'Hazard',      pos: 'LW', team: 'away', teamName: 'Chelsea' },
+      { id: 21, name: 'Barkley',     pos: 'AM', team: 'away', teamName: 'Chelsea' },
+      { id: 22, name: 'Giroud',      pos: 'ST', team: 'away', teamName: 'Chelsea' },
+    ],
+    events: [
+      { min:  8, type: 'goal',    playerId: 11 },  // Wilson
+      { min: 26, type: 'goal',    playerId:  9 },  // Brooks
+      { min: 51, type: 'goal',    playerId: 11 },  // Wilson
+      { min: 56, type: 'yellow',  playerId: 17 },  // Jorginho
+      { min: 71, type: 'goal',    playerId: 10 },  // King
+      { min: 90, type: 'full_90' },
+    ],
+  },
+
+  // ── MATCH 27: Arsenal 4-3 Liverpool, 14 Aug 2016 ─────────────
+  {
+    id: 'ars_4-3_liv_2016',
+    meta: {
+      home: 'Arsenal', away: 'Liverpool', score: '4-3', homeColour: '#EF0107', awayColour: '#C8102E',
+      date: '14 Aug 2016', label: 'Premier League · Sun 14 Aug 2016 · 4:00pm BST',
+      blurb: 'The Emirates. <strong>Opening day of the season.</strong> Liverpool led 4-1. Klopp's pressing system overwhelming Arsenal. Then Arsenal scored three in 20 minutes. Oxlade-Chamberlain wonder strike. The most dramatic opening day in Premier League history.',
+      finalCommentary: '<strong>Full time.</strong> Arsenal 4–3 Liverpool. Three goals in 20 minutes. What a start to the season.',
+      lateCommentary: 'Arsenal have completed the comeback! Four-three!',
+    },
+    players: [
+      { id:  1, name: 'Čech',        pos: 'GK', team: 'home', teamName: 'Arsenal' },
+      { id:  2, name: 'Bellerin',    pos: 'RB', team: 'home', teamName: 'Arsenal' },
+      { id:  3, name: 'Mustafi',     pos: 'CB', team: 'home', teamName: 'Arsenal' },
+      { id:  4, name: 'Koscielny',   pos: 'CB', team: 'home', teamName: 'Arsenal' },
+      { id:  5, name: 'Monreal',     pos: 'LB', team: 'home', teamName: 'Arsenal' },
+      { id:  6, name: 'Xhaka',       pos: 'DM', team: 'home', teamName: 'Arsenal' },
+      { id:  7, name: 'Coquelin',    pos: 'CM', team: 'home', teamName: 'Arsenal' },
+      { id:  8, name: 'Oxlade-Chamberlain', pos: 'RW', team: 'home', teamName: 'Arsenal' },
+      { id:  9, name: 'Özil',        pos: 'AM', team: 'home', teamName: 'Arsenal' },
+      { id: 10, name: 'Sanchez',     pos: 'LW', team: 'home', teamName: 'Arsenal' },
+      { id: 11, name: 'Giroud',      pos: 'ST', team: 'home', teamName: 'Arsenal' },
+      { id: 12, name: 'Mignolet',    pos: 'GK', team: 'away', teamName: 'Liverpool' },
+      { id: 13, name: 'Clyne',       pos: 'RB', team: 'away', teamName: 'Liverpool' },
+      { id: 14, name: 'Lovren',      pos: 'CB', team: 'away', teamName: 'Liverpool' },
+      { id: 15, name: 'Matip',       pos: 'CB', team: 'away', teamName: 'Liverpool' },
+      { id: 16, name: 'Milner',      pos: 'LB', team: 'away', teamName: 'Liverpool' },
+      { id: 17, name: 'Henderson',   pos: 'DM', team: 'away', teamName: 'Liverpool' },
+      { id: 18, name: 'Wijnaldum',   pos: 'CM', team: 'away', teamName: 'Liverpool' },
+      { id: 19, name: 'Mané',        pos: 'RW', team: 'away', teamName: 'Liverpool' },
+      { id: 20, name: 'Coutinho',    pos: 'AM', team: 'away', teamName: 'Liverpool' },
+      { id: 21, name: 'Lallana',     pos: 'LW', team: 'away', teamName: 'Liverpool' },
+      { id: 22, name: 'Firmino',     pos: 'ST', team: 'away', teamName: 'Liverpool' },
+    ],
+    events: [
+      { min: 30, type: 'goal',    playerId: 22 },  // Firmino
+      { min: 32, type: 'goal',    playerId: 19 },  // Mané
+      { min: 44, type: 'goal',    playerId: 11 },  // Giroud
+      { min: 49, type: 'goal',    playerId: 20 },  // Coutinho
+      { min: 54, type: 'goal',    playerId: 22 },  // Firmino
+      { min: 63, type: 'yellow',  playerId:  6 },  // Xhaka
+      { min: 71, type: 'goal',    playerId: 10 },  // Sanchez
+      { min: 79, type: 'goal',    playerId:  8 },  // Oxlade-Chamberlain
+      { min: 85, type: 'goal',    playerId:  9 },  // Özil
+      { min: 90, type: 'full_90' },
+    ],
+  },
+
+  // ── MATCH 28: Tottenham 4-5 Arsenal, 13 Nov 2004 ─────────────
+  {
+    id: 'tot_4-5_ars_2004',
+    meta: {
+      home: 'Tottenham', away: 'Arsenal', score: '4-5', homeColour: '#132257', awayColour: '#EF0107',
+      date: '13 Nov 2004', label: 'Premier League · Sun 13 Nov 2004 · 4:05pm GMT',
+      blurb: 'White Hart Lane. <strong>Arsenal were the Invincibles</strong> — unbeaten in the league. Spurs led 4-2 late on. Henry hat-trick. Arsenal scored three to win 5-4. The comeback that defined an era. Keown embracing Henry on the final whistle.',
+      finalCommentary: '<strong>Full time.</strong> Tottenham 4–5 Arsenal. Henry hat-trick. The Invincibles survive.',
+      lateCommentary: 'Henry again! Arsenal lead! The Invincibles are unbeaten!',
+    },
+    players: [
+      { id:  1, name: 'Robinson',    pos: 'GK', team: 'home', teamName: 'Tottenham' },
+      { id:  2, name: 'Kelly',       pos: 'RB', team: 'home', teamName: 'Tottenham' },
+      { id:  3, name: 'King',        pos: 'CB', team: 'home', teamName: 'Tottenham' },
+      { id:  4, name: 'Gardner',     pos: 'CB', team: 'home', teamName: 'Tottenham' },
+      { id:  5, name: 'Edman',       pos: 'LB', team: 'home', teamName: 'Tottenham' },
+      { id:  6, name: 'Brown',       pos: 'DM', team: 'home', teamName: 'Tottenham' },
+      { id:  7, name: 'Carrick',     pos: 'CM', team: 'home', teamName: 'Tottenham' },
+      { id:  8, name: 'Redknapp',    pos: 'CM', team: 'home', teamName: 'Tottenham' },
+      { id:  9, name: 'Defoe',       pos: 'RW', team: 'home', teamName: 'Tottenham' },
+      { id: 10, name: 'Kanoute',     pos: 'LW', team: 'home', teamName: 'Tottenham' },
+      { id: 11, name: 'Keane',       pos: 'ST', team: 'home', teamName: 'Tottenham' },
+      { id: 12, name: 'Lehmann',     pos: 'GK', team: 'away', teamName: 'Arsenal' },
+      { id: 13, name: 'Lauren',      pos: 'RB', team: 'away', teamName: 'Arsenal' },
+      { id: 14, name: 'Toure',       pos: 'CB', team: 'away', teamName: 'Arsenal' },
+      { id: 15, name: 'Campbell',    pos: 'CB', team: 'away', teamName: 'Arsenal' },
+      { id: 16, name: 'Cole',        pos: 'LB', team: 'away', teamName: 'Arsenal' },
+      { id: 17, name: 'Vieira',      pos: 'DM', team: 'away', teamName: 'Arsenal' },
+      { id: 18, name: 'Gilberto',    pos: 'CM', team: 'away', teamName: 'Arsenal' },
+      { id: 19, name: 'Ljungberg',   pos: 'RW', team: 'away', teamName: 'Arsenal' },
+      { id: 20, name: 'Bergkamp',    pos: 'AM', team: 'away', teamName: 'Arsenal' },
+      { id: 21, name: 'Pires',       pos: 'LW', team: 'away', teamName: 'Arsenal' },
+      { id: 22, name: 'Henry',       pos: 'ST', team: 'away', teamName: 'Arsenal' },
+    ],
+    events: [
+      { min: 23, type: 'goal',    playerId: 11 },  // Keane
+      { min: 30, type: 'goal',    playerId: 22 },  // Henry
+      { min: 37, type: 'goal',    playerId:  9 },  // Defoe
+      { min: 40, type: 'goal',    playerId: 11 },  // Keane
+      { min: 56, type: 'goal',    playerId: 22 },  // Henry
+      { min: 66, type: 'goal',    playerId:  9 },  // Defoe
+      { min: 69, type: 'goal',    playerId: 10 },  // Kanoute
+      { min: 75, type: 'goal',    playerId: 22 },  // Henry hat-trick
+      { min: 80, type: 'goal',    playerId: 20 },  // Bergkamp
+      { min: 84, type: 'goal',    playerId: 21 },  // Pires
+      { min: 90, type: 'full_90' },
+    ],
+  },
+
+  // ── MATCH 30: Man City 3-2 QPR, 13 May 2012 ──────────────────
+  {
+    id: 'mci_3-2_qpr_2012',
+    meta: {
+      home: 'Man City', away: 'QPR', score: '3-2', homeColour: '#6CABDD', awayColour: '#1D5BA4',
+      date: '13 May 2012', label: 'Premier League · Sun 13 May 2012 · 5:00pm BST',
+      blurb: 'The Etihad. <strong>City needed to win to take the title from United.</strong> QPR were battling relegation. City led then trailed 2-1 with 10 minutes left. Džeko made it 2-2. Then, in injury time, Agüero. The most dramatic moment in Premier League history.',
+      finalCommentary: '<strong>Full time.</strong> Manchester City 3–2 QPR. AGUEROOOO. City are champions.',
+      lateCommentary: 'AGUEROOOO! Ninety-four minutes! City are champions! Unbelievable!',
+    },
+    players: [
+      { id:  1, name: 'Hart',        pos: 'GK', team: 'home', teamName: 'Man City' },
+      { id:  2, name: 'Zabaleta',    pos: 'RB', team: 'home', teamName: 'Man City' },
+      { id:  3, name: 'Kompany',     pos: 'CB', team: 'home', teamName: 'Man City' },
+      { id:  4, name: 'Lescott',     pos: 'CB', team: 'home', teamName: 'Man City' },
+      { id:  5, name: 'Clichy',      pos: 'LB', team: 'home', teamName: 'Man City' },
+      { id:  6, name: 'De Bruyne',   pos: 'CM', team: 'home', teamName: 'Man City' },
+      { id:  7, name: 'Barry',       pos: 'DM', team: 'home', teamName: 'Man City' },
+      { id:  8, name: 'Silva',       pos: 'AM', team: 'home', teamName: 'Man City' },
+      { id:  9, name: 'Nasri',       pos: 'RW', team: 'home', teamName: 'Man City' },
+      { id: 10, name: 'Agüero',      pos: 'ST', team: 'home', teamName: 'Man City' },
+      { id: 11, name: 'Džeko',       pos: 'LW', team: 'home', teamName: 'Man City' },
+      { id: 12, name: 'Kenny',       pos: 'GK', team: 'away', teamName: 'QPR' },
+      { id: 13, name: 'Onuoha',      pos: 'RB', team: 'away', teamName: 'QPR' },
+      { id: 14, name: 'Ferdinand',   pos: 'CB', team: 'away', teamName: 'QPR' },
+      { id: 15, name: 'Hill',        pos: 'CB', team: 'away', teamName: 'QPR' },
+      { id: 16, name: 'Taiwo',       pos: 'LB', team: 'away', teamName: 'QPR' },
+      { id: 17, name: 'Barton',      pos: 'DM', team: 'away', teamName: 'QPR' },
+      { id: 18, name: 'Derry',       pos: 'CM', team: 'away', teamName: 'QPR' },
+      { id: 19, name: 'Mackie',      pos: 'RW', team: 'away', teamName: 'QPR' },
+      { id: 20, name: 'Wright-Phillips', pos: 'LW', team: 'away', teamName: 'QPR' },
+      { id: 21, name: 'Cissé',       pos: 'AM', team: 'away', teamName: 'QPR' },
+      { id: 22, name: 'Taarabt',     pos: 'ST', team: 'away', teamName: 'QPR' },
+    ],
+    events: [
+      { min: 39, type: 'goal',    playerId: 10 },  // Agüero
+      { min: 48, type: 'red',     playerId: 17 },  // Barton red card
+      { min: 55, type: 'goal',    playerId: 21 },  // Cissé
+      { min: 66, type: 'goal',    playerId: 19 },  // Mackie
+      { min: 73, type: 'yellow',  playerId: 14 },  // Ferdinand
+      { min: 90, type: 'goal',    playerId: 11 },  // Džeko
+      { min: 94, type: 'goal',    playerId: 10 },  // AGÜERO
+      { min: 90, type: 'full_90' },
+    ],
+  },
+
 ];
 
 // ── Active match globals — set by loadMatch() ─────────────────
@@ -4366,6 +5515,8 @@ function restart() {
     simView: 'me', myScore: 0, oppScore: 0, playerData: {},
     teamName: '', teamEmoji: '', matchIdx: null,
     tipTaken: false, predictionPending: null, predictionAnswer: null, predictionTimerTimeout: null,
+    _tutShownCard: false, _tutShownGoal: false, _tutShownQuestion: false,
+    _tutShownGkForced: false, _tutShownSabotage: false, _tutShownYourPicks: false,
     autoPickLocked: false,
     mp: null,
     deltaHistory: [],
@@ -4705,6 +5856,28 @@ function afterPick() {
   renderDraftSlots();
   renderCarousel();
   updateTurnUI();
+
+  // Tutorial hooks based on draft progression
+  if (_tutorialActive) {
+    const pickNum = state.currentPick;
+    // After player picks GK (myTeam has 1 player, first time): explain forced GK then sabotage
+    if (pickNum === 1 && state.myTeam.length === 1 && !state._tutShownGkForced) {
+      state._tutShownGkForced = true;
+      showTutorialCard('gk_forced').then(() => {
+        // After dismissing GK explainer, immediately show sabotage if that's next
+        const n = currentStep();
+        if (n && n.type === 'sabotage' && n.who === 'me' && !state._tutShownSabotage) {
+          state._tutShownSabotage = true;
+          showTutorialCard('sabotage').then(() => {});
+        }
+      });
+    }
+    // Start of own normal picks (pick 7)
+    if (pickNum === 7 && !state._tutShownYourPicks && next && next.type === 'normal' && next.who === 'me') {
+      state._tutShownYourPicks = true;
+      showTutorialCard('your_picks').then(() => {});
+    }
+  }
 
   // If only 1 player left in the pool and it's my turn, auto-draft them
   if (next && next.who === 'me' && next.type === 'normal') {
@@ -5223,6 +6396,10 @@ function showCaptainScreen() {
   showScreen('captain');
   state.myCaptain     = null;
   state.captainRandom = false; // track whether dice was used
+  // Tutorial: explain captain mechanic
+  if (_tutorialActive) {
+    showTutorialCard('captain').then(() => {});
+  }
 
   // ── Opponent captain: highest chaos estimate from their team ──
   const POSITION_PRIOR = { GK:5,CB:8,RB:6,LB:6,DM:7,CM:5,AM:3,RW:2,LW:2,ST:1 };
@@ -5471,6 +6648,19 @@ function showPrediction(beat, onComplete) {
 
   state.predictionAnswer  = null;
   state.predictionPending = beat;
+
+  // Tutorial: explain the prediction mechanic before the first question
+  if (_tutorialActive && !state._tutShownQuestion) {
+    state._tutShownQuestion = true;
+    showTutorialCard('question', false).then(() => {
+      _runShowPrediction(overlay, qEl, fillEl, yesBtn, noBtn, beat, onComplete);
+    });
+    return;
+  }
+  _runShowPrediction(overlay, qEl, fillEl, yesBtn, noBtn, beat, onComplete);
+}
+
+function _runShowPrediction(overlay, qEl, fillEl, yesBtn, noBtn, beat, onComplete) {
 
   qEl.textContent = beat.predQuestion;
 
@@ -6329,6 +7519,17 @@ function processSimEvent(event) {
   const inMyTeam  = state.myTeam.includes(player.id);
   const inOppTeam = state.oppTeam.includes(player.id);
 
+  // Tutorial: first card and first goal explainers
+  if (_tutorialActive) {
+    if ((event.type === 'yellow' || event.type === 'red') && !state._tutShownCard) {
+      state._tutShownCard = true;
+      setTimeout(() => showTutorialCard('first_card', false).then(() => {}), 1200);
+    } else if (event.type === 'goal' && !state._tutShownGoal) {
+      state._tutShownGoal = true;
+      setTimeout(() => showTutorialCard('first_goal', false).then(() => {}), 1200);
+    }
+  }
+
   if (inMyTeam) {
     state.myScore += delta;
     if (state.playerData[player.id]) {
@@ -6624,6 +7825,11 @@ function flashPlayer(playerId, delta) {
 // RESULTS
 // ═══════════════════════════════════════════════════════════════
 function showResults() {
+  // Tutorial: end-of-game explainer, then mark tutorial complete
+  if (_tutorialActive) {
+    _tutorialActive = false;
+    showTutorialCard('post_match', false).then(() => {});
+  }
   // In mp mode: write our score to Firebase first, then wait for opponent's
   if (state.mp) {
     mpWriteScore(state.myScore);
@@ -7419,6 +8625,11 @@ function showHtSwapUI(onComplete) {
 
   // Render both team lists
   renderHtLists();
+
+  // Tutorial: explain the swap mechanic
+  if (_tutorialActive) {
+    showTutorialCard('ht_swap', false).then(() => {});
+  }
 
   // Start 20s timer
   let secs = 20;
@@ -8383,6 +9594,179 @@ window.draftPlayer = function() {
   if (state.mp) { mpDraftPlayer(); }
   else { _origDraftPlayer(); }
 };
+
+
+// ═══════════════════════════════════════════════════════════════
+// TUTORIAL SYSTEM
+// Fixed match: Newcastle 4-4 Arsenal, Feb 2011
+// 10 explainer moments, each dismissible immediately
+// ═══════════════════════════════════════════════════════════════
+
+let _tutorialActive  = false;
+let _tutorialStep    = 0;
+let _tutorialResolve = null; // promise resolver — advances game when dismissed
+
+// Tutorial match index — find Newcastle 4-4 Arsenal in ALL_MATCHES
+function getTutorialMatchIdx() {
+  return ALL_MATCHES.findIndex(m => m.id === 'new_4-4_ars_2011');
+}
+
+// The 10 explainer moments
+const TUTORIAL_STEPS = {
+  coin_toss: {
+    emoji: '🪙',
+    title: 'Coin toss — pick your goalkeeper',
+    body: `You're picking first. Choose the goalkeeper you think will have the <strong>worst game</strong> — the one most likely to let goals in.<br><br>Remember: bad is good here. Chaos = points.`,
+    btn: `Got it — pick my keeper`,
+  },
+  gk_forced: {
+    emoji: '😬',
+    title: 'Opponent gets the other keeper',
+    body: `The goalkeeper you didn't pick goes straight to your opponent's squad. <strong>No choice for them.</strong><br><br>Pick wisely — send yourself the disaster, not them.`,
+    btn: `Understood`,
+  },
+  sabotage: {
+    emoji: '😈',
+    title: 'Sabotage round — send them your best',
+    body: `Your next 3 picks go to your <strong>opponent's squad</strong>, not yours.<br><br>This is your chance to load them with players who are going to score, assist, and behave themselves. The worst thing you can do to an opponent is give them a hatful of stars.`,
+    btn: `Let the sabotage begin`,
+  },
+  your_picks: {
+    emoji: '📋',
+    title: 'Now build your disaster XI',
+    body: `These picks go into <strong>your squad</strong>. You want the worst performers from this game — the ones who got carded, subbed off early, or just had a nightmare.<br><br>Who do you remember stinking the place out?`,
+    btn: `Start picking`,
+  },
+  captain: {
+    emoji: '🎖️',
+    title: 'Pick your captain — double points',
+    body: `Your captain earns <strong>double points</strong> for everything they do.<br><br>Don't pick your best player. Pick the liability. The one most likely to get a red card, an own goal, or get hooked at half time. That's your captain.`,
+    btn: `Choose my liability`,
+  },
+  first_card: {
+    emoji: '🟨',
+    title: 'Card! Your score goes UP',
+    body: `A yellow card just earned you <strong>chaos points</strong>. Check the top of the screen — your score went green.<br><br>Cards, red cards, own goals, getting subbed off — that's all money in the bank. The worse they behave, the better for you.`,
+    btn: `Love to see it`,
+  },
+  first_goal: {
+    emoji: '⚽',
+    title: 'Goal. Your score goes DOWN',
+    body: `A goal just <strong>cost you points</strong>. Good players scoring is your enemy — it means you drafted someone too competent.<br><br>This is the whole game. Disasters = good. Goals = bad. Keep that inverted logic in your head.`,
+    btn: `Pain understood`,
+  },
+  question: {
+    emoji: '🧠',
+    title: 'Quick question — chaos points up for grabs',
+    body: `Answer before time runs out.<br><br><strong>✅ Correct = +10 pts · ❌ Wrong = −5 pts · Skip = 0 pts</strong><br><br>If you're not sure, skip it — there's no shame in dodging the penalty.`,
+    btn: `Let me answer`,
+  },
+  ht_swap: {
+    emoji: '🔄',
+    title: 'Half time — make a swap',
+    body: `You can swap one player from your squad for one from <strong>theirs</strong>.<br><br>Drop an underperformer, steal someone from their team who's about to cause chaos in the second half. Or roll the dice for a mystery swap with a +5 bonus.`,
+    btn: `Make my move`,
+  },
+  post_match: {
+    emoji: '🏆',
+    title: 'The result is in',
+    body: `<strong>Green box</strong> (Chaos King) = top scorer — someone who really delivered the disasters.<br><strong>Red box</strong> (Annoyingly Decent) = the player who behaved too well and cost you points.<br><br>That's Worst Eleven. Now challenge a friend and let the chaos begin.`,
+    btn: `Play for real 🔥`,
+  },
+};
+
+// Show a tutorial card. Returns a promise that resolves when dismissed.
+function showTutorialCard(stepKey, showSkip = true) {
+  return new Promise(resolve => {
+    _tutorialResolve = resolve;
+    const step = TUTORIAL_STEPS[stepKey];
+    if (!step) { resolve(); return; }
+
+    const totalSteps = Object.keys(TUTORIAL_STEPS).length;
+    const stepNum    = Object.keys(TUTORIAL_STEPS).indexOf(stepKey) + 1;
+
+    const overlay = document.createElement('div');
+    overlay.className = 'tutorial-overlay';
+    overlay.id = 'tutorial-overlay-current';
+    overlay.innerHTML = `
+      <div class="tutorial-card">
+        <div class="tutorial-step-label">Tutorial · Step ${stepNum} of ${totalSteps}</div>
+        <span class="tutorial-emoji">${step.emoji}</span>
+        <div class="tutorial-title">${step.title}</div>
+        <div class="tutorial-body">${step.body}</div>
+        <button class="tutorial-got-it" onclick="dismissTutorialCard()">
+          ${step.btn}
+        </button>
+        ${showSkip ? `<span class="tutorial-skip" onclick="skipTutorial()">Skip tutorial</span>` : ''}
+      </div>
+    `;
+    document.body.appendChild(overlay);
+  });
+}
+
+function dismissTutorialCard() {
+  const el = document.getElementById('tutorial-overlay-current');
+  if (el) el.remove();
+  if (_tutorialResolve) {
+    const r = _tutorialResolve;
+    _tutorialResolve = null;
+    r();
+  }
+}
+
+function skipTutorial() {
+  _tutorialActive = false;
+  const el = document.getElementById('tutorial-overlay-current');
+  if (el) el.remove();
+  _tutorialResolve = null;
+  // Return to home so they can start a real game
+  restart();
+  showToast('Tutorial skipped — start a real game above!');
+}
+
+// Entry point — called from the home screen button
+async function startTutorial() {
+  _tutorialActive = true;
+  _tutorialStep = 0;
+
+  // Find the tutorial match
+  const idx = getTutorialMatchIdx();
+  if (idx === -1) {
+    alert('Tutorial match not found — play a regular game instead.');
+    return;
+  }
+
+  // Set up state as solo vs AI game
+  state.mp = null;
+
+  // Force coin toss win so player always picks GK first in tutorial
+  state.gkPickerIsMe = true;
+
+  // Load the match
+  const m = ALL_MATCHES[idx];
+  state.matchIdx = idx;
+  loadMatch(idx);
+
+  // Go to draft screen directly (skip coin flip animation)
+  showScreen('draft');
+  setupDraft();
+
+  // Show coin toss explainer immediately
+  await showTutorialCard('coin_toss');
+  // Now game is live — next hook fires from tutorialHook() calls
+}
+
+// Central hook — called at key moments if tutorial is active
+async function tutorialHook(moment) {
+  if (!_tutorialActive) return;
+  await showTutorialCard(moment);
+}
+
+// Tutorial-aware GK pick helper
+async function tutorialAfterGkPick() {
+  if (!_tutorialActive) return;
+  await showTutorialCard('gk_forced');
+}
 
 </script>
 </body>

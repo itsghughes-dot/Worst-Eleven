@@ -7517,7 +7517,7 @@ function runBeats(beats, idx) {
   }
 
   const beat = beats[idx];
-  const delay = idx === 0 ? 500 : (beat.realTime - beats[idx-1].realTime);
+  const delay = idx === 0 ? 500 : Math.max(300, beat.realTime - beats[idx-1].realTime);
 
   simTimeout = setTimeout(() => {
     // Animate clock from previous minute to current beat minute
@@ -7685,7 +7685,8 @@ function runBeats(beats, idx) {
     if (beat.commentary) {
       setCommentary(beat.commentary, beat.emoji);
     }
-    runBeats(beats, idx + 1);
+    // Always use setTimeout to prevent synchronous stack overflow on clustered events
+    simTimeout = setTimeout(() => runBeats(beats, idx + 1), 1500);
   }, delay);
 }
 

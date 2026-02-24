@@ -892,6 +892,14 @@
   .pred-no  { background: #dc2626; color: white; }
   .pred-btn.selected { outline: 3px solid white; }
   .pred-btn:disabled { opacity: 0.4; pointer-events: none; }
+  .pred-scoring-hint {
+    font-size: 10px;
+    color: rgba(255,255,255,0.4);
+    text-align: center;
+    margin-top: 6px;
+    letter-spacing: 0.5px;
+    font-family: 'DM Mono', monospace;
+  }
 
   /* ─── 3-OPTION SCORER QUESTION ─── */
   .scorer-overlay {
@@ -1470,8 +1478,8 @@
     width: 44px;
     text-align: right;
   }
-  .pts-positive { color: var(--red); }
-  .pts-negative { color: var(--green); }
+  .pts-positive { color: #22c55e; }   /* green = positive pts, good for you */
+  .pts-negative { color: var(--red); } /* red   = negative pts, losing points */
   .pts-neutral { color: var(--muted); }
 
   /* Delta popups */
@@ -1486,7 +1494,7 @@
     pointer-events: none;
     z-index: 10;
   }
-  .delta-popup.positive { color: var(--red); }
+  .delta-popup.positive { color: #22c55e; }
   .delta-popup.negative { color: var(--green); }
   @keyframes float-up {
     0% { opacity: 1; transform: translateY(0); }
@@ -2940,9 +2948,10 @@ function mpCleanup() {
     <div class="prediction-question" id="prediction-question">Does he score?</div>
     <div class="prediction-timer-bar"><div class="prediction-timer-fill" id="prediction-timer-fill"></div></div>
     <div class="prediction-buttons">
-      <button class="pred-btn pred-yes" onclick="submitPrediction(true)">✅ Yes</button>
-      <button class="pred-btn pred-no"  onclick="submitPrediction(false)">❌ No</button>
+      <button class="pred-btn pred-yes" id="pred-btn-a" onclick="submitPrediction(true)">✅ Yes</button>
+      <button class="pred-btn pred-no"  id="pred-btn-b" onclick="submitPrediction(false)">❌ No</button>
     </div>
+    <div class="pred-scoring-hint">✅ correct +10 · ❌ wrong −5 · skip 0</div>
   </div>
 
   <!-- 3-option scorer question overlay -->
@@ -2951,6 +2960,7 @@ function mpCleanup() {
     <div class="scorer-question" id="scorer-question">Who scored?</div>
     <div class="prediction-timer-bar"><div class="prediction-timer-fill" id="scorer-timer-fill"></div></div>
     <div class="scorer-buttons" id="scorer-buttons"></div>
+    <div class="pred-scoring-hint">✅ correct +15 · ❌ wrong −5 · skip 0</div>
   </div>
 </div>
 
@@ -4479,7 +4489,7 @@ function renderDraftSlots() {
     oSlot.className = 'player-slot ' + (i < state.oppTeam.length ? 'filled opponent-slot' : 'empty-slot');
     if (i < state.oppTeam.length) {
       const p = getPlayer(state.oppTeam[i]);
-      oSlot.innerHTML = `<div class="slot-pos">${p.pos}</div><div class="slot-name">${p.name.split(' ').pop()}</div><div class="slot-team">${p.team === 'home' ? '🔵' : '🟡'}</div>`;
+      oSlot.innerHTML = `<div class="slot-pos">${p.pos}</div><div class="slot-name">${p.name.split(' ').pop()}</div><div class="slot-team">${p.team === 'home' ? '<span class="card-team-dot home-dot"></span>' : '<span class="card-team-dot away-dot"></span>'}</div>`;
     } else {
       oSlot.innerHTML = `<div class="slot-pos">${i+1}</div>`;
     }
@@ -4489,7 +4499,7 @@ function renderDraftSlots() {
     mSlot.className = 'player-slot ' + (i < state.myTeam.length ? 'filled your-slot' : 'empty-slot');
     if (i < state.myTeam.length) {
       const p = getPlayer(state.myTeam[i]);
-      mSlot.innerHTML = `<div class="slot-pos">${p.pos}</div><div class="slot-name">${p.name.split(' ').pop()}</div><div class="slot-team">${p.team === 'home' ? '🔵' : '🟡'}</div>`;
+      mSlot.innerHTML = `<div class="slot-pos">${p.pos}</div><div class="slot-name">${p.name.split(' ').pop()}</div><div class="slot-team">${p.team === 'home' ? '<span class="card-team-dot home-dot"></span>' : '<span class="card-team-dot away-dot"></span>'}</div>`;
     } else {
       mSlot.innerHTML = `<div class="slot-pos">${i+1}</div>`;
     }
@@ -4902,20 +4912,35 @@ function updateTimerDisplay() {
 const COMMENTARY = {
   // ── GOALS ──
   goal: [
-    // Tier 1 — dry
+    // Tier 1 — flat/dry
     (name) => `<strong>${name}</strong>. Goal. It's in. Ball's in the net.`,
     (name) => `<strong>${name}</strong> finds the back of the net. Nothing the keeper could do, apparently.`,
     (name) => `And it's <strong>${name}</strong>. Clinical. Or something like it.`,
     (name) => `<strong>${name}</strong> scores. As forwards occasionally do.`,
+    (name) => `<strong>${name}</strong>. In off the post. It's in.`,
+    (name) => `Goal. <strong>${name}</strong>. Simple as that.`,
+    (name) => `<strong>${name}</strong>. One touch. Top corner. In.`,
+    (name) => `Net. <strong>${name}</strong>. That's a goal.`,
     // Tier 2 — warm
     (name) => `Oh that's a goal. <strong>${name}</strong>. Clean finish, no complaints, plenty of chaos implications.`,
     (name) => `<strong>${name}</strong> pulls the trigger and it's in. The keeper had a look at it and decided against intervening.`,
     (name) => `<strong>${name}</strong> — well, he's supposed to score, isn't he. And yet somehow here we are, surprised.`,
-    (name) => `Lovely finish from <strong>${name}</strong>. Textbook. Aesthetically pleasing. Absolutely unhelpful.`,
-    (name) => `There it is. <strong>${name}</strong>. The net ripples. The crowd reacts. The chaos points adjust accordingly.`,
-    // Tier 2 — knowing
+    (name) => `Lovely finish from <strong>${name}</strong>. Textbook. Aesthetically pleasing. Whether it helps you is another matter.`,
+    (name) => `There it is. <strong>${name}</strong>. The net ripples. The crowd reacts. The chaos points shift accordingly.`,
+    (name) => `<strong>${name}</strong> with the finish. He'll be pleased with that. Whether you are depends entirely on his shirt colour.`,
+    (name) => `<strong>${name}</strong> makes it look easy. Sweeps it home. Absolutely no drama. Which is either great or terrible.`,
+    (name) => `Low drive from <strong>${name}</strong> — keeper guessed wrong, ball went the other way. Goal. Simple, effective, conclusive.`,
+    (name) => `<strong>${name}</strong> arrives late into the box and tucks it away. Where was the marking. Doesn't matter. It's in.`,
+    (name) => `Header from <strong>${name}</strong>. Planted. Keeper had no chance. The physics of it were very clear.`,
+    (name) => `<strong>${name}</strong> cuts inside, shapes for the shot, and finds the bottom corner. The crowd didn't see it coming. The keeper didn't either.`,
+    (name) => `It bobbles, it squirms, it crosses the line. <strong>${name}</strong> claims it. Ugly. Effective. On the board.`,
+    (name) => `<strong>${name}</strong> from close range — it was always going in. No credit to the finish. Full credit for being there.`,
+    (name) => `Free kick. <strong>${name}</strong> over the ball. Up. Over the wall. In. That's what free kicks are supposed to do.`,
+    // Tier 2 — knowing/Worst Eleven aware
     (name) => `<strong>${name}</strong> with the goal. Whether that's good or bad for your score depends entirely on whose team he's in. You know what you did.`,
     (name) => `<strong>${name}</strong> scores and somewhere out there a Worst Eleven player is either celebrating or staring at the ceiling.`,
+    (name) => `<strong>${name}</strong> on the scoresheet. This is either exactly what you wanted or the opposite. No middle ground in this game.`,
+    (name) => `Goal for <strong>${name}</strong>. The chaos ledger updates itself. You'll see the number change. Make of it what you will.`,
   ],
 
   // ── OWN GOALS ──
@@ -5449,11 +5474,20 @@ function showPrediction(beat, onComplete) {
 
   qEl.textContent = beat.predQuestion;
 
+  // For card-colour questions, relabel buttons; for yes/no use defaults
+  const btnA = document.getElementById('pred-btn-a');
+  const btnB = document.getElementById('pred-btn-b');
+  if (beat.predIsCard && beat.predOptions) {
+    if (btnA) { btnA.textContent = beat.predOptions[0]; btnA.onclick = () => submitPrediction(0); }
+    if (btnB) { btnB.textContent = beat.predOptions[1]; btnB.onclick = () => submitPrediction(1); }
+  } else {
+    if (btnA) { btnA.textContent = '✅ Yes'; btnA.onclick = () => submitPrediction(true); }
+    if (btnB) { btnB.textContent = '❌ No';  btnB.onclick = () => submitPrediction(false); }
+  }
+
   // Reset buttons
-  yesBtn.disabled = false;
-  noBtn.disabled  = false;
-  yesBtn.classList.remove('selected');
-  noBtn.classList.remove('selected');
+  if (yesBtn) { yesBtn.disabled = false; yesBtn.classList.remove('selected'); }
+  if (noBtn)  { noBtn.disabled  = false; noBtn.classList.remove('selected'); }
 
   overlay.style.display = '';
 
@@ -5506,11 +5540,20 @@ function applyPredictionResult(playerAnswer, isReal) {
     setCommentary('No answer — play continues.', '⏩');
     return;
   }
-  const correct = (playerAnswer === isReal);
+  const beat = state.predictionPending;
+  let correct;
+
+  // Card-colour question: answer is an index (0=red, 1=yellow)
+  if (beat && beat.predIsCard) {
+    correct = (playerAnswer === beat.predCorrectOption);
+  } else {
+    // Yes/No question: playerAnswer is true/false, isReal is whether it happened
+    correct = (playerAnswer === isReal);
+  }
+
   if (correct) {
     state.myScore += 10;
     updateScoreDisplay();
-    // Show result clearly in the commentary feed + toast
     setCommentary('<strong>✅ Correct!</strong> +10 pts added to your score.', '🎯');
     showToast('+10 CORRECT!');
     flashPredResult('+10 CORRECT!', 'correct');
@@ -5631,7 +5674,7 @@ function showScorerQuestion(beat, onComplete) {
 }
 
 // Apply scored result and close overlay. msg = optional override message (e.g. "Too slow!")
-function submitScorerAnswer(correct, correctId, onComplete, overrideMsg) {
+function submitScorerAnswer(correct, correctId, onComplete, overrideMsg, beat) {
   const overlay = document.getElementById('scorer-overlay');
 
   // Ensure correct answer is always highlighted when resolving
@@ -5660,9 +5703,15 @@ function submitScorerAnswer(correct, correctId, onComplete, overrideMsg) {
     flashPredResult('−5 WRONG', 'wrong');
   }
 
+  // After brief result display, reveal the real commentary (who scored/got red)
   setTimeout(() => {
     if (overlay) overlay.style.display = 'none';
-    onComplete();
+    if (beat && beat.revealCommentary) {
+      setCommentary(beat.revealCommentary, beat.revealEmoji || '⚽');
+      setTimeout(() => onComplete(), 1500);
+    } else {
+      onComplete();
+    }
   }, 1800);
 }
 
@@ -5742,10 +5791,184 @@ function buildBeats() {
     if (!e) continue;
     const opts = getScorerOptions(e.playerId, e.type);
     if (!opts) continue; // not enough players
-    b.isScorerQuestion = true;
-    b.scorerOptions    = opts;
-    b.scorerEventType  = e.type;
+    b.isScorerQuestion    = true;
+    b.scorerOptions       = opts;
+    b.scorerEventType     = e.type;
+    // Save PAST-TENSE commentary to reveal AFTER the question is answered
+    const pastTenseGoals = [
+      (n) => `<strong>${n}</strong> pulled the trigger — and it was in. The keeper never had a chance.`,
+      (n) => `<strong>${n}</strong> found the bottom corner. Composed finish. Net confirmed.`,
+      (n) => `<strong>${n}</strong> arrived late and tucked it away. Right place, right time.`,
+      (n) => `<strong>${n}</strong> shaped up and drove it low. Keeper went the wrong way.`,
+      (n) => `<strong>${n}</strong> met it sweetly. Planted. Off the post and in.`,
+      (n) => `<strong>${n}</strong> cut inside and curled it home. The keeper got a hand to it. Didn't matter.`,
+      (n) => `<strong>${n}</strong> took one touch and finished. Simple. Effective. On the board.`,
+      (n) => `<strong>${n}</strong> nodded it in. Six yards out. Had to score. Scored.`,
+      (n) => `<strong>${n}</strong> struck it first time. No hesitation. Back of the net.`,
+      (n) => `<strong>${n}</strong> stepped over it, let it run, then buried the corner. The keeper was somewhere else entirely.`,
+    ];
+    const pastTenseReds = [
+      (n) => `<strong>${n}</strong> went in two-footed and the referee had no choice. Off.`,
+      (n) => `<strong>${n}</strong> caught him late. Raised studs. Straight red. Down to ten.`,
+      (n) => `<strong>${n}</strong> argued. The referee didn't argue back. He just showed the card.`,
+      (n) => `<strong>${n}</strong> made the tackle and immediately knew it was wrong. So did everyone else.`,
+    ];
+    const ptBank = e.type === 'goal' ? pastTenseGoals : pastTenseReds;
+    const ptLine = ptBank[Math.floor(Math.random() * ptBank.length)];
+    const scorer = getPlayer(e.playerId);
+    const sName  = scorer ? scorer.name.split(' ').pop() : '';
+    b.revealCommentary    = ptLine(sName);
+    b.revealEmoji         = e.type === 'goal' ? '⚽' : '🟥';
+    // Replace with a generic suspense line so we don't give the answer away
+    if (e.type === 'goal') {
+      const generics = [
+        `Something's happening here…`,
+        `The ball is in the net!`,
+        `Goal at the ground!`,
+        `The crowd erupts!`,
+        `Someone's just scored!`,
+        `Net ripples. Flags checked. It's a goal.`,
+      ];
+      b.commentary = generics[Math.floor(Math.random() * generics.length)];
+      b.emoji = '⚽';
+    } else {
+      const redGenerics = [
+        `Off! Someone's walking!`,
+        `Red card shown!`,
+        `Down to ten men!`,
+        `The referee reaches for his pocket — it's red!`,
+      ];
+      b.commentary = redGenerics[Math.floor(Math.random() * redGenerics.length)];
+      b.emoji = '🟥';
+    }
   }
+
+  // ── Inject 2-answer prediction beats ──────────────────────────
+  // These attach to REAL events: yellow/red cards get "red or yellow?" question,
+  // goals that are NOT already scorer questions get "will they score?" question.
+  // These fire AS the pre-event teaser (2 min before), not on the event itself.
+  // Limited to 2 per game, spread across halves.
+
+  const predCandidates = [];
+
+  // Card events: yellow or red → "Which colour?" question
+  for (const e of eventsToShow) {
+    if (e.type !== 'yellow' && e.type !== 'red') continue;
+    const p = getPlayer(e.playerId);
+    if (!p) continue;
+    const teaserMin  = Math.max(1, e.min - 2);
+    const teaserReal = mapMatchMinToReal(teaserMin);
+    const tooClose   = beats.some(b => Math.abs(b.realTime - teaserReal) < 2500);
+    if (tooClose) continue;
+
+    const surname = p.name.split(' ').pop();
+    // Build the pre-card atmosphere commentary
+    const setups = {
+      red:    [
+        `${surname} has been walking a tightrope all afternoon…`,
+        `The referee is watching ${surname} very closely now…`,
+        `${surname} goes in again — this looks dangerous…`,
+      ],
+      yellow: [
+        `${surname} has been giving the referee problems all game…`,
+        `Frustration building — ${surname} is pushing his luck here…`,
+        `${surname} clatters into another one — the ref's patience is running out…`,
+      ],
+    };
+    const ttype = e.type;
+    const setupPool = setups[ttype];
+    const setup = setupPool[Math.floor(Math.random() * setupPool.length)];
+
+    predCandidates.push({
+      realTime:    teaserReal,
+      matchMin:    teaserMin,
+      events:      [],
+      fake:        true,
+      isPrediction: true,
+      predIsReal:   true,  // correct answer is YES (card is coming)
+      predIsCard:   true,  // flag: this is a card-colour question
+      predCardCorrect: ttype, // 'red' or 'yellow'
+      commentary:  setup,
+      emoji:       '👀',
+      predQuestion: ttype === 'red'
+        ? `${surname} goes in — red or yellow?`
+        : `${surname} fouls again — red or yellow?`,
+      predOptions:  ['🟥 Red', '🟨 Yellow'],
+      predCorrectOption: ttype === 'red' ? 0 : 1,
+      linkedEventType:  ttype,
+      linkedPlayerName: surname,
+    });
+  }
+
+  // Goal events (not already scorer questions) → "Will they score?" question (YES)
+  for (const e of eventsToShow) {
+    if (e.type !== 'goal') continue;
+    const beatForEvent = beats.find(b => b.isScorerQuestion && b.events.some(ev => ev === e));
+    if (beatForEvent) continue; // already has a scorer question
+    const p = getPlayer(e.playerId);
+    if (!p) continue;
+    const teaserMin  = Math.max(1, e.min - 2);
+    const teaserReal = mapMatchMinToReal(teaserMin);
+    const tooClose   = beats.some(b => Math.abs(b.realTime - teaserReal) < 2500)
+                    || predCandidates.some(b => Math.abs(b.realTime - teaserReal) < 2500);
+    if (tooClose) continue;
+    const surname = p.name.split(' ').pop();
+    const yesSetups = [
+      `${surname} picks it up in space — this could be dangerous…`,
+      `${surname} through on goal — only the keeper to beat…`,
+      `${surname} arrives late into the box — will he finish?…`,
+      `${surname} is clean through — one on one with the keeper…`,
+    ];
+    const setup = yesSetups[Math.floor(Math.random() * yesSetups.length)];
+    predCandidates.push({
+      realTime: teaserReal, matchMin: teaserMin, events: [], fake: true,
+      isPrediction: true, predIsReal: true, predIsYesNo: true,
+      commentary: setup, emoji: '👀',
+      predQuestion: `${surname} is bearing down on goal — does he score?`,
+      linkedEventType: 'goal', linkedPlayerName: surname,
+    });
+  }
+
+  // Also add some NO-answer fake goal questions — tied to non-goal moments
+  // Pick from fake near-miss beats OR invent positions in gaps with no real event
+  // Use a drafted outfield player NOT in a real goal event for these
+  const goalScorers = new Set(eventsToShow.filter(e => e.type === 'goal').map(e => e.playerId));
+  const noQuestionPool = (state.myTeam.concat(state.oppTeam))
+    .filter(id => { const p = getPlayer(id); return p && p.pos !== 'GK' && !goalScorers.has(id); });
+
+  if (noQuestionPool.length > 0) {
+    // Try to find 1–2 clean gaps for fake questions
+    const fakeGapMins = [22, 67].filter(targetMin => {
+      const targetReal = mapMatchMinToReal(targetMin);
+      return !beats.some(b => Math.abs(b.realTime - targetReal) < 4000)
+          && !predCandidates.some(b => Math.abs(b.realTime - targetReal) < 4000);
+    });
+    for (const targetMin of fakeGapMins) {
+      const fp = noQuestionPool[Math.floor(Math.random() * noQuestionPool.length)];
+      const surname = fp.name.split(' ').pop();
+      const noSetups = [
+        `${surname} shapes to shoot — keeper braced…`,
+        `${surname} gets in behind — crowd on their feet…`,
+        `${surname} cuts inside — looks dangerous…`,
+        `${surname} strikes from range — screamer on…`,
+      ];
+      predCandidates.push({
+        realTime: mapMatchMinToReal(targetMin), matchMin: targetMin, events: [], fake: true,
+        isPrediction: true, predIsReal: false, predIsYesNo: true,  // NO is correct
+        commentary: noSetups[Math.floor(Math.random() * noSetups.length)], emoji: '👀',
+        predQuestion: `${surname} has a chance here — does he score?`,
+        resolve: `${surname} skies it. Miles over. Nothing. Play continues.`,
+        linkedEventType: 'goal', linkedPlayerName: surname,
+      });
+    }
+  }
+
+  // Shuffle and pick at most 2, spread across halves — mix YES and NO naturally
+  const shuffle2 = arr => [...arr].sort(() => Math.random() - 0.5);
+  const pred1st  = shuffle2(predCandidates.filter(b => b.matchMin < 45))[0];
+  const pred2nd  = shuffle2(predCandidates.filter(b => b.matchMin >= 45))[0];
+  const chosenPreds = [pred1st, pred2nd].filter(Boolean);
+  beats.push(...chosenPreds);
 
   // ── Inject near-miss fake beats into gaps ───────────────────────
   // Get all drafted player names for realistic fake commentary
@@ -6010,10 +6233,13 @@ function runBeats(beats, idx) {
             // Step 3: slide up prediction panel — question is clean and plain
             showPrediction(beat, (playerAnswer) => {
               if (feed) feed.classList.remove('feed-building');
-              setCommentary(
-                beat.predIsReal ? `Watch this space…` : beat.resolve,
-                beat.predIsReal ? '👀' : beat.emoji
-              );
+              // YES question: real event follows — stay suspenseful
+              // NO question: show the resolve line (what actually didn't happen)
+              if (beat.predIsReal) {
+                setCommentary('Watch this space…', '👀');
+              } else {
+                setCommentary(beat.resolve || 'Nothing doing. Play continues.', beat.emoji || '💨');
+              }
               applyPredictionResult(playerAnswer, beat.predIsReal);
               simTimeout = setTimeout(() => runBeats(beats, idx + 1), 2800);
             });
@@ -6082,7 +6308,7 @@ function runBeats(beats, idx) {
           // Single player: callback gets (isCorrect, playerId), apply score then continue
           showScorerQuestion(beat, (isCorrect, playerId) => {
             const { correctId } = beat.scorerOptions;
-            submitScorerAnswer(isCorrect, correctId, () => runBeats(beats, idx + 1));
+            submitScorerAnswer(isCorrect, correctId, () => runBeats(beats, idx + 1), null, beat);
           });
         }
       }, 1200);
@@ -6786,7 +7012,7 @@ function _renderResults() {
       const ownerLabel = item.mine
         ? '<span style="color:var(--blue);font-size:10px;font-weight:700;">YOU</span>'
         : '<span style="color:var(--red);font-size:10px;font-weight:700;">OPP</span>';
-      const ptsColor = item.pts > 0 ? 'var(--red)' : item.pts < 0 ? '#22c55e' : 'var(--muted)';
+      const ptsColor = item.pts > 0 ? '#22c55e' : item.pts < 0 ? 'var(--red)' : 'var(--muted)';
       row.innerHTML = `
         <div class="contributor-pos">${item.player.pos}</div>
         <div class="contributor-name">${item.player.name} <span class="contributor-team">${item.player.teamName}</span></div>
@@ -7222,25 +7448,41 @@ function renderHtLists() {
   myList.innerHTML  = '';
   oppList.innerHTML = '';
 
-  // My team: worst performers first, top 3 shown
+  // ── My team: 5 players with LOWEST pts so far (sorted, then shuffled for display)
+  // These are the players who have underperformed in the first half —
+  // the candidates you most want to drop.
   const mySorted = [...state.myTeam]
     .filter(id => { const p = getPlayer(id); return p && p.pos !== 'GK'; })
-    .sort((a, b) => (state.playerData[a]?.score || 0) - (state.playerData[b]?.score || 0))
-    .slice(0, 3);
+    .sort((a, b) => (state.playerData[a]?.pts || 0) - (state.playerData[b]?.pts || 0))
+    .slice(0, 5);
+  // Shuffle for display so it's not an obvious ranked list
+  const myShuffled = [...mySorted].sort(() => Math.random() - 0.5);
 
-  // Opp team: best performers first, top 3 shown
-  const oppSorted = [...state.oppTeam]
+  // ── Opp team: 5 players with HIGHEST chaos potential in 2nd half
+  // Estimate 2nd half scoring: count remaining events (min >= 45) for each player
+  const secondHalfEvents = EVENTS.filter(e => e.min >= 45 && e.type !== 'full_90' && e.type !== 'assist');
+  const oppPotential = [...state.oppTeam]
     .filter(id => { const p = getPlayer(id); return p && p.pos !== 'GK'; })
-    .sort((a, b) => (state.playerData[b]?.score || 0) - (state.playerData[a]?.score || 0))
-    .slice(0, 3);
+    .map(id => {
+      const remaining = secondHalfEvents.filter(e => e.playerId === id);
+      // Weight by event value: goal=3, red=5, own_goal=4, yellow=2, missed_pen=3, sub=1
+      const weights = { goal: 3, red: 5, own_goal: 4, yellow: 2, missed_pen: 3, sub: 1 };
+      const score = remaining.reduce((s, e) => s + (weights[e.type] || 1), 0);
+      return { id, score };
+    })
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 5)
+    .map(x => x.id);
+  // Shuffle for display
+  const oppShuffled = [...oppPotential].sort(() => Math.random() - 0.5);
 
-  mySorted.forEach(id => {
+  myShuffled.forEach(id => {
     const p = getPlayer(id);
     if (!p) return;
-    const pts = Math.round(state.playerData[id]?.score || 0);
+    const pts = Math.round(state.playerData[id]?.pts || 0);
     const card = document.createElement('div');
     card.className = 'ht-swap-card' + (state.htSwapOut === id ? ' selected-out' : '');
-    card.innerHTML = `<span class="sc-pos">${p.pos}</span><span class="sc-name">${p.name.split(' ').pop()}</span><span class="sc-pts">${pts > 0 ? '+' + pts : pts}</span>`;
+    card.innerHTML = `<span class="sc-pos">${p.pos}</span><span class="sc-name">${p.name.split(' ').pop()}</span><span class="sc-pts">${pts >= 0 ? '+' + pts : pts}</span>`;
     card.onclick = () => selectHtOut(id);
     myList.appendChild(card);
   });
@@ -7259,13 +7501,13 @@ function renderHtLists() {
   };
   myList.appendChild(diceCard);
 
-  oppSorted.forEach(id => {
+  oppShuffled.forEach(id => {
     const p = getPlayer(id);
     if (!p) return;
-    const pts = Math.round(state.playerData[id]?.score || 0);
+    const pts = Math.round(state.playerData[id]?.pts || 0);
     const card = document.createElement('div');
     card.className = 'ht-swap-card' + (state.htSwapIn === id ? ' selected-in' : '');
-    card.innerHTML = `<span class="sc-pos">${p.pos}</span><span class="sc-name">${p.name.split(' ').pop()}</span><span class="sc-pts">${pts > 0 ? '+' + pts : pts}</span>`;
+    card.innerHTML = `<span class="sc-pos">${p.pos}</span><span class="sc-name">${p.name.split(' ').pop()}</span><span class="sc-pts">${pts >= 0 ? '+' + pts : pts}</span>`;
     card.onclick = () => selectHtIn(id);
     oppList.appendChild(card);
   });

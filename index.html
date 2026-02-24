@@ -3267,61 +3267,69 @@ function mpCleanup() {
 
   <!-- Phase 1: Half time announcement -->
   <div id="ht-phase-announce" style="display:flex;flex-direction:column;align-items:center;gap:10px">
-    <div class="ht-whistle">🟡</div>
+    <div class="ht-whistle">⏸️</div>
     <div class="ht-label">HALF TIME</div>
     <div class="ht-score" id="ht-score"></div>
-    <div class="ht-sub">You have one swap — steal a player from your opponent</div>
+    <div class="ht-sub" id="ht-announce-sub">The manager has a suggestion…</div>
   </div>
 
-  <!-- Phase 2: Swap UI -->
-  <div id="ht-phase-swap" style="display:none;width:100%;flex-direction:column;align-items:center;gap:0;overflow-y:auto;padding:16px 16px 32px">
-    <div class="ht-label" style="font-size:32px;margin-bottom:4px">SWAP</div>
+  <!-- Phase 2: Swap offer UI -->
+  <div id="ht-phase-swap" style="display:none;width:100%;flex-direction:column;align-items:center;gap:0;padding:20px 20px 32px">
+
+    <div class="ht-label" style="font-size:28px;margin-bottom:4px">SWAP OFFER</div>
+    <div style="font-size:12px;color:#666;text-align:center;margin-bottom:16px;line-height:1.6;max-width:300px">
+      The manager sees an opportunity. It'll cost you <strong style="color:#f5c842">−5 pts</strong> to take it.
+    </div>
 
     <!-- Timer bar -->
-    <div style="width:100%;max-width:400px;margin-bottom:12px">
+    <div style="width:100%;max-width:360px;margin-bottom:20px">
       <div style="display:flex;justify-content:space-between;margin-bottom:4px">
-        <span style="font-family:'DM Mono',monospace;font-size:10px;color:#555;letter-spacing:1px">PICK YOUR SWAP</span>
-        <span id="ht-timer-label" style="font-family:'Bebas Neue',sans-serif;font-size:18px;color:#f5c842">20</span>
+        <span style="font-family:'DM Mono',monospace;font-size:10px;color:#555;letter-spacing:1px">DECIDE</span>
+        <span id="ht-timer-label" style="font-family:'Bebas Neue',sans-serif;font-size:18px;color:#f5c842">15</span>
       </div>
       <div style="height:3px;background:#222;border-radius:2px;overflow:hidden">
         <div id="ht-timer-bar" style="height:100%;background:#f5c842;width:100%;transition:width 1s linear;border-radius:2px"></div>
       </div>
     </div>
 
-    <!-- Instructions -->
-    <div id="ht-swap-instructions" style="font-size:12px;color:#666;text-align:center;margin-bottom:12px;max-width:340px;line-height:1.6">
-      Tap a player from <strong style="color:white">your XI</strong> to offload, then tap a player from <strong style="color:#f87171">their XI</strong> to steal
+    <!-- The offer card -->
+    <div style="width:100%;max-width:340px;background:#111;border-radius:14px;padding:16px;margin-bottom:20px">
+      <!-- Send out -->
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+        <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:2px;color:#f87171;min-width:60px">SEND OUT</div>
+        <div style="flex:1">
+          <div id="ht-offer-out-name" style="font-family:'Bebas Neue',sans-serif;font-size:20px;color:white;letter-spacing:0.5px"></div>
+          <div id="ht-offer-out-pts" style="font-family:'DM Mono',monospace;font-size:11px;color:#666"></div>
+        </div>
+        <div style="font-size:20px">↑</div>
+      </div>
+      <!-- Divider -->
+      <div style="height:1px;background:#222;margin-bottom:12px"></div>
+      <!-- Bring in -->
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:2px;color:#4ade80;min-width:60px">BRING IN</div>
+        <div style="flex:1">
+          <div id="ht-offer-in-name" style="font-family:'Bebas Neue',sans-serif;font-size:20px;color:white;letter-spacing:0.5px"></div>
+          <div id="ht-offer-in-pts" style="font-family:'DM Mono',monospace;font-size:11px;color:#666"></div>
+        </div>
+        <div style="font-size:20px">↓</div>
+      </div>
     </div>
 
-    <!-- Swap status -->
-    <div id="ht-swap-status" style="font-family:'DM Mono',monospace;font-size:11px;color:#555;letter-spacing:1px;margin-bottom:12px;min-height:16px;text-align:center"></div>
-
-    <!-- Two team lists side by side -->
-    <div style="display:flex;gap:10px;width:100%;max-width:420px">
-      <!-- My XI -->
-      <div style="flex:1">
-        <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:2px;color:#555;text-transform:uppercase;margin-bottom:6px;text-align:center">Your XI</div>
-        <div id="ht-my-list" style="display:flex;flex-direction:column;gap:4px"></div>
-      </div>
-      <!-- Their XI -->
-      <div style="flex:1">
-        <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:2px;color:#f87171;text-transform:uppercase;margin-bottom:6px;text-align:center">Their XI</div>
-        <div id="ht-opp-list" style="display:flex;flex-direction:column;gap:4px"></div>
-      </div>
-    </div>
-
-    <!-- Confirm button -->
-    <button id="ht-confirm-btn" onclick="confirmHtSwap()" style="display:none;margin-top:16px;background:white;color:black;border:none;border-radius:12px;padding:14px 40px;font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:1px;cursor:pointer">
-      CONFIRM SWAP
+    <!-- Accept / Decline buttons -->
+    <button id="ht-accept-btn" onclick="acceptHtSwap()" style="width:100%;max-width:340px;background:white;color:black;border:none;border-radius:12px;padding:15px;font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:1px;cursor:pointer;margin-bottom:10px">
+      ACCEPT  ·  −5 PTS
     </button>
-    <button onclick="skipHtSwap()" style="margin-top:8px;background:transparent;border:none;color:#333;font-size:13px;cursor:pointer;padding:8px">No swap — continue</button>
+    <button id="ht-decline-btn" onclick="declineHtSwap()" style="width:100%;max-width:340px;background:transparent;border:1px solid #333;border-radius:12px;padding:14px;font-family:'Bebas Neue',sans-serif;font-size:18px;color:#666;letter-spacing:1px;cursor:pointer">
+      NO THANKS
+    </button>
   </div>
 
-  <!-- Phase 3: Locked / waiting (mp only) -->
+  <!-- Phase 3: Waiting for opponent (mp only) -->
   <div id="ht-phase-locked" style="display:none;flex-direction:column;align-items:center;gap:12px">
-    <div style="font-size:48px">🔒</div>
-    <div class="ht-label" style="font-size:32px">SWAP LOCKED</div>
-    <div id="ht-locked-msg" style="font-size:13px;color:#666;text-align:center;max-width:280px;line-height:1.6"></div>
+    <div style="font-size:48px">⏳</div>
+    <div class="ht-label" style="font-size:28px">WAITING</div>
+    <div id="ht-locked-msg" style="font-size:13px;color:#666;text-align:center;max-width:280px;line-height:1.6">Waiting for your opponent…</div>
   </div>
 
 </div>
@@ -5994,6 +6002,10 @@ function afterPick() {
     // After player picks GK (myTeam has 1 player, first time): explain forced GK then sabotage
     if (pickNum === 1 && state.myTeam.length === 1 && !state._tutShownGkForced) {
       state._tutShownGkForced = true;
+      // Re-render now that step has advanced (so carousel shows sabotage/outfield, not GKs)
+      renderDraftSlots();
+      renderCarousel();
+      updateTurnUI();
       showTutorialCard('gk_forced').then(() => {
         // After dismissing GK explainer, immediately show sabotage if that's next
         const n = currentStep();
@@ -6002,6 +6014,7 @@ function afterPick() {
           showTutorialCard('sabotage').then(() => {});
         }
       });
+      return; // already re-rendered above, skip the renders at the top of afterPick
     }
     // Start of own normal picks (pick 7)
     if (pickNum === 7 && !state._tutShownYourPicks && next && next.type === 'normal' && next.who === 'me') {
@@ -7554,7 +7567,7 @@ function runBeats(beats, idx) {
         if (htOverlay) htOverlay.style.display = '';
         if (feed) feed.classList.add('feed-halftime');
         if (_clockTicker) { clearInterval(_clockTicker); _clockTicker = null; }
-        setCommentary('<strong>Half time.</strong> Referee blows for the break.', '🟡');
+        setCommentary('<strong>Half time.</strong> Referee blows for the break.', '⏸️');
 
         // Start multiplayer swap listener
         if (state.mp) mpListenForHtSwap();
@@ -7566,6 +7579,8 @@ function runBeats(beats, idx) {
             if (feed) { feed.classList.remove('feed-halftime'); }
             const sub = document.getElementById('commentary-sub');
             if (sub) sub.style.display = 'none';
+            // If in MP, show opp swap notification before 2nd half starts
+            if (state.mp) showOppSwapNotification();
             setCommentary('Second half underway.', '🏟️');
             simTimeout = setTimeout(() => runBeats(beats, idx + 1), 800);
           });
@@ -8897,216 +8912,146 @@ function drawResultGraph() {
 // HALFTIME SWAP
 // ═══════════════════════════════════════════════════════════════
 
+// ── Build the computer's swap offer ──────────────────────────
+function buildHtSwapOffer() {
+  const secondHalfEvents = EVENTS.filter(e => e.min > 45 && e.type !== 'full_90' && e.type !== 'assist');
+  const weights = { goal: 3, red: 4, own_goal: 3, yellow: 2, missed_pen: 2, sub: 1 };
+
+  // My worst outfield performer in first half (non-captain)
+  const myOutfield = state.myTeam.filter(id => {
+    const p = getPlayer(id);
+    return p && p.pos !== 'GK' && id !== state.myCaptain;
+  }).sort((a, b) => (state.playerData[a]?.pts || 0) - (state.playerData[b]?.pts || 0));
+
+  // Opp best projected 2nd-half performer (non-captain), top 25% of their squad
+  const oppScored = state.oppTeam
+    .filter(id => { const p = getPlayer(id); return p && p.pos !== 'GK' && id !== state.oppCaptain; })
+    .map(id => {
+      const score = secondHalfEvents.filter(e => e.playerId === id)
+        .reduce((s, e) => s + (weights[e.type] || 1), 0);
+      return { id, score };
+    })
+    .sort((a, b) => b.score - a.score);
+
+  // Pick worst from my team, best from opp (with 75% chance it's truly top 25% of opp)
+  const outId = myOutfield[0];
+  const topQuarter = Math.max(1, Math.ceil(oppScored.length * 0.25));
+  const inPool = Math.random() < 0.75 ? oppScored.slice(0, topQuarter) : oppScored;
+  const inId = inPool[Math.floor(Math.random() * inPool.length)]?.id;
+
+  return outId && inId ? { outId, inId } : null;
+}
+
 function showHtSwapUI(onComplete) {
-  // onComplete(swapOut, swapIn) or onComplete(null, null) if skipped
   state.htSwapOut  = null;
   state.htSwapIn   = null;
   state.htSwapDone = false;
 
-  // Transition from announce phase to swap phase
   const announce = document.getElementById('ht-phase-announce');
   const swapPhase = document.getElementById('ht-phase-swap');
-  if (announce)   announce.style.display = 'none';
-  if (swapPhase)  swapPhase.style.display = 'flex';
+  if (announce) announce.style.display = 'none';
+  if (swapPhase) swapPhase.style.display = 'flex';
 
-  // Render both team lists
-  renderHtLists();
+  // Build the offer
+  const offer = buildHtSwapOffer();
+  state._htOffer = offer;
+
+  if (!offer) {
+    // No valid offer possible — skip straight to second half
+    finishHtSwap();
+    if (onComplete) onComplete();
+    return;
+  }
+
+  const outPlayer = getPlayer(offer.outId);
+  const inPlayer  = getPlayer(offer.inId);
+  const outPts    = Math.round(state.playerData[offer.outId]?.pts || 0);
+  const inPts     = Math.round(state.playerData[offer.inId]?.pts || 0);
+
+  // Populate offer card
+  const outName = document.getElementById('ht-offer-out-name');
+  const outPtsEl = document.getElementById('ht-offer-out-pts');
+  const inName  = document.getElementById('ht-offer-in-name');
+  const inPtsEl = document.getElementById('ht-offer-in-pts');
+
+  if (outName)  outName.textContent  = outPlayer ? outPlayer.name.split(' ').pop() : '?';
+  if (outPtsEl) outPtsEl.textContent = `${outPlayer?.pos || ''} · ${outPts >= 0 ? '+' : ''}${outPts} pts this half`;
+  if (inName)   inName.textContent   = inPlayer  ? inPlayer.name.split(' ').pop()  : '?';
+  if (inPtsEl)  inPtsEl.textContent  = `${inPlayer?.pos || ''} · ${inPts >= 0 ? '+' : ''}${inPts} pts this half`;
 
   // Tutorial: explain the swap mechanic
   if (_tutorialActive) {
     showTutorialCard('ht_swap', false).then(() => {});
   }
 
-  // Start 20s timer
-  let secs = 20;
+  // 15s timer
+  let secs = 15;
   const timerLabel = document.getElementById('ht-timer-label');
   const timerBar   = document.getElementById('ht-timer-bar');
-  if (timerBar) timerBar.style.width = '100%';
+  if (timerLabel) timerLabel.textContent = secs;
+  if (timerBar)   timerBar.style.width = '100%';
 
   state._htTimerSecsRemaining = secs;
   state.htTimerInterval = setInterval(() => {
     secs--;
     state._htTimerSecsRemaining = secs;
     if (timerLabel) timerLabel.textContent = secs;
-    if (timerBar)   timerBar.style.width = (secs / 20 * 100) + '%';
+    if (timerBar)   timerBar.style.width = (secs / 15 * 100) + '%';
     if (secs <= 0) {
       clearInterval(state.htTimerInterval);
-      if (!state.htSwapDone) autoCompleteHtSwap(onComplete);
+      if (!state.htSwapDone) declineHtSwap(); // timer = auto-decline
     }
   }, 1000);
 
-  // Store callback
   state._htSwapCallback = onComplete;
 }
 
-function renderHtLists() {
-  const myList  = document.getElementById('ht-my-list');
-  const oppList = document.getElementById('ht-opp-list');
-  if (!myList || !oppList) return;
-
-  myList.innerHTML  = '';
-  oppList.innerHTML = '';
-
-  // ── My team: 5 players with LOWEST pts so far (sorted, then shuffled for display)
-  // These are the players who have underperformed in the first half —
-  // the candidates you most want to drop.
-  const mySorted = [...state.myTeam]
-    .filter(id => { const p = getPlayer(id); return p && p.pos !== 'GK' && id !== state.myCaptain; })
-    .sort((a, b) => (state.playerData[a]?.pts || 0) - (state.playerData[b]?.pts || 0))
-    .slice(0, 5);
-  // Shuffle for display so it's not an obvious ranked list
-  const myShuffled = [...mySorted].sort(() => Math.random() - 0.5);
-
-  // ── Opp team: 5 players with HIGHEST chaos potential in 2nd half
-  // Estimate 2nd half scoring: count remaining events (min >= 45) for each player
-  const secondHalfEvents = EVENTS.filter(e => e.min >= 45 && e.type !== 'full_90' && e.type !== 'assist');
-  const oppPotential = [...state.oppTeam]
-    .filter(id => { const p = getPlayer(id); return p && p.pos !== 'GK' && id !== state.oppCaptain; })
-    .map(id => {
-      const remaining = secondHalfEvents.filter(e => e.playerId === id);
-      // Weight by event value: goal=3, red=5, own_goal=4, yellow=2, missed_pen=3, sub=1
-      const weights = { goal: 3, red: 5, own_goal: 4, yellow: 2, missed_pen: 3, sub: 1 };
-      const score = remaining.reduce((s, e) => s + (weights[e.type] || 1), 0);
-      return { id, score };
-    })
-    .sort((a, b) => b.score - a.score)
-    .slice(0, 5)
-    .map(x => x.id);
-  // Shuffle for display
-  const oppShuffled = [...oppPotential].sort(() => Math.random() - 0.5);
-
-  myShuffled.forEach(id => {
-    const p = getPlayer(id);
-    if (!p) return;
-    const pts = Math.round(state.playerData[id]?.pts || 0);
-    const card = document.createElement('div');
-    card.className = 'ht-swap-card' + (state.htSwapOut === id ? ' selected-out' : '');
-    card.innerHTML = `<span class="sc-pos">${p.pos}</span><span class="sc-name">${p.name.split(' ').pop()}</span><span class="sc-pts">${pts >= 0 ? '+' + pts : pts}</span>`;
-    card.onclick = () => selectHtOut(id);
-    myList.appendChild(card);
-  });
-
-  // Dice/random swap option at bottom of my list
-  const diceCard = document.createElement('div');
-  diceCard.className = 'ht-swap-card' + (state.htSwapOut === 'random' ? ' selected-out' : '');
-  diceCard.style.background = state.htSwapOut === 'random' ? '#2a2500' : '';
-  diceCard.innerHTML = `<span class="sc-pos">🎲</span><span class="sc-name">Random</span><span class="sc-pts" style="color:#f5a623">+5</span>`;
-  diceCard.onclick = () => {
-    // Pick random from full my-team (not just the curated 3)
-    const outfield = state.myTeam.filter(id => { const p = getPlayer(id); return p && p.pos !== 'GK'; });
-    const picked = outfield[Math.floor(Math.random() * outfield.length)];
-    state.htSwapRandomOut = picked;
-    selectHtOut('random');
-  };
-  myList.appendChild(diceCard);
-
-  oppShuffled.forEach(id => {
-    const p = getPlayer(id);
-    if (!p) return;
-    const pts = Math.round(state.playerData[id]?.pts || 0);
-    const card = document.createElement('div');
-    card.className = 'ht-swap-card' + (state.htSwapIn === id ? ' selected-in' : '');
-    card.innerHTML = `<span class="sc-pos">${p.pos}</span><span class="sc-name">${p.name.split(' ').pop()}</span><span class="sc-pts">${pts >= 0 ? '+' + pts : pts}</span>`;
-    card.onclick = () => selectHtIn(id);
-    oppList.appendChild(card);
-  });
-
-  // Dice/random steal option
-  const diceIn = document.createElement('div');
-  diceIn.className = 'ht-swap-card' + (state.htSwapIn === 'random' ? ' selected-in' : '');
-  diceIn.innerHTML = `<span class="sc-pos">🎲</span><span class="sc-name">Random</span><span class="sc-pts" style="color:#f5a623">+5</span>`;
-  diceIn.onclick = () => {
-    const outfield = state.oppTeam.filter(id => { const p = getPlayer(id); return p && p.pos !== 'GK'; });
-    const picked = outfield[Math.floor(Math.random() * outfield.length)];
-    state.htSwapRandomIn = picked;
-    selectHtIn('random');
-  };
-  oppList.appendChild(diceIn);
-}
-
-function selectHtOut(id) {
+function acceptHtSwap() {
   if (state.htSwapDone) return;
-  state.htSwapOut = (state.htSwapOut === id) ? null : id;
-  updateHtConfirmBtn();
-  renderHtLists();
-}
-
-function selectHtIn(id) {
-  if (state.htSwapDone) return;
-  state.htSwapIn = (state.htSwapIn === id) ? null : id;
-  updateHtConfirmBtn();
-  renderHtLists();
-}
-
-function updateHtConfirmBtn() {
-  const btn = document.getElementById('ht-confirm-btn');
-  const status = document.getElementById('ht-swap-status');
-  if (!btn) return;
-  if (state.htSwapOut && state.htSwapIn) {
-    const outId = state.htSwapOut === 'random' ? state.htSwapRandomOut : state.htSwapOut;
-    const inId  = state.htSwapIn  === 'random' ? state.htSwapRandomIn  : state.htSwapIn;
-    const out = outId ? getPlayer(outId) : null;
-    const inn = inId  ? getPlayer(inId)  : null;
-    const outName = state.htSwapOut === 'random' ? '🎲 Random' : (out?.name.split(' ').pop() || '?');
-    const inName  = state.htSwapIn  === 'random' ? '🎲 Random' : (inn?.name.split(' ').pop() || '?');
-    btn.style.display = '';
-    if (status) status.textContent = `${outName} → ${inName}`;
-  } else {
-    btn.style.display = 'none';
-    if (status) status.textContent = '';
-  }
-}
-
-function confirmHtSwap() {
-  if (!state.htSwapOut || !state.htSwapIn || state.htSwapDone) return;
   clearInterval(state.htTimerInterval);
   state.htSwapDone = true;
 
-  // Resolve 'random' sentinel to actual player ids
-  const outId = state.htSwapOut === 'random' ? state.htSwapRandomOut : state.htSwapOut;
-  const inId  = state.htSwapIn  === 'random' ? state.htSwapRandomIn  : state.htSwapIn;
-  if (!outId || !inId) { finishHtSwap(); return; }
+  const offer = state._htOffer;
+  if (!offer) { finishHtSwap(); return; }
 
-  // +5 bonus if either dice was used
-  const usedDice = state.htSwapOut === 'random' || state.htSwapIn === 'random';
-  if (usedDice) {
-    state.myScore += 5;
-    updateScoreDisplay();
-    showToast('🎲 +5 dice bonus!');
-  }
+  // Immediate −5 cost
+  state.myScore -= 5;
+  updateScoreDisplay();
+  showToast('🔄 Swap accepted · −5 pts');
 
   if (state.mp) {
-    mpWriteHtSwap(outId, inId);
+    mpWriteHtSwap(offer.outId, offer.inId);
   } else {
-    applyHtSwap(outId, inId, true);
+    applyHtSwap(offer.outId, offer.inId, true);
   }
 }
 
-function skipHtSwap() {
+function declineHtSwap() {
+  if (state.htSwapDone) return;
   clearInterval(state.htTimerInterval);
   state.htSwapDone = true;
-  finishHtSwap();
+  // In MP: write a "no swap" signal so the other player knows we're ready
+  if (state.mp) {
+    mpWriteHtSwap(null, null); // null = declined
+  } else {
+    finishHtSwap();
+  }
 }
 
-function autoCompleteHtSwap(onComplete) {
-  // Timer ran out with no selection — skip
-  state.htSwapDone = true;
-  finishHtSwap();
-}
+// Keep skipHtSwap as alias for backward compat (tutorial etc.)
+function skipHtSwap() { declineHtSwap(); }
+function autoCompleteHtSwap() { declineHtSwap(); }
 
 function applyHtSwap(outId, inId, isMe) {
+  if (!outId || !inId) { finishHtSwap(); return; } // declined
   if (isMe) {
-    // Remove outId from my team, add inId
     state.myTeam  = state.myTeam.filter(id => id !== outId);
     state.myTeam.push(inId);
-    // Remove inId from opp team, add outId
     state.oppTeam = state.oppTeam.filter(id => id !== inId);
     state.oppTeam.push(outId);
   }
-  // Initialise playerData for new player if needed
-  if (!state.playerData[inId])  state.playerData[inId]  = { score: 0, events: [] };
-  if (!state.playerData[outId]) state.playerData[outId] = { score: 0, events: [] };
-  // Mark both players as HT substitutes so the UI can show the 🔄 badge
+  if (!state.playerData[inId])  state.playerData[inId]  = { pts: 0, events: [] };
+  if (!state.playerData[outId]) state.playerData[outId] = { pts: 0, events: [] };
   if (isMe) {
     state.playerData[inId].htSubIn   = true;
     state.playerData[outId].htSubOut = true;
@@ -9115,16 +9060,14 @@ function applyHtSwap(outId, inId, isMe) {
 }
 
 function finishHtSwap() {
-  // Hide swap UI, show second half starting
   const htOverlay = document.getElementById('ht-overlay');
   const swapPhase = document.getElementById('ht-phase-swap');
   if (swapPhase) swapPhase.style.display = 'none';
 
-  // Brief confirmation then close
   const announce = document.getElementById('ht-phase-announce');
   if (announce) {
     announce.style.display = 'flex';
-    const sub = announce.querySelector('.ht-sub');
+    const sub = document.getElementById('ht-announce-sub');
     if (sub) sub.textContent = 'Second half kicks off shortly…';
   }
 
@@ -9143,26 +9086,41 @@ async function mpWriteHtSwap(outId, inId) {
   const mp = state.mp;
   if (!mp) return;
   const field = mp.role === 'A' ? 'htSwapA' : 'htSwapB';
+  // Write decision (null/null = declined)
   await window._fb.update(mp.sessionRef, {
-    [field]: { outId, inId, lockedAt: Date.now() }
+    [field]: { outId: outId || null, inId: inId || null, lockedAt: Date.now() }
   });
-  // Apply my swap immediately
+  // Apply my own swap immediately (or skip if declined)
   applyHtSwap(outId, inId, true);
 }
 
 function mpListenForHtSwap() {
   const mp = state.mp;
   if (!mp) return;
-  const oppField = mp.role === 'A' ? 'htSwapB' : 'htSwapA';
+  const oppField    = mp.role === 'A' ? 'htSwapB' : 'htSwapA';
+  const myField     = mp.role === 'A' ? 'htSwapA' : 'htSwapB';
+
+  // Listen for opponent's decision — store it so we can show the notification
+  // at start of second half
   window._fb.onValue(window._fb.ref('sessions/' + mp.code + '/' + oppField), (snap) => {
     const d = snap.val();
     if (!d) return;
-    mpCleanup();
-    // Opp swap: their outId comes to us (we don't apply it — it's their team)
-    // But we need to know so we can lock that player on our screen
-    const lockedMsg = document.getElementById('ht-locked-msg');
-    if (lockedMsg) lockedMsg.textContent = 'Your opponent has made their swap.';
+    // Save opp swap info for the second-half notification
+    state._oppHtSwap = d; // { outId, inId } or { outId: null, inId: null }
   });
+}
+
+// Called at start of 2nd half — shows notification if opp made a swap
+function showOppSwapNotification() {
+  const d = state._oppHtSwap;
+  if (!d || !d.outId || !d.inId) return; // opp declined or no data
+  const outP = getPlayer(d.outId);
+  const inP  = getPlayer(d.inId);
+  if (!outP || !inP) return;
+  const outName = outP.name.split(' ').pop();
+  const inName  = inP.name.split(' ').pop();
+  showToast(`Opponent swapped ${outName} → ${inName}`);
+  setCommentary(`Opponent made a swap: <strong>${outName}</strong> out, <strong>${inName}</strong> in.`, '🔄');
 }
 
 
@@ -9959,9 +9917,9 @@ const TUTORIAL_STEPS = {
   },
   ht_swap: {
     emoji: '🔄',
-    title: 'Half time — make a swap',
-    body: `You can swap one player from your squad for one from <strong>theirs</strong>.<br><br>Drop an underperformer, steal someone from their team who's about to cause chaos in the second half. Or roll the dice for a mystery swap with a +5 bonus.`,
-    btn: `Make my move`,
+    title: 'Half time — swap offer',
+    body: `The manager has spotted an opportunity. He wants to drop your <strong>worst performer</strong> and bring in someone from the other team who could cause chaos in the second half.<br><br><strong>Accept</strong> the swap for <strong>−5 pts</strong> upfront — worth it if the new player delivers. <strong>Decline</strong> and keep your squad as is, no cost.`,
+    btn: `Got it`,
   },
   post_match: {
     emoji: '🏆',

@@ -6007,9 +6007,11 @@ function afterPick() {
       renderCarousel();
       updateTurnUI();
       showTutorialCard('gk_forced').then(() => {
-        // After dismissing GK explainer, immediately show sabotage if that's next
+        // After GK card dismissed, trigger opponent auto-pick if it's their turn
         const n = currentStep();
-        if (n && n.type === 'sabotage' && n.who === 'me' && !state._tutShownSabotage) {
+        if (n && n.who === 'opp') {
+          setTimeout(() => autoPickOpponent(), 800);
+        } else if (n && n.type === 'sabotage' && n.who === 'me' && !state._tutShownSabotage) {
           state._tutShownSabotage = true;
           showTutorialCard('sabotage').then(() => {});
         }
@@ -6758,7 +6760,18 @@ function startSimulation() {
   updateScoreDisplay();
   setSimView('pitch');
 
-  const beats = buildBeats();
+  let beats;
+  try {
+    beats = buildBeats();
+  } catch(err) {
+    console.error('buildBeats error:', err);
+    beats = [];
+  }
+  if (!beats || beats.length === 0) {
+    // Fallback: skip straight to results after a brief delay
+    setTimeout(() => showResults(), 2000);
+    return;
+  }
   runBeats(beats, 0);
 }
 
@@ -7517,7 +7530,9 @@ function runBeats(beats, idx) {
   }
 
   const beat = beats[idx];
-  const delay = idx === 0 ? 500 : Math.max(300, beat.realTime - beats[idx-1].realTime);
+  // Clamp delay: min 300ms to prevent synchronous cascade, max 8000ms to keep game moving
+  const rawDelay = idx === 0 ? 500 : (beat.realTime - beats[idx-1].realTime);
+  const delay = Math.min(8000, Math.max(300, rawDelay));
 
   simTimeout = setTimeout(() => {
     // Animate clock from previous minute to current beat minute
@@ -8117,13 +8132,22 @@ function showResults() {
   if (state.mp) {
     mpWriteScore(state.myScore);
     // Listen for opponent score to show final comparison
-    window._fb.onValue(state.mp.sessionRef, (snap) => {
+    // Register via _mpUnsubs so mpCleanup() can kill it if needed
+    let _resultsRendered = false;
+    const _resultsUnsub = window._fb.onValue(state.mp.sessionRef, (snap) => {
       const d = snap.val();
-      if (!d) return;
+      if (!d || _resultsRendered) return;
       const myScore  = state.mp.role === 'A' ? d.scoreA : d.scoreB;
       const oppScore = state.mp.role === 'A' ? d.scoreB : d.scoreA;
-      if (myScore !== null && oppScore !== null) {
-        mpCleanup();
+      const myTs     = state.mp.role === 'A' ? d.scoreATs : d.scoreBTs;
+      const oppTs    = state.mp.role === 'A' ? d.scoreBTs : d.scoreATs;
+      const sessionStart = d.createdAt || 0;
+      // Both scores must be present AND written after session started (prevents stale cache)
+      const myFresh  = myScore  !== null && myScore  !== undefined && (!myTs  || myTs  >= sessionStart);
+      const oppFresh = oppScore !== null && oppScore !== undefined && (!oppTs || oppTs >= sessionStart);
+      if (myFresh && oppFresh) {
+        _resultsRendered = true;
+        try { _resultsUnsub(); } catch(e) {}
         // Use Firebase scores as source of truth for both players
         // so winner/loser is always consistent across devices
         state.myScore  = myScore;
@@ -8131,6 +8155,16 @@ function showResults() {
         _renderResults();
       }
     });
+    window._mpUnsubs.push(_resultsUnsub);
+    // Timeout fallback: if opponent score never arrives after 20s, use local scores
+    setTimeout(() => {
+      if (!_resultsRendered) {
+        _resultsRendered = true;
+        try { _resultsUnsub(); } catch(e) {}
+        console.warn('MP results timeout - using local scores');
+        _renderResults();
+      }
+    }, 20000);
     // Show loading state while waiting
     showScreen('results');
     document.getElementById('result-headline').textContent = 'CALCULATING…';
@@ -9719,8 +9753,16 @@ async function mpConfirmCaptainAndSim(captainId) {
       return; // listener will fire again with the timestamp
     }
 
-    // Both players: once timestamp exists and we have opp captain, start sim
-    if (d.simStartTimestamp && state.oppCaptain) {
+    // Both players: once timestamp exists, start sim
+    // (oppCaptain may arrive slightly after timestamp - use whatever we have)
+    if (d.simStartTimestamp) {
+      // Grab opp captain if available
+      if (d[oppCapField]) state.oppCaptain = d[oppCapField];
+      // If opp captain still not set, pick a fallback from their team
+      if (!state.oppCaptain && state.oppTeam.length > 0) {
+        const outfield = state.oppTeam.filter(id => { const p = getPlayer ? getPlayer(id) : null; return p && p.pos !== 'GK'; });
+        state.oppCaptain = outfield[0] || state.oppTeam[0];
+      }
       simFired = true;
       mpCleanup();
       const delay = Math.max(0, d.simStartTimestamp + 500 - Date.now());
@@ -9840,7 +9882,19 @@ async function mpWriteScore(score) {
   const mp = state.mp;
   if (!mp) return;
   const field = mp.role === 'A' ? 'scoreA' : 'scoreB';
-  await window._fb.update(mp.sessionRef, { [field]: Math.round(score), status: 'done' });
+  const rounded = Math.round(score);
+  const scoreTs = Date.now(); // timestamp so we can detect stale cached reads
+  // Retry up to 3 times in case of network hiccup
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      await window._fb.update(mp.sessionRef, { [field]: rounded, [field + 'Ts']: scoreTs, status: 'done' });
+      return; // success
+    } catch(e) {
+      console.warn('mpWriteScore attempt', attempt + 1, 'failed:', e);
+      if (attempt < 2) await new Promise(r => setTimeout(r, 1000));
+    }
+  }
+  console.error('mpWriteScore failed after 3 attempts - using local fallback');
 }
 
 // ── Override draftPlayer in mp mode ──────────────────────────

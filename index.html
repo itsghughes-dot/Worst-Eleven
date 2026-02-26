@@ -2840,6 +2840,16 @@ function mpCleanup() {
     try { unsub(); } catch(e) {}
   }
   window._mpUnsubs = [];
+  // Cancel wall-clock sim loop if running
+  if (typeof _mpSimRAF !== 'undefined' && _mpSimRAF) {
+    cancelAnimationFrame(_mpSimRAF);
+    _mpSimRAF = null;
+  }
+  // Cancel score listener
+  if (typeof _mpScoreUnsub !== 'undefined' && _mpScoreUnsub) {
+    try { _mpScoreUnsub(); } catch(e) {}
+    _mpScoreUnsub = null;
+  }
 }
 </script>
 </head>
@@ -6944,7 +6954,12 @@ function startSimulation() {
     setTimeout(() => showResults(), 2000);
     return;
   }
-  runBeats(beats, 0);
+  if (state.mp) {
+    // Option A: wall-clock driven sync
+    mpRunBeats(beats);
+  } else {
+    runBeats(beats, 0);
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -9297,7 +9312,7 @@ function skipHtSwap() { declineHtSwap(); }
 function autoCompleteHtSwap() { declineHtSwap(); }
 
 function applyHtSwap(outId, inId, isMe) {
-  if (!outId || !inId) { finishHtSwap(); return; } // declined
+  if (!outId || !inId || outId === 'skip' || inId === 'skip') { finishHtSwap(); return; } // declined
   if (isMe) {
     state.myTeam  = state.myTeam.filter(id => id !== outId);
     state.myTeam.push(inId);
@@ -9341,8 +9356,9 @@ async function mpWriteHtSwap(outId, inId) {
   if (!mp) return;
   const field = mp.role === 'A' ? 'htSwapA' : 'htSwapB';
   // Write decision (null/null = declined)
+  // Use 'skip' sentinel for declined swaps (Firebase strips null fields)
   await window._fb.update(mp.sessionRef, {
-    [field]: { outId: outId || null, inId: inId || null, lockedAt: Date.now() }
+    [field]: { outId: outId || 'skip', inId: inId || 'skip', lockedAt: Date.now() }
   });
   // Apply my own swap immediately (or skip if declined)
   applyHtSwap(outId, inId, true);
@@ -10006,6 +10022,8 @@ async function mpConfirmCaptainAndSim(captainId) {
       }
       simFired = true;
       mpCleanup();
+      // Store the shared timestamp on state.mp so mpRunBeats can use it
+      state.mp.simStartTimestamp = d.simStartTimestamp + 500;
       const delay = Math.max(0, d.simStartTimestamp + 500 - Date.now());
       setTimeout(() => startSimulation(), delay);
     }
@@ -10115,6 +10133,347 @@ function mpShowScorerQuestion(beat, onComplete) {
       [myField]: { playerId, ts: myAnsweredAt, correct: isCorrect }
     });
     // Don't call onComplete here — wait for resolveQuestion
+  });
+}
+
+
+// ═══════════════════════════════════════════════════════════════
+// OPTION A — WALL-CLOCK MULTIPLAYER SIMULATION
+// Both clients share a Firebase simStartTimestamp written by host.
+// Each beat fires when Date.now() - origin >= beat.realTime.
+// Predictions, HT swap, and score are all Firebase-coordinated.
+// ═══════════════════════════════════════════════════════════════
+
+let _mpSimRAF     = null;  // requestAnimationFrame handle
+let _mpSimPaused  = false; // true while waiting for HT swap sync
+let _mpBeatIdx    = 0;
+let _mpBeats      = null;
+let _mpOrigin     = 0;     // wall-clock ms when first half started
+let _mpHtOrigin   = 0;     // wall-clock ms when second half started
+let _mpInSecondHalf = false;
+let _mpScoreUnsub  = null; // Firebase unsub for opponent score listener
+
+function mpRunBeats(beats) {
+  const mp = state.mp;
+  if (!mp) { runBeats(beats, 0); return; }
+
+  _mpBeats        = beats;
+  _mpBeatIdx      = 0;
+  _mpSimPaused    = false;
+  _mpInSecondHalf = false;
+  _mpOrigin       = mp.simStartTimestamp || Date.now();
+
+  // ── Start listening for opponent's live score ──
+  _mpStartOppScoreListener();
+
+  // ── Kick off the loop ──
+  _mpSimLoop();
+}
+
+function _mpSimLoop() {
+  if (_mpSimPaused) return; // will be re-called by HT resume
+  _mpSimRAF = requestAnimationFrame(_mpSimLoop);
+
+  const beats = _mpBeats;
+  if (!beats) return;
+  if (_mpBeatIdx >= beats.length) {
+    // All beats processed — end game
+    cancelAnimationFrame(_mpSimRAF);
+    _mpSimRAF = null;
+    applyFull90();
+    _mpPushScore();
+    if (_mpScoreUnsub) { _mpScoreUnsub(); _mpScoreUnsub = null; }
+    setTimeout(() => showResults(), 2000);
+    return;
+  }
+
+  const beat = beats[_mpBeatIdx];
+  const origin  = _mpInSecondHalf ? _mpHtOrigin : _mpOrigin;
+  // In second half, beats have realTime > htRealTime (~31000).
+  // We offset: elapsed needed = beat.realTime - htBeatRealTime
+  const htBeat  = beats.find(b => b.isHalfTime);
+  const htRT    = htBeat ? htBeat.realTime : 31000;
+  const targetElapsed = _mpInSecondHalf
+    ? (beat.realTime - htRT)   // 2nd half: time since HT ended
+    : beat.realTime;           // 1st half: time since sim started
+
+  const elapsed = Date.now() - origin;
+  if (elapsed < targetElapsed) return; // not time yet
+
+  // Time to fire this beat — cancel rAF while processing
+  cancelAnimationFrame(_mpSimRAF);
+  _mpSimRAF = null;
+  _mpBeatIdx++;
+
+  _mpFireBeat(beat, beats, () => {
+    // Beat fully processed — resume loop if not paused at HT
+    if (!_mpSimPaused) _mpSimLoop();
+  });
+}
+
+function _mpFireBeat(beat, beats, onDone) {
+  const mp = state.mp;
+
+  // ── Clock update ──
+  _mpTickClock(beat);
+
+  // ── Half-time beat ──
+  if (beat.isHalfTime) {
+    _mpSimPaused = true;
+    cancelAnimationFrame(_mpSimRAF);
+    _mpSimRAF = null;
+
+    const htOverlay = document.getElementById('ht-overlay');
+    const htScore   = document.getElementById('ht-score');
+    const feed      = document.getElementById('commentary-feed');
+    const announcePhase = document.getElementById('ht-phase-announce');
+    const swapPhase     = document.getElementById('ht-phase-swap');
+    if (announcePhase) announcePhase.style.display = 'flex';
+    if (swapPhase)     swapPhase.style.display = 'none';
+    if (htScore) {
+      const my  = Math.round(state.myScore);
+      const opp = Math.round(state.oppScore);
+      htScore.textContent = `${state.teamName || 'You'}  ${my > 0 ? '+' : ''}${my}  ·  Opp  ${opp > 0 ? '+' : ''}${opp}`;
+    }
+    if (htOverlay) htOverlay.style.display = '';
+    if (feed) feed.classList.add('feed-halftime');
+    if (_clockTicker) { clearInterval(_clockTicker); _clockTicker = null; }
+    setCommentary('<strong>Half time.</strong> Referee blows for the break.', '⏸️');
+
+    // Write score at HT
+    _mpPushScore();
+
+    // Show swap UI — then wait for BOTH players to confirm before starting 2nd half
+    setTimeout(() => {
+      showHtSwapUI(() => {
+        // My swap is done — now wait for both players confirmed via Firebase
+        _mpWaitForHtBothConfirmed(beats, () => {
+          // Both confirmed — start second half
+          if (feed) feed.classList.remove('feed-halftime');
+          const sub = document.getElementById('commentary-sub');
+          if (sub) sub.style.display = 'none';
+          showOppSwapNotification();
+          setCommentary('Second half underway.', '🏟️');
+          _mpInSecondHalf = true;
+          _mpSimPaused = false;
+          setTimeout(() => _mpSimLoop(), 800);
+        });
+      });
+    }, 2000);
+    return;
+  }
+
+  // ── Prediction beat (2-answer questions) ──
+  if (beat.isPrediction && !beat.predIsReal) {
+    // Pure fake prediction (NO is always correct) — handled locally, no Firebase sync needed
+    // because no real event follows. Both clients run identical beat sequence so timing is same.
+    setCommentary(beat.commentary || beat.setup || '', '👁️');
+    setTimeout(() => {
+      showPrediction(beat, (playerAnswer) => {
+        applyPredictionResult(playerAnswer, false);
+        _mpPushScore();
+        setTimeout(onDone, 2000);
+      });
+    }, 1800);
+    return;
+  }
+
+  if (beat.isPrediction && beat.predIsReal) {
+    // Real prediction — Firebase-coordinated so both clients show simultaneously
+    // Both clients show it at the same wall-clock time (loop fires at same elapsed)
+    // Answer is personal — no race mechanic for 2-answer questions (unlike scorer q)
+    setCommentary(beat.setup || beat.build || beat.commentary || '', '👁️');
+    setTimeout(() => {
+      setCommentary(beat.build || beat.commentary || '', '…');
+      setTimeout(() => {
+        showPrediction(beat, (playerAnswer) => {
+          if (beat.predIsReal) {
+            setCommentary('Watch this space…', '👀');
+          } else {
+            setCommentary(beat.resolve || 'Nothing doing.', '💨');
+          }
+          applyPredictionResult(playerAnswer, beat.predIsReal);
+          _mpPushScore();
+          setTimeout(onDone, 2800);
+        });
+      }, 1400);
+    }, 1800);
+    return;
+  }
+
+  // ── Scorer question (3-answer) ──
+  if (beat.isScorerQuestion) {
+    setCommentary(beat.commentary, beat.emoji);
+    beat._applyEvents = () => {
+      _mpApplyBeatEvents(beat);
+    };
+    setTimeout(() => {
+      mpShowScorerQuestion(beat, () => {
+        _mpPushScore();
+        onDone();
+      });
+    }, 1000);
+    return;
+  }
+
+  // ── Teaser ──
+  if (beat.isTeaser) {
+    setCommentary(beat.commentary || beat.build, '👀');
+    setTimeout(onDone, 2000);
+    return;
+  }
+
+  // ── Fake near-miss ──
+  if (beat.fake) {
+    setCommentary(beat.build, '…');
+    setTimeout(() => {
+      setCommentary(beat.resolve, beat.emoji);
+      setTimeout(onDone, 1800);
+    }, 2800);
+    return;
+  }
+
+  // ── Standard real event ──
+  _mpApplyBeatEvents(beat);
+  if (beat.commentary) setCommentary(beat.commentary, beat.emoji);
+  _mpPushScore();
+
+  setTimeout(onDone, 1500);
+}
+
+function _mpTickClock(beat) {
+  // Mirror the clock animation from runBeats
+  const clockEl = document.getElementById('match-clock');
+  if (!clockEl) return;
+  const beats = _mpBeats;
+  const idx   = _mpBeatIdx - 1;
+  const prevMin  = idx <= 0 ? 0 : beats[idx - 1].matchMin;
+  const targetMin = beat.matchMin;
+  const spanMins  = Math.max(1, targetMin - prevMin);
+  // Use a fixed ms-per-min based on typical inter-beat gap
+  const msPerMin  = Math.max(40, 1200 / spanMins);
+  if (_clockTicker) clearInterval(_clockTicker);
+  let tickMin = prevMin;
+  _clockTicker = setInterval(() => {
+    tickMin = Math.min(tickMin + 1, targetMin);
+    clockEl.textContent = tickMin + "'";
+    if (tickMin >= targetMin) { clearInterval(_clockTicker); _clockTicker = null; }
+  }, msPerMin);
+}
+
+function _mpApplyBeatEvents(beat) {
+  // Same logic as applyBeatEvents inside runBeats
+  state.pendingFlashes = [];
+  for (const e of beat.events) {
+    processSimEvent(e);
+    if (e.type === 'goal') {
+      const scorer = getPlayer(e.playerId);
+      if (scorer && scorer.team === 'home') {
+        state.liveHomeScore = (state.liveHomeScore || 0) + 1;
+        const h = document.getElementById('live-home-score');
+        if (h) h.textContent = state.liveHomeScore;
+      } else if (scorer && scorer.team === 'away') {
+        state.liveAwayScore = (state.liveAwayScore || 0) + 1;
+        const a = document.getElementById('live-away-score');
+        if (a) a.textContent = state.liveAwayScore;
+      }
+    }
+  }
+  const primaryEventType = beat.events.length
+    ? (beat.events.find(e => e.type === 'red')?.type
+      || beat.events.find(e => e.type === 'goal')?.type
+      || beat.events.find(e => e.type === 'yellow')?.type
+      || beat.events[0]?.type)
+    : null;
+  updateScoreDisplay(beat.matchMin, primaryEventType);
+  renderSimPlayers();
+  (state.pendingFlashes || []).forEach(({ id, delta }) => flashPlayer(id, delta));
+  state.pendingFlashes = [];
+}
+
+// Push my current score to Firebase so opponent sees it live
+function _mpPushScore() {
+  const mp = state.mp;
+  if (!mp) return;
+  const field = mp.role === 'A' ? 'liveScoreA' : 'liveScoreB';
+  window._fb.update(mp.sessionRef, { [field]: Math.round(state.myScore) })
+    .catch(e => console.warn('_mpPushScore failed:', e));
+}
+
+// Listen for opponent's live score and update state.oppScore in real time
+function _mpStartOppScoreListener() {
+  const mp = state.mp;
+  if (!mp) return;
+  const field = mp.role === 'A' ? 'liveScoreB' : 'liveScoreA';
+  if (_mpScoreUnsub) _mpScoreUnsub();
+  _mpScoreUnsub = window._fb.onValue(
+    window._fb.ref('sessions/' + mp.code + '/' + field),
+    (snap) => {
+      const val = snap.val();
+      if (val !== null && val !== undefined) {
+        state.oppScore = val;
+        updateScoreDisplay();
+      }
+    }
+  );
+}
+
+// Wait for BOTH players to have written their HT swap decision, then:
+// - Host writes ht2StartTimestamp
+// - Both clients listen for it and start second half
+function _mpWaitForHtBothConfirmed(beats, onBothReady) {
+  const mp = state.mp;
+  if (!mp) { onBothReady(); return; }
+
+  const myField  = mp.role === 'A' ? 'htSwapA' : 'htSwapB';
+  const oppField = mp.role === 'A' ? 'htSwapB' : 'htSwapA';
+
+  // Poll sessionRef for both swap fields written
+  let resolved = false;
+  const unsub = window._fb.onValue(mp.sessionRef, async (snap) => {
+    if (resolved) return;
+    const d = snap.val();
+    if (!d) return;
+
+    const myDone  = d[myField]  !== undefined && d[myField]  !== null;
+    const oppDone = d[oppField] !== undefined && d[oppField] !== null;
+
+    // Show "waiting for opponent" if I'm done but they're not
+    if (myDone && !oppDone) {
+      const timerLabel = document.getElementById('ht-timer-label');
+      const acceptBtn  = document.getElementById('ht-accept-btn');
+      const declineBtn = document.getElementById('ht-decline-btn');
+      if (timerLabel) timerLabel.textContent = '⏳';
+      if (acceptBtn)  { acceptBtn.disabled = true; acceptBtn.textContent = 'Waiting for opponent…'; }
+      if (declineBtn) declineBtn.disabled = true;
+      return;
+    }
+
+    if (!myDone || !oppDone) return;
+
+    resolved = true;
+    mpCleanup(); // detach this listener
+
+    // Apply opponent's swap now that we know it
+    const oppSwap = d[oppField];
+    if (oppSwap && oppSwap.outId && oppSwap.outId !== 'skip' && oppSwap.inId && oppSwap.inId !== 'skip') {
+      state._oppHtSwap = oppSwap;
+    }
+
+    // Host writes the shared second-half start timestamp
+    if (mp.role === 'A' && !d.ht2StartTimestamp) {
+      await window._fb.update(mp.sessionRef, { ht2StartTimestamp: Date.now() + 500 });
+    }
+
+    // Both clients wait for the timestamp then kick off
+    // (window._fb.onValue auto-registers with _mpUnsubs)
+    window._fb.onValue(mp.sessionRef, (snap2) => {
+      const d2 = snap2.val();
+      if (!d2 || !d2.ht2StartTimestamp) return;
+      mpCleanup();
+      _mpHtOrigin = d2.ht2StartTimestamp;
+      onBothReady();
+    });
   });
 }
 

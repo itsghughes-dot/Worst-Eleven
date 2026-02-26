@@ -6955,10 +6955,51 @@ function startSimulation() {
     return;
   }
   if (state.mp) {
-    // Option A: wall-clock driven sync
-    mpRunBeats(beats);
+    // Option A: wall-clock driven sync with Firebase beat sync
+    _mpSyncBeatsAndRun(beats);
   } else {
     runBeats(beats, 0);
+  }
+}
+
+// Host serialises beats to Firebase; guest waits then reads them.
+// Both then call mpRunBeats with identical data.
+async function _mpSyncBeatsAndRun(localBeats) {
+  const mp = state.mp;
+  const beatsRef = window._fb.ref('sessions/' + mp.code + '/beats');
+
+  if (mp.role === 'A') {
+    // HOST: serialise and write beats
+    const serialized = _serializeBeats(localBeats);
+    try {
+      await window._fb.set(beatsRef, serialized);
+    } catch(e) {
+      console.error('Failed to write beats to Firebase:', e);
+      // Fallback: run locally (will be out of sync but at least playable)
+      mpRunBeats(localBeats);
+      return;
+    }
+    mpRunBeats(localBeats);
+  } else {
+    // GUEST: wait for host to write beats, then deserialise and run
+    let resolved = false;
+    window._fb.onValue(beatsRef, (snap) => {
+      if (resolved) return;
+      const data = snap.val();
+      if (!data || !Array.isArray(data) || data.length === 0) return;
+      resolved = true;
+      mpCleanup(); // detach this listener
+      const beats = _deserializeBeats(data);
+      mpRunBeats(beats);
+    });
+    // Timeout fallback: if beats never arrive in 8s, use local build
+    setTimeout(() => {
+      if (!resolved) {
+        resolved = true;
+        console.warn('Beats from Firebase never arrived — using local buildBeats()');
+        mpRunBeats(localBeats);
+      }
+    }, 8000);
   }
 }
 
@@ -8355,15 +8396,22 @@ function showResults() {
       }
     });
     window._mpUnsubs.push(_resultsUnsub);
-    // Timeout fallback: if opponent score never arrives after 20s, use local scores
+    // Timeout fallback: if opponent score never arrives after 10s, use live scores
     setTimeout(() => {
       if (!_resultsRendered) {
         _resultsRendered = true;
         try { _resultsUnsub(); } catch(e) {}
-        console.warn('MP results timeout - using local scores');
-        _renderResults();
+        // Try to use the live score the opponent was pushing during the game
+        window._fb.get(state.mp.sessionRef).then(snap => {
+          const d = snap.val() || {};
+          const liveOpp = state.mp.role === 'A' ? d.liveScoreB : d.liveScoreA;
+          if (liveOpp !== null && liveOpp !== undefined) {
+            state.oppScore = liveOpp;
+          }
+          _renderResults();
+        }).catch(() => _renderResults());
       }
-    }, 20000);
+    }, 10000);
     // Show loading state while waiting
     showScreen('results');
     document.getElementById('result-headline').textContent = 'CALCULATING…';
@@ -10136,6 +10184,75 @@ function mpShowScorerQuestion(beat, onComplete) {
   });
 }
 
+
+
+// ═══════════════════════════════════════════════════════════════
+// BEAT SERIALISATION — host writes, guest reads
+// Ensures both devices run identical beat sequences.
+// ═══════════════════════════════════════════════════════════════
+
+function _serializeBeats(beats) {
+  return beats.map(b => {
+    const s = {
+      realTime:    b.realTime,
+      matchMin:    b.matchMin,
+      fake:        b.fake        || false,
+      isHalfTime:  b.isHalfTime  || false,
+      isTeaser:    b.isTeaser    || false,
+      isPrediction: b.isPrediction || false,
+      isScorerQuestion: b.isScorerQuestion || false,
+      commentary:  b.commentary  || '',
+      emoji:       b.emoji       || '',
+      // Fake beat fields
+      build:       b.build       || '',
+      resolve:     b.resolve     || '',
+      setup:       b.setup       || '',
+      // Prediction fields
+      predIsReal:  b.predIsReal  || false,
+      predIsCard:  b.predIsCard  || false,
+      predIsYesNo: b.predIsYesNo || false,
+      predQuestion: b.predQuestion || '',
+      predOptions:  b.predOptions  || null,
+      predCorrectOption: b.predCorrectOption != null ? b.predCorrectOption : null,
+      predCardCorrect: b.predCardCorrect || null,
+      linkedEventType:  b.linkedEventType  || '',
+      linkedPlayerName: b.linkedPlayerName || '',
+      // Scorer question fields
+      scorerEventType: b.scorerEventType || null,
+      // Store scorerOptions as IDs only
+      scorerOptionsIds: b.scorerOptions ? {
+        correctId: b.scorerOptions.correctId,
+        optionIds: b.scorerOptions.options.map(p => p.id),
+      } : null,
+      revealCommentary: b.revealCommentary || '',
+      revealEmoji:      b.revealEmoji      || '',
+      // Real event array
+      events: (b.events || []).map(e => ({
+        type:     e.type,
+        playerId: e.playerId,
+        min:      e.min,
+        team:     e.team,
+      })),
+    };
+    return s;
+  });
+}
+
+function _deserializeBeats(serialized) {
+  return serialized.map(s => {
+    const b = Object.assign({}, s);
+    // Reconstruct scorerOptions from IDs
+    if (s.scorerOptionsIds) {
+      const players = s.scorerOptionsIds.optionIds.map(id => getPlayer(id)).filter(Boolean);
+      b.scorerOptions = {
+        correctId: s.scorerOptionsIds.correctId,
+        options:   players,
+      };
+    }
+    b.scorerOptionsIds = undefined; // clean up
+    return b;
+  });
+}
 
 // ═══════════════════════════════════════════════════════════════
 // OPTION A — WALL-CLOCK MULTIPLAYER SIMULATION

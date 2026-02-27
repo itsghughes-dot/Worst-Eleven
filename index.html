@@ -5793,6 +5793,8 @@ function startGame() {
   const p = getActiveProfile();
   state.teamName  = p.emoji + ' ' + p.name;
   state.teamEmoji = p.emoji;
+  state.mp = null; // ensure single-player mode — clear any leftover MP state
+  mpSimCleanup();  // kill any lingering sim listeners from previous MP game
   goToDraft();
 }
 
@@ -6353,15 +6355,7 @@ function autoPickOpponent() {
 
 // Timer
 function getTimerDuration() {
-  // Last 5 picks for the human player = 10 seconds, otherwise 30
-  const myPicksSoFar = state.sequence
-    ? state.sequence.slice(0, state.currentPick).filter(s => s.who === 'me').length
-    : 0;
-  const myPicksTotal = state.sequence
-    ? state.sequence.filter(s => s.who === 'me').length
-    : 11;
-  const picksRemaining = myPicksTotal - myPicksSoFar;
-  return picksRemaining <= 5 ? 10 : 30;
+  return 20; // flat 20 seconds per pick
 }
 
 function startTimer(durationOverride) {
@@ -8015,8 +8009,10 @@ function processSimEvent(event) {
       if (event.type === 'sub') state.playerData[player.id].subbed = true;
     }
   }
+  // In MP mode, oppScore comes ONLY from Firebase live listener — never mutate it here
+  const inMpMode = !!state.mp;
   if (inOppTeam) {
-    state.oppScore += delta;
+    if (!inMpMode) state.oppScore += delta; // SP only
     if (state.playerData[player.id]) {
       state.playerData[player.id].pts += delta;
       state.playerData[player.id].events.push(event.type);
@@ -8042,7 +8038,7 @@ function processSimEvent(event) {
         state.playerData[dp.id].pts += concedeDelta;
       }
       if (dpInOpp && state.playerData[dp.id]) {
-        state.oppScore += concedeDelta;
+        if (!inMpMode) state.oppScore += concedeDelta; // SP only
         state.playerData[dp.id].pts += concedeDelta;
       }
     }
@@ -8053,13 +8049,14 @@ function processSimEvent(event) {
 
 function applyFull90() {
   const allDrafted = [...new Set([...state.myTeam, ...state.oppTeam])];
+  const _mpFull90 = !!state.mp;
   for (const id of allDrafted) {
     const player = getPlayer(id);
     const pd = state.playerData[id];
     if (!pd.subbed) {
       const delta = getScoreForEvent('full_90', player) * captainMultiplier(id);
       if (state.myTeam.includes(id)) state.myScore += delta;
-      if (state.oppTeam.includes(id)) state.oppScore += delta;
+      if (state.oppTeam.includes(id) && !_mpFull90) state.oppScore += delta; // SP only
       pd.pts += delta;
     }
   }
@@ -10223,11 +10220,9 @@ function mpShowScorerQuestion(beat, onComplete) {
       return;
     }
 
-    // Opponent answered first — immediately lock out this player, no second chance
+    // Opponent answered first — stop timers and lock out immediately
     if (oppAns && !myAns && !myAnsweredAt) {
-      // Disable all scorer buttons immediately
-      document.querySelectorAll('.scorer-btn').forEach(b => b.disabled = true);
-      // Resolve immediately with null (no answer) for this player
+      _stopQuestionTimerUI();
       resolveQuestion(null, oppAns);
     }
   });
@@ -10342,6 +10337,27 @@ function _deserializeBeats(serialized) {
 
 
 // Multiplayer 2-answer prediction: first to answer wins, other locked out immediately
+
+// Stop all question timer UI immediately (called when opponent answers first)
+function _stopQuestionTimerUI() {
+  // Scorer question timer bar
+  const scorerFill = document.getElementById('scorer-timer-fill');
+  if (scorerFill) {
+    scorerFill.style.transition = 'none';
+    scorerFill.style.width = '0%';
+  }
+  clearTimeout(state.scorerTimerTimeout);
+  state.scorerTimerTimeout = null;
+  // Prediction timer bar
+  const predFill = document.getElementById('prediction-timer-fill');
+  if (predFill) {
+    predFill.style.transition = 'none';
+    predFill.style.width = '0%';
+  }
+  // Disable all answer buttons immediately
+  document.querySelectorAll('.scorer-btn, #pred-btn-a, #pred-btn-b').forEach(b => b.disabled = true);
+}
+
 function mpShowPrediction(beat, onComplete) {
   const mp = state.mp;
   if (!mp) { showPrediction(beat, onComplete); return; }
@@ -10401,11 +10417,8 @@ function mpShowPrediction(beat, onComplete) {
     if (myAns && oppAns) {
       resolvePred(myAns, oppAns);
     } else if (oppAns && !myAns && !myAnsweredAt) {
-      // Opponent answered first — lock me out immediately
-      const btnA = document.getElementById('pred-btn-a');
-      const btnB = document.getElementById('pred-btn-b');
-      if (btnA) btnA.disabled = true;
-      if (btnB) btnB.disabled = true;
+      // Opponent answered first — stop timers and lock out immediately
+      _stopQuestionTimerUI();
       resolvePred(null, oppAns);
     }
   });

@@ -2814,7 +2814,9 @@
   // Expose Firebase helpers on window so the main (non-module) script can reach them
   // onValue() in Firebase v9 modular returns an unsubscribe function.
   // We wrap it to also register with our cleanup registry.
-  const _origOnValue = (r, cb) => onValue(r, cb);
+  // Expose raw onValue for sim-phase listeners that must NOT be killed by mpCleanup
+  window._fbRaw = { onValue: (r, cb) => onValue(r, cb) };
+
   window._fb = {
     ref:             (path)           => ref(db, path),
     set:             (r, v)           => set(r, v),
@@ -2831,21 +2833,39 @@
 </script>
 <script>
 // ── Firebase listener registry ────────────────────────────────
-// _fb.onValue() auto-registers every unsubscribe fn here.
-// mpCleanup() kills ALL active mp listeners in one shot.
-window._mpUnsubs = [];
+// TWO registries:
+//   _mpUnsubs    = lobby/pre-game listeners (killed by mpCleanup)
+//   _mpSimUnsubs = simulation-phase listeners (killed only by mpSimCleanup)
+// This prevents mpCleanup() from accidentally killing sim listeners.
+window._mpUnsubs    = [];
+window._mpSimUnsubs = [];
+
+// Register a sim-phase listener (safe from mpCleanup)
+function mpSimListen(ref, cb) {
+  const { onValue } = window._fbRaw || {};
+  if (!onValue) return () => {};
+  const unsub = onValue(ref, cb);
+  window._mpSimUnsubs.push(unsub);
+  return unsub;
+}
 
 function mpCleanup() {
   for (const unsub of window._mpUnsubs) {
     try { unsub(); } catch(e) {}
   }
   window._mpUnsubs = [];
-  // Cancel wall-clock sim loop if running
+}
+
+function mpSimCleanup() {
+  // Kill simulation-phase listeners AND the rAF loop
+  for (const unsub of window._mpSimUnsubs) {
+    try { unsub(); } catch(e) {}
+  }
+  window._mpSimUnsubs = [];
   if (typeof _mpSimRAF !== 'undefined' && _mpSimRAF) {
     cancelAnimationFrame(_mpSimRAF);
     _mpSimRAF = null;
   }
-  // Cancel score listener
   if (typeof _mpScoreUnsub !== 'undefined' && _mpScoreUnsub) {
     try { _mpScoreUnsub(); } catch(e) {}
     _mpScoreUnsub = null;
@@ -6968,49 +6988,56 @@ async function _mpSyncBeatsAndRun(localBeats) {
   const mp = state.mp;
   const beatsRef = window._fb.ref('sessions/' + mp.code + '/beats');
 
+  console.log('[MP-SYNC] role=' + mp.role + ' localBeats=' + localBeats.length + ' code=' + mp.code);
+
   if (mp.role === 'A') {
     // HOST: serialise and write beats
     const serialized = _serializeBeats(localBeats);
+    console.log('[MP-SYNC] HOST writing ' + serialized.length + ' beats to Firebase');
     try {
       await window._fb.set(beatsRef, serialized);
+      console.log('[MP-SYNC] HOST beats written successfully');
     } catch(e) {
-      console.error('Failed to write beats to Firebase:', e);
-      // Fallback: run locally (will be out of sync but at least playable)
+      console.error('[MP-SYNC] HOST failed to write beats:', e);
       mpRunBeats(localBeats);
       return;
     }
     mpRunBeats(localBeats);
   } else {
     // GUEST: wait for host to write beats, then deserialise and run
-    // Firebase converts arrays to objects with numeric keys — handle both
+    console.log('[MP-SYNC] GUEST waiting for beats from Firebase...');
     let resolved = false;
-    const unsub = window._fb.onValue(beatsRef, (snap) => {
-      if (resolved) return;
+    const unsub = mpSimListen(beatsRef, (snap) => {
       const raw = snap.val();
+      console.log('[MP-SYNC] GUEST got Firebase snap, raw type=' + typeof raw + ' isArray=' + Array.isArray(raw) + ' val=' + (raw ? 'exists' : 'null'));
+      if (resolved) return;
       if (!raw) return;
-      // Convert Firebase object-with-numeric-keys back to array
       let data;
       if (Array.isArray(raw)) {
         data = raw;
       } else if (typeof raw === 'object') {
-        data = Object.keys(raw).sort((a,b) => Number(a)-Number(b)).map(k => raw[k]);
+        const keys = Object.keys(raw);
+        console.log('[MP-SYNC] GUEST converting object keys, count=' + keys.length);
+        data = keys.sort((a,b) => Number(a)-Number(b)).map(k => raw[k]);
       } else {
+        console.warn('[MP-SYNC] GUEST unexpected data type:', typeof raw);
         return;
       }
-      if (!data || data.length === 0) return;
+      if (!data || data.length === 0) {
+        console.warn('[MP-SYNC] GUEST data empty after conversion');
+        return;
+      }
+      console.log('[MP-SYNC] GUEST received ' + data.length + ' beats, starting sim');
       resolved = true;
-      try { unsub(); } catch(e) {} // unsubscribe just this listener, not all
+      try { unsub(); } catch(e) {}
       const beats = _deserializeBeats(data);
       mpRunBeats(beats);
     });
-    // Register so mpCleanup can kill it if needed (e.g. player leaves lobby)
-    if (window._mpUnsubs) window._mpUnsubs.push(unsub);
-    // Timeout fallback: if beats never arrive in 8s, use local build
     setTimeout(() => {
       if (!resolved) {
         resolved = true;
         try { unsub(); } catch(e) {}
-        console.warn('Beats from Firebase never arrived — using local buildBeats()');
+        console.warn('[MP-SYNC] TIMEOUT — beats never arrived, using local buildBeats()');
         mpRunBeats(localBeats);
       }
     }, 8000);
@@ -8910,7 +8937,17 @@ function getDeltaEmoji(delta) {
 
 function recordDelta(matchMin, eventType) {
   const delta = state.myScore - state.oppScore;
-  state.deltaHistory.push({ min: matchMin, delta, eventType: eventType || null });
+  // Calculate how much my score changed since last recorded point
+  const prevDelta = state.deltaHistory.length
+    ? state.deltaHistory[state.deltaHistory.length - 1].delta
+    : 0;
+  const myScoreChange = delta - prevDelta; // positive = I gained, negative = I lost
+  state.deltaHistory.push({
+    min: matchMin,
+    delta,
+    eventType: eventType || null,
+    myScoreChange, // + means this event helped me, - means it hurt me
+  });
   drawLiveGraph(matchMin);
 }
 
@@ -9210,12 +9247,31 @@ function drawResultGraph() {
   // ── Event icons — DOM overlays (canvas emoji unreliable on mobile) ──
   const chartWrap = canvas.parentElement;
   chartWrap.querySelectorAll('.rc-event-icon').forEach(el => el.remove());
+  const iWon = finalDelta > 0;
   for (const p of scaledPts) {
     if (!p.eventType) continue;
-    const icon = p.eventType === 'red' ? '🟥'
-               : p.eventType === 'goal' ? '⚽'
-               : p.eventType === 'own_goal' ? '🤦'
-               : p.eventType === 'yellow' ? '🟨' : null;
+    const change = p.myScoreChange || 0;
+    
+    // Winner: show only events that HELPED them (positive score change)
+    // Loser: show only events that HURT them (negative score change)
+    if (iWon && change <= 0) continue;
+    if (!iWon && change >= 0) continue;
+
+    // Pick icon: winner sees goals they scored, red cards opponent got, subs they made
+    // Loser sees goals scored against them, red cards they got, yellows they got
+    let icon = null;
+    if (change > 0) {
+      // Positive events for the winner
+      if (p.eventType === 'goal' || p.eventType === 'own_goal') icon = '⚽';
+      else if (p.eventType === 'red') icon = '🟥';
+      else if (p.eventType === 'yellow') icon = '🟨';
+      else if (p.eventType === 'sub') icon = '🔄';
+    } else {
+      // Negative events for the loser
+      if (p.eventType === 'goal' || p.eventType === 'own_goal') icon = '⚽';
+      else if (p.eventType === 'red') icon = '🟥';
+      else if (p.eventType === 'yellow') icon = '🟨';
+    }
     if (!icon) continue;
     const pctX = (xPos(p.min) / w) * 100;
     const pctY = ((yPos(p.sv) - 16) / h) * 100;
@@ -10120,7 +10176,7 @@ function mpShowScorerQuestion(beat, onComplete) {
   function resolveQuestion(myAns, oppAns) {
     if (resolved) return;
     resolved = true;
-    mpCleanup(); // detach the watcher
+    // Note: mpSimListen listeners are cleaned up by mpSimCleanup at end of game
 
     // Determine outcome
     const { correctId } = beat.scorerOptions;
@@ -10155,8 +10211,8 @@ function mpShowScorerQuestion(beat, onComplete) {
     }
   }
 
-  // Watch for both answers
-  window._fb.onValue(questionRef, (snap) => {
+  // Watch for both answers — use mpSimListen to survive mpCleanup calls
+  mpSimListen(questionRef, (snap) => {
     const d = snap.val() || {};
     const myAns  = d[myField]  || null;
     const oppAns = d[oppField] || null;
@@ -10318,8 +10374,8 @@ function mpShowPrediction(beat, onComplete) {
     }
   }
 
-  // Watch for answers
-  const predUnsub = window._fb.onValue(predRef, (snap) => {
+  // Use mpSimListen — must NOT be killed by mpCleanup during sim
+  const predUnsub = mpSimListen(predRef, (snap) => {
     if (resolved) return;
     const d = snap.val() || {};
     const myAns  = d[myField]  || null;
@@ -10336,7 +10392,6 @@ function mpShowPrediction(beat, onComplete) {
       resolvePred(null, oppAns);
     }
   });
-  if (window._mpUnsubs) window._mpUnsubs.push(predUnsub);
 
   // Auto-resolve after 6s if neither answers
   const autoResolve = setTimeout(() => {
@@ -10401,7 +10456,7 @@ function _mpSimLoop() {
     _mpSimRAF = null;
     applyFull90();
     _mpPushScore();
-    if (_mpScoreUnsub) { _mpScoreUnsub(); _mpScoreUnsub = null; }
+    mpSimCleanup(); // clean up all sim-phase listeners
     setTimeout(() => showResults(), 2000);
     return;
   }
@@ -10606,7 +10661,8 @@ function _mpStartOppScoreListener() {
   if (!mp) return;
   const field = mp.role === 'A' ? 'liveScoreB' : 'liveScoreA';
   if (_mpScoreUnsub) _mpScoreUnsub();
-  _mpScoreUnsub = window._fb.onValue(
+  // Use mpSimListen — must NOT be killed by mpCleanup during sim
+  _mpScoreUnsub = mpSimListen(
     window._fb.ref('sessions/' + mp.code + '/' + field),
     (snap) => {
       const val = snap.val();
@@ -10630,7 +10686,7 @@ function _mpWaitForHtBothConfirmed(beats, onBothReady) {
 
   // Poll sessionRef for both swap fields written
   let resolved = false;
-  const unsub = window._fb.onValue(mp.sessionRef, async (snap) => {
+  const unsub = mpSimListen(mp.sessionRef, async (snap) => {
     if (resolved) return;
     const d = snap.val();
     if (!d) return;
@@ -10665,12 +10721,10 @@ function _mpWaitForHtBothConfirmed(beats, onBothReady) {
       await window._fb.update(mp.sessionRef, { ht2StartTimestamp: Date.now() + 500 });
     }
 
-    // Both clients wait for the timestamp then kick off
-    // (window._fb.onValue auto-registers with _mpUnsubs)
-    window._fb.onValue(mp.sessionRef, (snap2) => {
+    // Both clients wait for ht2StartTimestamp — use mpSimListen
+    mpSimListen(mp.sessionRef, (snap2) => {
       const d2 = snap2.val();
       if (!d2 || !d2.ht2StartTimestamp) return;
-      mpCleanup();
       _mpHtOrigin = d2.ht2StartTimestamp;
       onBothReady();
     });

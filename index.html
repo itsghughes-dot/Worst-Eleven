@@ -10262,7 +10262,30 @@ function mpShowScorerQuestion(beat, onComplete) {
 // Ensures both devices run identical beat sequences.
 // ═══════════════════════════════════════════════════════════════
 
- fields
+function _serializeBeats(beats) {
+  return beats.map(b => {
+    const s = {
+      realTime:    b.realTime,
+      matchMin:    b.matchMin,
+      fake:        b.fake         || false,
+      isHalfTime:  b.isHalfTime   || false,
+      isTeaser:    b.isTeaser     || false,
+      isPrediction: b.isPrediction || false,
+      isScorerQuestion: b.isScorerQuestion || false,
+      commentary:  b.commentary   || '',
+      emoji:       b.emoji        || '',
+      build:       b.build        || '',
+      resolve:     b.resolve      || '',
+      setup:       b.setup        || '',
+      predIsReal:  b.predIsReal   || false,
+      predIsCard:  b.predIsCard   || false,
+      predIsYesNo: b.predIsYesNo  || false,
+      predQuestion: b.predQuestion || '',
+      predOptions:  b.predOptions  || null,
+      predCorrectOption: b.predCorrectOption != null ? b.predCorrectOption : null,
+      predCardCorrect: b.predCardCorrect || null,
+      linkedEventType:  b.linkedEventType  || '',
+      linkedPlayerName: b.linkedPlayerName || '',
       scorerEventType: b.scorerEventType || null,
       // Store scorerOptions as IDs only
       scorerOptionsIds: b.scorerOptions ? {

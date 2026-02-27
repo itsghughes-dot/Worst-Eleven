@@ -6982,20 +6982,34 @@ async function _mpSyncBeatsAndRun(localBeats) {
     mpRunBeats(localBeats);
   } else {
     // GUEST: wait for host to write beats, then deserialise and run
+    // Firebase converts arrays to objects with numeric keys — handle both
     let resolved = false;
-    window._fb.onValue(beatsRef, (snap) => {
+    const unsub = window._fb.onValue(beatsRef, (snap) => {
       if (resolved) return;
-      const data = snap.val();
-      if (!data || !Array.isArray(data) || data.length === 0) return;
+      const raw = snap.val();
+      if (!raw) return;
+      // Convert Firebase object-with-numeric-keys back to array
+      let data;
+      if (Array.isArray(raw)) {
+        data = raw;
+      } else if (typeof raw === 'object') {
+        data = Object.keys(raw).sort((a,b) => Number(a)-Number(b)).map(k => raw[k]);
+      } else {
+        return;
+      }
+      if (!data || data.length === 0) return;
       resolved = true;
-      mpCleanup(); // detach this listener
+      try { unsub(); } catch(e) {} // unsubscribe just this listener, not all
       const beats = _deserializeBeats(data);
       mpRunBeats(beats);
     });
+    // Register so mpCleanup can kill it if needed (e.g. player leaves lobby)
+    if (window._mpUnsubs) window._mpUnsubs.push(unsub);
     // Timeout fallback: if beats never arrive in 8s, use local build
     setTimeout(() => {
       if (!resolved) {
         resolved = true;
+        try { unsub(); } catch(e) {}
         console.warn('Beats from Firebase never arrived — using local buildBeats()');
         mpRunBeats(localBeats);
       }
@@ -10153,11 +10167,12 @@ function mpShowScorerQuestion(beat, onComplete) {
       return;
     }
 
-    // If only opponent answered and I haven't, start a 1.5s window for me to still answer
+    // Opponent answered first — immediately lock out this player, no second chance
     if (oppAns && !myAns && !myAnsweredAt) {
-      setTimeout(() => {
-        if (!resolved && !myAnsweredAt) resolveQuestion(null, oppAns);
-      }, 1500);
+      // Disable all scorer buttons immediately
+      document.querySelectorAll('.scorer-btn').forEach(b => b.disabled = true);
+      // Resolve immediately with null (no answer) for this player
+      resolveQuestion(null, oppAns);
     }
   });
 
@@ -10254,6 +10269,93 @@ function _deserializeBeats(serialized) {
   });
 }
 
+
+// Multiplayer 2-answer prediction: first to answer wins, other locked out immediately
+function mpShowPrediction(beat, onComplete) {
+  const mp = state.mp;
+  if (!mp) { showPrediction(beat, onComplete); return; }
+
+  const predId   = 'pred_' + beat.matchMin + '_' + (beat.linkedEventType || 'p');
+  const myField  = mp.role === 'A' ? 'predA' : 'predB';
+  const oppField = mp.role === 'A' ? 'predB' : 'predA';
+  const predRef  = window._fb.ref('sessions/' + mp.code + '/predQ/' + predId);
+
+  // Clear any stale data
+  window._fb.update(predRef, { [myField]: null });
+
+  let resolved = false;
+  let myAnsweredAt = null;
+
+  function resolvePred(myAns, oppAns) {
+    if (resolved) return;
+    resolved = true;
+    try { predUnsub(); } catch(e) {}
+    clearTimeout(autoResolve);
+
+    // Hide prediction overlay
+    const overlay = document.getElementById('prediction-overlay');
+    if (overlay) overlay.style.display = 'none';
+
+    if (!myAns && oppAns) {
+      // Opponent answered first — I get nothing
+      setCommentary('⚡ Opponent answered first — no points.', '⚡');
+      showToast('⚡ Too slow!');
+      // Still apply the event result to commentary
+      if (beat.predIsReal) setCommentary('Watch this space…', '👀');
+      else setCommentary(beat.resolve || 'Nothing doing.', '💨');
+      _mpPushScore();
+      setTimeout(onComplete, 2000);
+    } else if (myAns) {
+      // I answered (first or tied) — apply my result
+      applyPredictionResult(myAns.answer, beat.predIsReal);
+      _mpPushScore();
+      setTimeout(onComplete, 2000);
+    } else {
+      // Neither answered
+      setCommentary('No answer — play continues.', '⏩');
+      _mpPushScore();
+      setTimeout(onComplete, 1500);
+    }
+  }
+
+  // Watch for answers
+  const predUnsub = window._fb.onValue(predRef, (snap) => {
+    if (resolved) return;
+    const d = snap.val() || {};
+    const myAns  = d[myField]  || null;
+    const oppAns = d[oppField] || null;
+
+    if (myAns && oppAns) {
+      resolvePred(myAns, oppAns);
+    } else if (oppAns && !myAns && !myAnsweredAt) {
+      // Opponent answered first — lock me out immediately
+      const btnA = document.getElementById('pred-btn-a');
+      const btnB = document.getElementById('pred-btn-b');
+      if (btnA) btnA.disabled = true;
+      if (btnB) btnB.disabled = true;
+      resolvePred(null, oppAns);
+    }
+  });
+  if (window._mpUnsubs) window._mpUnsubs.push(predUnsub);
+
+  // Auto-resolve after 6s if neither answers
+  const autoResolve = setTimeout(() => {
+    window._fb.get(predRef).then(snap => {
+      const d = snap.val() || {};
+      resolvePred(d[myField] || null, d[oppField] || null);
+    }).catch(() => resolvePred(null, null));
+  }, 6000);
+
+  // Show the prediction UI — on answer, write to Firebase
+  showPrediction(beat, (playerAnswer) => {
+    if (resolved) return; // opponent already answered
+    myAnsweredAt = Date.now();
+    window._fb.update(predRef, {
+      [myField]: { answer: playerAnswer, ts: myAnsweredAt }
+    });
+    // Don't call onComplete yet — wait for resolvePred
+  });
+}
 // ═══════════════════════════════════════════════════════════════
 // OPTION A — WALL-CLOCK MULTIPLAYER SIMULATION
 // Both clients share a Firebase simStartTimestamp written by host.
@@ -10380,38 +10482,19 @@ function _mpFireBeat(beat, beats, onDone) {
     return;
   }
 
-  // ── Prediction beat (2-answer questions) ──
-  if (beat.isPrediction && !beat.predIsReal) {
-    // Pure fake prediction (NO is always correct) — handled locally, no Firebase sync needed
-    // because no real event follows. Both clients run identical beat sequence so timing is same.
-    setCommentary(beat.commentary || beat.setup || '', '👁️');
+  // ── Prediction beat (2-answer questions) ── Firebase-raced in MP
+  if (beat.isPrediction) {
+    const atmosLine  = beat.setup || beat.build || beat.commentary || '';
+    const triggerLine = beat.build || beat.commentary || atmosLine;
+    const feed = document.getElementById('commentary-feed');
+    if (feed) feed.classList.add('feed-building');
+    setCommentary(atmosLine, '👁️');
     setTimeout(() => {
-      showPrediction(beat, (playerAnswer) => {
-        applyPredictionResult(playerAnswer, false);
-        _mpPushScore();
-        setTimeout(onDone, 2000);
-      });
-    }, 1800);
-    return;
-  }
-
-  if (beat.isPrediction && beat.predIsReal) {
-    // Real prediction — Firebase-coordinated so both clients show simultaneously
-    // Both clients show it at the same wall-clock time (loop fires at same elapsed)
-    // Answer is personal — no race mechanic for 2-answer questions (unlike scorer q)
-    setCommentary(beat.setup || beat.build || beat.commentary || '', '👁️');
-    setTimeout(() => {
-      setCommentary(beat.build || beat.commentary || '', '…');
+      setCommentary(triggerLine, '…');
       setTimeout(() => {
-        showPrediction(beat, (playerAnswer) => {
-          if (beat.predIsReal) {
-            setCommentary('Watch this space…', '👀');
-          } else {
-            setCommentary(beat.resolve || 'Nothing doing.', '💨');
-          }
-          applyPredictionResult(playerAnswer, beat.predIsReal);
-          _mpPushScore();
-          setTimeout(onDone, 2800);
+        mpShowPrediction(beat, () => {
+          if (feed) feed.classList.remove('feed-building');
+          onDone();
         });
       }, 1400);
     }, 1800);

@@ -10310,12 +10310,26 @@ function _serializeBeats(beats) {
   });
 }
 
+// Firebase converts all arrays to objects with numeric keys on round-trip.
+// This helper converts them back.
+function _fbToArray(val) {
+  if (!val) return [];
+  if (Array.isArray(val)) return val;
+  if (typeof val === 'object') {
+    return Object.keys(val).sort((a, b) => Number(a) - Number(b)).map(k => val[k]);
+  }
+  return [];
+}
+
 function _deserializeBeats(serialized) {
   return serialized.map(s => {
     const b = Object.assign({}, s);
+    // events array — Firebase returns as object with numeric keys
+    b.events = _fbToArray(s.events);
     // Reconstruct scorerOptions from IDs
     if (s.scorerOptionsIds) {
-      const players = s.scorerOptionsIds.optionIds.map(id => getPlayer(id)).filter(Boolean);
+      const optionIds = _fbToArray(s.scorerOptionsIds.optionIds);
+      const players = optionIds.map(id => getPlayer(id)).filter(Boolean);
       b.scorerOptions = {
         correctId: s.scorerOptionsIds.correctId,
         options:   players,

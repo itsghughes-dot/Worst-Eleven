@@ -10262,33 +10262,7 @@ function mpShowScorerQuestion(beat, onComplete) {
 // Ensures both devices run identical beat sequences.
 // ═══════════════════════════════════════════════════════════════
 
-function _serializeBeats(beats) {
-  return beats.map(b => {
-    const s = {
-      realTime:    b.realTime,
-      matchMin:    b.matchMin,
-      fake:        b.fake        || false,
-      isHalfTime:  b.isHalfTime  || false,
-      isTeaser:    b.isTeaser    || false,
-      isPrediction: b.isPrediction || false,
-      isScorerQuestion: b.isScorerQuestion || false,
-      commentary:  b.commentary  || '',
-      emoji:       b.emoji       || '',
-      // Fake beat fields
-      build:       b.build       || '',
-      resolve:     b.resolve     || '',
-      setup:       b.setup       || '',
-      // Prediction fields
-      predIsReal:  b.predIsReal  || false,
-      predIsCard:  b.predIsCard  || false,
-      predIsYesNo: b.predIsYesNo || false,
-      predQuestion: b.predQuestion || '',
-      predOptions:  b.predOptions  || null,
-      predCorrectOption: b.predCorrectOption != null ? b.predCorrectOption : null,
-      predCardCorrect: b.predCardCorrect || null,
-      linkedEventType:  b.linkedEventType  || '',
-      linkedPlayerName: b.linkedPlayerName || '',
-      // Scorer question fields
+ fields
       scorerEventType: b.scorerEventType || null,
       // Store scorerOptions as IDs only
       scorerOptionsIds: b.scorerOptions ? {
@@ -10297,15 +10271,19 @@ function _serializeBeats(beats) {
       } : null,
       revealCommentary: b.revealCommentary || '',
       revealEmoji:      b.revealEmoji      || '',
-      // Real event array
-      events: (b.events || []).map(e => ({
-        type:     e.type,
-        playerId: e.playerId,
-        min:      e.min,
-        team:     e.team,
-      })),
+      // Real event array — only include defined fields (Firebase rejects undefined)
+      events: (b.events || []).map(e => {
+        const ev = {};
+        if (e.type     !== undefined) ev.type     = e.type;
+        if (e.playerId !== undefined) ev.playerId = e.playerId;
+        if (e.min      !== undefined) ev.min      = e.min;
+        // e.team is often undefined — derive from player at runtime, never store
+        return ev;
+      }),
     };
-    return s;
+    // Nuclear sanitise: JSON round-trip drops all undefined values
+    // Firebase rejects any undefined — this catches anything we missed
+    return JSON.parse(JSON.stringify(s));
   });
 }
 
@@ -10339,13 +10317,15 @@ function mpShowPrediction(beat, onComplete) {
   // Clear any stale data
   window._fb.update(predRef, { [myField]: null });
 
-  let resolved = false;
+  let resolved     = false;
   let myAnsweredAt = null;
+  let autoResolve  = null; // declared before resolvePred to avoid temporal dead zone
+  let predUnsub    = null; // declared before resolvePred to avoid temporal dead zone
 
   function resolvePred(myAns, oppAns) {
     if (resolved) return;
     resolved = true;
-    try { predUnsub(); } catch(e) {}
+    try { if (predUnsub) predUnsub(); } catch(e) {}
     clearTimeout(autoResolve);
 
     // Hide prediction overlay
@@ -10375,7 +10355,7 @@ function mpShowPrediction(beat, onComplete) {
   }
 
   // Use mpSimListen — must NOT be killed by mpCleanup during sim
-  const predUnsub = mpSimListen(predRef, (snap) => {
+  predUnsub = mpSimListen(predRef, (snap) => {
     if (resolved) return;
     const d = snap.val() || {};
     const myAns  = d[myField]  || null;
@@ -10394,7 +10374,7 @@ function mpShowPrediction(beat, onComplete) {
   });
 
   // Auto-resolve after 6s if neither answers
-  const autoResolve = setTimeout(() => {
+  autoResolve = setTimeout(() => {
     window._fb.get(predRef).then(snap => {
       const d = snap.val() || {};
       resolvePred(d[myField] || null, d[oppField] || null);

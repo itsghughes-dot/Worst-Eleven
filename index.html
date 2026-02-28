@@ -440,93 +440,204 @@
   }
   .player-slot.empty-slot .slot-pos { color: #ccc; font-size: 9px; }
 
-  /* Middle carousel */
+  /* ─── DRAFT MIDDLE ─── */
   .draft-middle {
     flex: 1;
     display: flex;
     flex-direction: column;
-    align-items: center;
-    gap: 7px;
-    min-height: 0;
-  }
-
-  /* Combined bottom action row */
-  .draft-action-row {
-    display: flex;
     align-items: stretch;
     gap: 8px;
-    width: 100%;
-    flex-shrink: 0;
-    box-sizing: border-box;
-  }
-  .turn-pill {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    background: var(--black);
-    color: white;
-    border-radius: 10px;
-    padding: 10px 12px;
-    flex: 1 1 0;
-    min-width: 0;
-    max-width: calc(55% - 4px);
+    min-height: 0;
     overflow: hidden;
   }
-  .turn-text {
-    font-size: 11px;
-    font-weight: 500;
+
+  /* ─── TAP GRID ─── */
+  .draft-grid {
     flex: 1;
-    min-width: 0;
-    line-height: 1.35;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-height: 0;
     overflow: hidden;
   }
-  .turn-text strong {
-    display: block;
-    font-size: 12px;
+  .draft-grid-row {
+    display: flex;
+    gap: 6px;
+    flex: 1;
+    min-height: 0;
+  }
+  /* GK layout — 2 large cards side by side */
+  .draft-grid.gk-layout .draft-grid-row {
+    gap: 12px;
+  }
+
+  /* Individual tap card */
+  .tap-card {
+    flex: 1;
+    background: white;
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 6px 4px;
+    text-align: center;
+    transition: transform 0.12s, box-shadow 0.12s, border-color 0.12s, opacity 0.12s;
+    position: relative;
+    overflow: hidden;
+    min-width: 0;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+  }
+  .tap-card:active {
+    transform: scale(0.93);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+  }
+  .tap-card.my-turn:hover {
+    border-color: var(--blue);
+    box-shadow: 0 3px 14px rgba(26,60,195,0.18);
+  }
+  .tap-card.opp-turn {
+    opacity: 0.5;
+    pointer-events: none;
+  }
+  /* Sabotage tint */
+  .tap-card.sabotage-mode {
+    background: #fff8f8;
+    border-color: #fdd;
+  }
+  .tap-card.sabotage-mode:active {
+    background: #ffe8e8;
+    border-color: #f87171;
+  }
+  /* GK special — taller */
+  .draft-grid.gk-layout .tap-card {
+    border-radius: 14px;
+    padding: 10px 8px;
+  }
+  .tap-card .tc-pos {
+    font-family: 'DM Mono', monospace;
+    font-size: 8px;
+    letter-spacing: 1px;
+    color: var(--muted);
+    line-height: 1;
+    margin-bottom: 2px;
+    text-transform: uppercase;
+  }
+  .tap-card .tc-name {
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 1.15;
+    color: var(--black);
+    margin-bottom: 2px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
     max-width: 100%;
   }
-  .turn-text em { font-style: normal; color: #aaa; font-size: 10.5px; }
-  .btn-confirm {
-    flex: 1 1 0;
-    min-width: 0;
-    max-width: calc(45% - 4px);
-    padding: 11px 8px;
-    border-radius: 10px;
-    border: none;
-    font-size: 13px;
-    font-weight: 700;
-    cursor: pointer;
-    transition: background 0.15s;
-    background: var(--blue);
-    color: white;
+  .draft-grid.gk-layout .tap-card .tc-name {
+    font-size: 16px;
+  }
+  .tap-card .tc-club {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    font-size: 9px;
+    color: var(--muted);
+  }
+  .tap-card .tc-dot {
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  /* Sabotage lightning badge */
+  .tap-card .tc-sab-badge {
+    display: none;
+    position: absolute;
+    top: 4px; right: 4px;
+    font-size: 9px;
+    opacity: 0.6;
+  }
+  .tap-card.sabotage-mode .tc-sab-badge { display: block; }
+  /* Fly-away animation when picked */
+  @keyframes tap-card-fly-mine {
+    0%   { transform: scale(1) translateY(0); opacity: 1; }
+    40%  { transform: scale(1.05) translateY(-4px); opacity: 1; }
+    100% { transform: scale(0.7) translateY(60px); opacity: 0; }
+  }
+  @keyframes tap-card-fly-opp {
+    0%   { transform: scale(1) translateY(0); opacity: 1; }
+    100% { transform: scale(0.7) translateY(-60px); opacity: 0; }
+  }
+  .tap-card.animating-mine { animation: tap-card-fly-mine 0.35s ease-in forwards; pointer-events: none; }
+  .tap-card.animating-opp  { animation: tap-card-fly-opp  0.35s ease-in forwards; pointer-events: none; }
+
+  /* Divider label between home/away rows */
+  .draft-grid-divider {
+    font-family: 'DM Mono', monospace;
+    font-size: 8px;
+    letter-spacing: 2px;
+    color: #ccc;
     text-align: center;
+    flex-shrink: 0;
+    line-height: 1;
+    padding: 1px 0;
+  }
+
+  /* ─── FULL-WIDTH ACTION BAR ─── */
+  .draft-action-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--black);
+    color: white;
+    border-radius: 12px;
+    padding: 12px 16px;
+    width: 100%;
+    box-sizing: border-box;
+    flex-shrink: 0;
+  }
+  .draft-action-text {
+    flex: 1;
+    min-width: 0;
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 1.4;
+    overflow: hidden;
+  }
+  .draft-action-text strong {
+    display: block;
+    font-size: 14px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
   }
-  .btn-confirm:disabled { opacity: 0.4; cursor: not-allowed; }
-  .btn-confirm:not(:disabled):hover { background: #1535a8; }
-  .timer-ring {
-    width: 30px; height: 30px;
+  .draft-action-text em {
+    font-style: normal;
+    color: #aaa;
+    font-size: 11px;
+  }
+  .draft-timer-ring {
+    width: 34px; height: 34px;
     position: relative;
     flex-shrink: 0;
   }
-  .timer-ring svg {
+  .draft-timer-ring svg {
     position: absolute;
     inset: 0;
     transform: rotate(-90deg);
     width: 100%;
     height: 100%;
   }
-  .timer-ring circle {
+  .draft-timer-ring circle {
     fill: none;
     stroke: #333;
     stroke-width: 3;
   }
-  .timer-ring .progress {
+  .draft-timer-ring .progress {
     stroke: var(--yellow);
     stroke-linecap: round;
     transition: stroke-dashoffset 1s linear;
@@ -544,83 +655,7 @@
     line-height: 1;
   }
 
-  /* Team toggle */
-  .team-toggle {
-    display: flex;
-    background: white;
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 3px;
-    gap: 3px;
-  }
-  .team-toggle button {
-    border: none;
-    background: none;
-    padding: 8px 16px;
-    border-radius: 7px;
-    font-size: 13px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.15s;
-    color: var(--muted);
-  }
-  .team-toggle button.active {
-    background: var(--black);
-    color: white;
-  }
-
-  /* Sabotage bar hidden */
-  .sabotage-bar { display: none; }
-
-  /* Player cards carousel */
-  .carousel-container {
-    width: 100%;
-    overflow-x: auto;
-    overflow-y: visible;
-    position: relative;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-  }
-  .carousel-container::-webkit-scrollbar { display: none; }
-  .carousel-track {
-    display: flex;
-    gap: 10px;
-    padding: 4px;
-    width: max-content;
-  }
-  .player-card {
-    flex-shrink: 0;
-    width: 96px;
-    background: white;
-    border: 2px solid var(--border);
-    border-radius: 10px;
-    padding: 8px 8px;
-    cursor: pointer;
-    transition: all 0.2s;
-    text-align: center;
-    position: relative;
-  }
-  .player-card:hover { border-color: var(--black); transform: translateY(-2px); box-shadow: 0 4px 16px rgba(0,0,0,0.1); }
-  .player-card.selected { border-color: var(--blue); background: #f4f6ff; }
-  .player-card .card-pos {
-    font-family: 'DM Mono', monospace;
-    font-size: 9px;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    color: var(--muted);
-    margin-bottom: 3px;
-  }
-  .player-card .card-name {
-    font-size: 12px;
-    font-weight: 700;
-    line-height: 1.2;
-    margin-bottom: 3px;
-  }
-  .player-card .card-team {
-    font-size: 10px;
-    color: var(--muted);
-  }
-  .player-card .chaos-score { display: none; }
+  /* Legacy — keep card-team-dot for slots grid */
   .card-team-dot {
     display: inline-block;
     width: 6px; height: 6px;
@@ -631,21 +666,9 @@
   }
   .home-dot { background: var(--home-colour); }
   .away-dot { background: var(--away-colour); }
-
-  .btn-pick-me {
-    background: var(--blue);
-    border-color: var(--blue);
-    color: white;
-  }
-  .btn-pick-me:hover { background: #1535a8; }
-  .btn-sabotage { display: none; }
-
-  /* Auto-scroll hint */
-  .carousel-hint {
-    font-size: 11px;
-    color: var(--muted);
-    text-align: center;
-  }
+  /* Hide legacy elements */
+  .player-card, .carousel-container, .carousel-track, .carousel-hint,
+  .team-toggle, .sabotage-bar, .btn-confirm, .btn-sabotage { display: none !important; }
 
   /* ─── SIMULATION SCREEN ─── */
   /* ─── CAPTAIN SCREEN ─── */
@@ -883,6 +906,79 @@
   .pitch-event-tile.fly-left {
     animation: pitch-fly-left 1.9s cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
   }
+
+  /* Anticipation drift tiles — plain name boxes that drift before event resolves */
+  .pitch-anticipation-tile {
+    position: absolute;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 6px 11px;
+    border-radius: 8px;
+    background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.25);
+    color: white;
+    white-space: nowrap;
+    pointer-events: none;
+    z-index: 9;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.4);
+    will-change: transform, opacity;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 14px;
+    letter-spacing: 0.5px;
+    line-height: 1;
+    backdrop-filter: blur(4px);
+    transition: background 0.3s, border-color 0.3s;
+  }
+  .pitch-anticipation-tile .tile-emoji {
+    font-size: 14px;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  .pitch-anticipation-tile .tile-pts {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    opacity: 0;
+    transition: opacity 0.3s;
+    transition-delay: 0.1s;
+  }
+  .pitch-anticipation-tile.resolved-pos {
+    background: rgba(22,163,74,0.85);
+    border-color: rgba(22,163,74,0.6);
+  }
+  .pitch-anticipation-tile.resolved-neg {
+    background: rgba(220,38,38,0.85);
+    border-color: rgba(220,38,38,0.6);
+  }
+  .pitch-anticipation-tile.resolved-pos .tile-emoji,
+  .pitch-anticipation-tile.resolved-neg .tile-emoji,
+  .pitch-anticipation-tile.resolved-pos .tile-pts,
+  .pitch-anticipation-tile.resolved-neg .tile-pts {
+    opacity: 1;
+  }
+  @keyframes anticipation-drift-a {
+    0%   { transform: translate(0, 0) scale(0.9); opacity: 0; }
+    8%   { opacity: 1; }
+    100% { transform: translate(12px, -18px) scale(1); opacity: 0.9; }
+  }
+  @keyframes anticipation-drift-b {
+    0%   { transform: translate(0, 0) scale(0.9); opacity: 0; }
+    8%   { opacity: 1; }
+    100% { transform: translate(-10px, -14px) scale(1); opacity: 0.9; }
+  }
+  @keyframes anticipation-drift-c {
+    0%   { transform: translate(0, 0) scale(0.9); opacity: 0; }
+    8%   { opacity: 1; }
+    100% { transform: translate(8px, 16px) scale(1); opacity: 0.9; }
+  }
+  @keyframes anticipation-fade-out {
+    0%   { opacity: 0.9; transform: scale(1); }
+    40%  { opacity: 0.9; transform: scale(1.05); }
+    100% { opacity: 0; transform: scale(0.85) translateY(-8px); }
+  }
+  .pitch-anticipation-tile.drift-a { animation: anticipation-drift-a 2.5s ease-out forwards; }
+  .pitch-anticipation-tile.drift-b { animation: anticipation-drift-b 2.5s ease-out forwards; }
+  .pitch-anticipation-tile.drift-c { animation: anticipation-drift-c 2.5s ease-out forwards; }
 
 
   #screen-sim {
@@ -1336,53 +1432,156 @@
     margin-top: 8px;
   }
 
-  /* ─── HT SWAP CARDS ─── */
-  .ht-swap-card {
-    background: #1a1a1a;
-    border: 1.5px solid #2a2a2a;
-    border-radius: 8px;
-    padding: 8px 10px;
-    cursor: pointer;
-    transition: all 0.15s ease;
+  /* ─── HT SWAP REDESIGN ─── */
+  .ht-swap-question {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 26px;
+    letter-spacing: 1.5px;
+    color: white;
+    text-align: center;
+    margin-bottom: 4px;
+    line-height: 1.2;
+    margin-top: 8px;
+  }
+  .ht-swap-subq {
+    font-size: 13px;
+    color: #888;
+    text-align: center;
+    margin-bottom: 20px;
+    letter-spacing: 0.3px;
+  }
+  .ht-swap-timer-wrap {
+    width: 100%;
+    max-width: 360px;
+    margin-bottom: 22px;
+  }
+  .ht-swap-timer-track {
+    height: 3px;
+    background: #2a2a2a;
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .ht-swap-timer-fill {
+    height: 100%;
+    background: #f5c842;
+    border-radius: 2px;
+    width: 100%;
+    transition: width 1s linear;
+  }
+  .ht-swap-tiles {
     display: flex;
     align-items: center;
-    gap: 8px;
-    font-size: 12px;
+    gap: 10px;
+    width: 100%;
+    max-width: 360px;
+    margin-bottom: 20px;
   }
-  .ht-swap-card:active { transform: scale(0.97); }
-  .ht-swap-card.selected-out {
-    border-color: #f5c842;
-    background: #2a2500;
-  }
-  .ht-swap-card.selected-in {
-    border-color: #4ade80;
-    background: #0a2a14;
-  }
-  .ht-swap-card.locked {
-    opacity: 0.4;
-    pointer-events: none;
-  }
-  .ht-swap-card .sc-pos {
-    font-family: 'DM Mono', monospace;
-    font-size: 9px;
-    color: #555;
-    width: 22px;
-    flex-shrink: 0;
-  }
-  .ht-swap-card .sc-name {
-    font-weight: 600;
-    color: white;
+  .ht-swap-tile {
     flex: 1;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    border-radius: 14px;
+    padding: 16px 14px 14px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    min-height: 150px;
+    justify-content: center;
   }
-  .ht-swap-card .sc-pts {
+  .ht-tile-out {
+    background: rgba(220, 38, 38, 0.12);
+    border: 1.5px solid rgba(220, 38, 38, 0.4);
+  }
+  .ht-tile-in {
+    background: rgba(74, 222, 128, 0.1);
+    border: 1.5px solid rgba(74, 222, 128, 0.35);
+  }
+  .ht-tile-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 8px;
+    letter-spacing: 2px;
+    margin-bottom: 4px;
+  }
+  .ht-tile-out .ht-tile-label { color: #f87171; }
+  .ht-tile-in  .ht-tile-label { color: #4ade80; }
+  .ht-tile-pos {
     font-family: 'DM Mono', monospace;
     font-size: 10px;
+    color: #666;
+    letter-spacing: 1px;
+  }
+  .ht-tile-name {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 28px;
+    letter-spacing: 0.5px;
+    color: white;
+    line-height: 1;
+    text-align: center;
+  }
+  .ht-tile-club {
+    font-size: 11px;
     color: #555;
+    margin-top: 2px;
+    text-align: center;
+  }
+  .ht-tile-divider {
+    width: 30px;
+    height: 1px;
+    background: #2a2a2a;
+    margin: 8px 0 6px;
+  }
+  .ht-tile-pts {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 22px;
+    line-height: 1;
+  }
+  .ht-tile-out .ht-tile-pts { color: #f87171; }
+  .ht-tile-in  .ht-tile-pts { color: #4ade80; }
+  .ht-tile-pts-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 8px;
+    color: #444;
+    letter-spacing: 1.5px;
+    margin-top: 1px;
+  }
+  .ht-swap-arrow {
+    font-size: 22px;
+    color: #444;
     flex-shrink: 0;
   }
+  .ht-swap-accept-btn {
+    width: 100%;
+    max-width: 360px;
+    background: white;
+    color: black;
+    border: none;
+    border-radius: 12px;
+    padding: 16px;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 20px;
+    letter-spacing: 1px;
+    cursor: pointer;
+    margin-bottom: 10px;
+    transition: opacity 0.15s;
+  }
+  .ht-swap-accept-btn:active { opacity: 0.85; }
+  .ht-swap-decline-btn {
+    width: 100%;
+    max-width: 360px;
+    background: transparent;
+    border: 1px solid #2a2a2a;
+    border-radius: 12px;
+    padding: 14px;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 16px;
+    color: #444;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: border-color 0.15s, color 0.15s;
+  }
+  .ht-swap-decline-btn:active { border-color: #555; color: #888; }
+
+  /* Legacy classes kept for any remaining references */
+  .ht-swap-card { display: none; }
 
   /* ─── RESULTS GRAPH ─── */
   .result-graph-wrap {
@@ -2137,28 +2336,113 @@
   }
   .chaos-desc { font-size: 14px; color: var(--muted); margin-top: 4px; }
 
-  .contributor-row {
+  /* ── WORST ELEVEN FORMATION PITCH ── */
+  .wx11-pitch {
+    background: #2d6a44;
+    border-radius: 12px;
+    padding: 14px 8px 14px;
     display: flex;
-    align-items: center;
-    padding: 8px 0;
-    border-bottom: 1px solid var(--border);
+    flex-direction: column;
+    gap: 8px;
+    position: relative;
+    overflow: hidden;
   }
-  .contributor-row:last-child { border-bottom: none; }
-  .contributor-pos {
+  .wx11-pitch::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg, transparent, transparent 32px,
+      rgba(255,255,255,0.04) 32px, rgba(255,255,255,0.04) 33px
+    );
+    pointer-events: none;
+  }
+  .wx11-row {
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+    position: relative;
+    z-index: 1;
+  }
+  /* All tiles same fixed size — GK row uses same dimensions as outfield rows */
+  .wx11-tile {
+    flex: 1;
+    height: 80px;
+    max-width: 90px;
+    border-radius: 8px;
+    padding: 5px 4px;
+    text-align: center;
+    position: relative;
+    cursor: default;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1px;
+    border: 1.5px solid transparent;
+    /* colour set inline via JS */
+  }
+  .wx11-tile.is-worst {
+    box-shadow: 0 0 12px rgba(245,168,35,0.5);
+    border-color: #f5c842 !important;
+  }
+  .wx11-tile .wx-pos {
     font-family: 'DM Mono', monospace;
-    font-size: 10px;
-    color: var(--muted);
-    width: 28px;
+    font-size: 7px;
+    letter-spacing: 1px;
+    color: rgba(255,255,255,0.5);
+    line-height: 1;
     text-transform: uppercase;
   }
-  .contributor-name { flex: 1; font-size: 14px; font-weight: 500; }
-  .contributor-team { font-size: 11px; color: var(--muted); }
-  .contributor-pts {
-    font-family: 'DM Mono', monospace;
+  .wx11-tile .wx-name {
+    font-family: 'Bebas Neue', sans-serif;
     font-size: 14px;
-    font-weight: 700;
-    color: var(--red);
+    letter-spacing: 0.3px;
+    color: white;
+    line-height: 1.1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
   }
+  .wx11-tile.is-worst .wx-name { color: #f5c842; }
+  .wx11-tile .wx-events {
+    font-size: 9px;
+    line-height: 1;
+    letter-spacing: -1px;
+    min-height: 11px;
+  }
+  .wx11-tile .wx-pts {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 1;
+  }
+  .wx11-tile .wx-pts.pts-pos  { color: #4ade80; }
+  .wx11-tile .wx-pts.pts-neg  { color: #f87171; }
+  .wx11-tile .wx-pts.pts-zero { color: rgba(255,255,255,0.4); }
+  .wx11-tile.is-worst .wx-pts { color: #f5c842 !important; }
+  /* YOU/OPP badge */
+  .wx11-tile .wx-owner {
+    position: absolute;
+    top: 3px; right: 4px;
+    font-family: 'DM Mono', monospace;
+    font-size: 6px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    color: rgba(255,255,255,0.55);
+  }
+  /* Worst skull above tile */
+  .wx11-worst-badge {
+    position: absolute;
+    top: -10px; left: 50%;
+    transform: translateX(-50%);
+    font-size: 13px;
+    line-height: 1;
+    filter: drop-shadow(0 0 4px rgba(245,168,35,0.8));
+  }
+  /* Legacy contributor styles hidden */
+  .contributor-row { display: none; }
 
   .moment-row {
     display: flex;
@@ -3129,39 +3413,34 @@ function mpSimCleanup() {
       <div class="slots-grid" id="opp-slots"></div>
     </div>
 
-    <!-- Middle: carousel + controls -->
+    <!-- Middle: tap-grid + full-width action bar -->
     <div class="draft-middle">
 
-      <div class="team-toggle">
-        <button class="active" onclick="setTeamFilter('home')" id="toggle-home">Home</button>
-        <button onclick="setTeamFilter('away')" id="toggle-away">Away</button>
-      </div>
+      <!-- Player tap grid: home row + away row -->
+      <div class="draft-grid" id="draft-grid"></div>
 
-      <div class="sabotage-bar">
-        <div class="sabotage-pips" id="sabotage-pips"></div>
-        <span id="sabotage-label">2 sabotages remaining</span>
-      </div>
-
-      <div class="carousel-container" id="carousel-container">
-        <div class="carousel-track" id="carousel-track"></div>
-      </div>
-      <div class="carousel-hint">← scroll to browse · select to pick</div>
-
-      <!-- Bottom action row: status pill (left) + pick button (right) -->
-      <div class="draft-action-row">
-        <div class="turn-pill">
-          <div class="turn-text" id="turn-text">Your pick</div>
-          <div class="timer-ring">
-            <svg width="30" height="30" viewBox="0 0 36 36">
-              <circle cx="18" cy="18" r="15.9"/>
-              <circle class="progress" id="timer-circle" cx="18" cy="18" r="15.9"
-                stroke-dasharray="100" stroke-dashoffset="0"/>
-            </svg>
-            <div class="timer-num" id="timer-num">30</div>
-          </div>
+      <!-- Full-width action bar -->
+      <div class="draft-action-bar">
+        <div class="draft-action-text" id="turn-text">Your pick</div>
+        <div class="draft-timer-ring">
+          <svg width="34" height="34" viewBox="0 0 36 36">
+            <circle cx="18" cy="18" r="15.9"/>
+            <circle class="progress" id="timer-circle" cx="18" cy="18" r="15.9"
+              stroke-dasharray="100" stroke-dashoffset="0"/>
+          </svg>
+          <div class="timer-num" id="timer-num">20</div>
         </div>
-        <button class="btn-confirm" onclick="draftPlayer()" id="btn-me">Pick Player</button>
-        <button style="display:none" id="btn-sabotage"></button>
+      </div>
+
+      <!-- Hidden legacy elements kept for JS compatibility -->
+      <div style="display:none">
+        <div id="sabotage-pips"></div>
+        <span id="sabotage-label"></span>
+        <button id="btn-me"></button>
+        <button id="btn-sabotage"></button>
+        <div id="carousel-container"><div id="carousel-track"></div></div>
+        <button id="toggle-home"></button>
+        <button id="toggle-away"></button>
       </div>
 
     </div>
@@ -3390,56 +3669,58 @@ function mpSimCleanup() {
     <div class="ht-sub" id="ht-announce-sub">The manager has a suggestion…</div>
   </div>
 
-  <!-- Phase 2: Swap offer UI -->
-  <div id="ht-phase-swap" style="display:none;width:100%;flex-direction:column;align-items:center;gap:0;padding:20px 20px 32px">
+  <!-- Phase 2: Swap offer UI — prediction-style two-tile layout -->
+  <div id="ht-phase-swap" style="display:none;width:100%;flex-direction:column;align-items:center;padding:0 20px 32px">
 
-    <div class="ht-label" style="font-size:28px;margin-bottom:4px">SWAP OFFER</div>
-    <div style="font-size:12px;color:#666;text-align:center;margin-bottom:16px;line-height:1.6;max-width:300px">
-      The manager sees an opportunity. It'll cost you <strong style="color:#f5c842">−5 pts</strong> to take it.
-    </div>
+    <!-- Question -->
+    <div class="ht-swap-question">The manager wants to make a change</div>
+    <div class="ht-swap-subq">Is it worth <span style="color:#f5c842">−5 pts</span> to bring fresh legs on?</div>
 
     <!-- Timer bar -->
-    <div style="width:100%;max-width:360px;margin-bottom:20px">
-      <div style="display:flex;justify-content:space-between;margin-bottom:4px">
-        <span style="font-family:'DM Mono',monospace;font-size:10px;color:#555;letter-spacing:1px">DECIDE</span>
-        <span id="ht-timer-label" style="font-family:'Bebas Neue',sans-serif;font-size:18px;color:#f5c842">15</span>
-      </div>
-      <div style="height:3px;background:#222;border-radius:2px;overflow:hidden">
-        <div id="ht-timer-bar" style="height:100%;background:#f5c842;width:100%;transition:width 1s linear;border-radius:2px"></div>
+    <div class="ht-swap-timer-wrap">
+      <div class="ht-swap-timer-track">
+        <div id="ht-timer-bar" class="ht-swap-timer-fill"></div>
       </div>
     </div>
 
-    <!-- The offer card -->
-    <div style="width:100%;max-width:340px;background:#111;border-radius:14px;padding:16px;margin-bottom:20px">
-      <!-- Send out -->
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
-        <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:2px;color:#f87171;min-width:60px">SEND OUT</div>
-        <div style="flex:1">
-          <div id="ht-offer-out-name" style="font-family:'Bebas Neue',sans-serif;font-size:20px;color:white;letter-spacing:0.5px"></div>
-          <div id="ht-offer-out-pts" style="font-family:'DM Mono',monospace;font-size:11px;color:#666"></div>
-        </div>
-        <div style="font-size:20px">↑</div>
+    <!-- Two player tiles side by side -->
+    <div class="ht-swap-tiles">
+
+      <!-- OUT tile -->
+      <div class="ht-swap-tile ht-tile-out">
+        <div class="ht-tile-label">COMING OFF</div>
+        <div class="ht-tile-pos" id="ht-out-pos"></div>
+        <div class="ht-tile-name" id="ht-out-name"></div>
+        <div class="ht-tile-club" id="ht-out-club"></div>
+        <div class="ht-tile-divider"></div>
+        <div class="ht-tile-pts" id="ht-out-pts"></div>
+        <div class="ht-tile-pts-label">1ST HALF</div>
       </div>
-      <!-- Divider -->
-      <div style="height:1px;background:#222;margin-bottom:12px"></div>
-      <!-- Bring in -->
-      <div style="display:flex;align-items:center;gap:10px">
-        <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:2px;color:#4ade80;min-width:60px">BRING IN</div>
-        <div style="flex:1">
-          <div id="ht-offer-in-name" style="font-family:'Bebas Neue',sans-serif;font-size:20px;color:white;letter-spacing:0.5px"></div>
-          <div id="ht-offer-in-pts" style="font-family:'DM Mono',monospace;font-size:11px;color:#666"></div>
-        </div>
-        <div style="font-size:20px">↓</div>
+
+      <!-- Arrow between -->
+      <div class="ht-swap-arrow">→</div>
+
+      <!-- IN tile -->
+      <div class="ht-swap-tile ht-tile-in">
+        <div class="ht-tile-label">COMING ON</div>
+        <div class="ht-tile-pos" id="ht-in-pos"></div>
+        <div class="ht-tile-name" id="ht-in-name"></div>
+        <div class="ht-tile-club" id="ht-in-club"></div>
+        <div class="ht-tile-divider"></div>
+        <div class="ht-tile-pts" id="ht-in-pts"></div>
+        <div class="ht-tile-pts-label">1ST HALF</div>
       </div>
+
     </div>
 
     <!-- Accept / Decline buttons -->
-    <button id="ht-accept-btn" onclick="acceptHtSwap()" style="width:100%;max-width:340px;background:white;color:black;border:none;border-radius:12px;padding:15px;font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:1px;cursor:pointer;margin-bottom:10px">
-      ACCEPT  ·  −5 PTS
+    <button id="ht-accept-btn" class="ht-swap-accept-btn" onclick="acceptHtSwap()">
+      MAKE THE SWAP · <span style="color:#f5c842">−5 PTS</span>
     </button>
-    <button id="ht-decline-btn" onclick="declineHtSwap()" style="width:100%;max-width:340px;background:transparent;border:1px solid #333;border-radius:12px;padding:14px;font-family:'Bebas Neue',sans-serif;font-size:18px;color:#666;letter-spacing:1px;cursor:pointer">
-      NO THANKS
+    <button id="ht-decline-btn" class="ht-swap-decline-btn" onclick="declineHtSwap()">
+      KEEP THE SAME XI
     </button>
+
   </div>
 
   <!-- Phase 3: Waiting for opponent (mp only) -->
@@ -5873,26 +6154,43 @@ function buildDraftSequence(gkWinner) {
   const loser  = gkWinner === 'me' ? 'opp' : 'me';
   const seq = [];
 
-  // Step 0: GK — winner picks, other GK auto-assigned to loser
+  // Pick 1:  CTW picks GK
   seq.push({ who: winner, type: 'gk' });
+  // Pick 2:  CTL auto-gets other GK
+  seq.push({ who: loser,  type: 'auto_gk' });
 
-  // Picks 3-16: 7 normal snake rounds, loser leads (14 picks, 7 each)
-  for (let i = 0; i < 7; i++) {
-    seq.push({ who: loser,  type: 'normal' });
-    seq.push({ who: winner, type: 'normal' });
-  }
+  // Picks 3-16: position-filtered rounds
+  // DEF: CTL first (pick 3), CTW (4), CTW (9), CTL (10), CTW (13), CTL (14)
+  // MID: CTW first (pick 5), CTL (6), CTL (11), CTW (12)  [only 4 picks — leaves 2 for sab]
+  // ATT: CTL first (pick 7), CTW (8), CTL (15), CTW (16)
+  seq.push({ who: loser,  type: 'def' }); // Pick 3
+  seq.push({ who: winner, type: 'def' }); // Pick 4
+  seq.push({ who: winner, type: 'mid' }); // Pick 5
+  seq.push({ who: loser,  type: 'mid' }); // Pick 6
+  seq.push({ who: loser,  type: 'att' }); // Pick 7
+  seq.push({ who: winner, type: 'att' }); // Pick 8
+  seq.push({ who: winner, type: 'def' }); // Pick 9
+  seq.push({ who: loser,  type: 'def' }); // Pick 10
+  seq.push({ who: loser,  type: 'mid' }); // Pick 11
+  seq.push({ who: winner, type: 'mid' }); // Pick 12
+  seq.push({ who: winner, type: 'def' }); // Pick 13
+  seq.push({ who: loser,  type: 'def' }); // Pick 14
+  seq.push({ who: loser,  type: 'att' }); // Pick 15
+  seq.push({ who: winner, type: 'att' }); // Pick 16
 
-  // Picks 17-21: 5 sabotage picks -- CTL gets 3, CTW gets 2
-  seq.push({ who: loser,  type: 'sabotage' }); // Pick 17 -- CTL sab 1
-  seq.push({ who: winner, type: 'sabotage' }); // Pick 18 -- CTW sab 1
-  seq.push({ who: winner, type: 'sabotage' }); // Pick 19 -- CTW sab 2
-  seq.push({ who: loser,  type: 'sabotage' }); // Pick 20 -- CTL sab 2
-  seq.push({ who: loser,  type: 'sabotage' }); // Pick 21 -- CTL sab 3
+  // Picks 17-21: 5 sabotage picks from remaining 6 players (2 def + 2 mid + 2 att)
+  seq.push({ who: loser,  type: 'sabotage' }); // Pick 17 — CTL sab 1 (first pick of sabotage)
+  seq.push({ who: winner, type: 'sabotage' }); // Pick 18 — CTW sab 1
+  seq.push({ who: winner, type: 'sabotage' }); // Pick 19 — CTW sab 2
+  seq.push({ who: loser,  type: 'sabotage' }); // Pick 20 — CTL sab 2
+  seq.push({ who: loser,  type: 'sabotage' }); // Pick 21 — CTL sab 3
 
-  // Pick 22: Last player auto-assigned to loser (CTL)
+  // Pick 22: last remaining player auto-assigned to CTL
   seq.push({ who: loser, type: 'auto' });
 
-  return seq; // 22 steps: 1 GK + 14 normal + 5 sabotage + 1 auto (22 players total)
+  return seq;
+  // Pool math: 8 def − 6 picks = 2 rem | 6 mid − 4 picks = 2 rem | 6 att − 4 picks = 2 rem
+  // Sabotage pool = 6 players (2 def + 2 mid + 2 att) ✅
 }
 
 function setupDraft() {
@@ -5901,6 +6199,7 @@ function setupDraft() {
   state.currentPick   = 0;
   state.selectedPlayer = null;
   state.teamFilter    = 'home';
+  _gridBuiltForType   = null; // force full rebuild on new draft
 
   const gkWinner = state.gkPickerIsMe !== false ? 'me' : 'opp';
   state.sequence = buildDraftSequence(gkWinner);
@@ -5913,14 +6212,15 @@ function setupDraft() {
   }
 
   renderDraftSlots();
-  renderCarousel();
+  renderDraftGrid(); // (was renderCarousel)
   updateTurnUI();
 
   // If opponent won coin flip they do the GK pick first — auto-pick it
   if (gkWinner === 'opp') {
+    // Opp won toss — auto-advance through their GK pick then our auto_gk
     setTimeout(() => autoPickGK(), 1000);
   } else {
-    startTimer(10); // GK pick: 10 second timer
+    startTimer(15); // GK pick: 15 seconds
   }
 }
 
@@ -5975,75 +6275,204 @@ function renderDraftSlots() {
     sabLeft > 0 ? `${sabLeft} sabotage${sabLeft !== 1 ? 's' : ''} to send` : 'Sabotages complete';
 }
 
-function renderCarousel(scrollToTeam = null) {
-  const track = document.getElementById('carousel-track');
-  const container = document.getElementById('carousel-container');
+// renderCarousel is now renderDraftGrid — kept as alias for any legacy calls
+function renderCarousel() { renderDraftGrid(); }
+function selectPlayer(id) { tapDraftPlayer(id); } // legacy alias
+function setTeamFilter() {} // no-op, tabs removed
 
-  // Save scroll position before re-rendering (unless a tab jump was requested)
-  const savedScroll = scrollToTeam ? 0 : (container ? container.scrollLeft : 0);
+const DEF_POS = ['CB','RB','LB','RWB','LWB','SW'];
+const MID_POS = ['CM','AM','DM','RM','LM'];
+const ATT_POS = ['ST','CF','RW','LW','SS'];
 
-  track.innerHTML = '';
-
-  const step = currentStep();
+function getAvailableForStep(step) {
   const drafted = [...state.myTeam, ...state.oppTeam];
+  if (!step) return [];
+  if (step.type === 'gk' || step.type === 'auto_gk')
+    return PLAYERS.filter(p => !drafted.includes(p.id) && p.pos === 'GK');
+  if (step.type === 'def')
+    return PLAYERS.filter(p => !drafted.includes(p.id) && DEF_POS.includes(p.pos));
+  if (step.type === 'mid')
+    return PLAYERS.filter(p => !drafted.includes(p.id) && MID_POS.includes(p.pos));
+  if (step.type === 'att')
+    return PLAYERS.filter(p => !drafted.includes(p.id) && ATT_POS.includes(p.pos));
+  // sabotage / auto / normal — all remaining
+  return PLAYERS.filter(p => !drafted.includes(p.id));
+}
 
-  let available;
-  if (step && step.type === 'gk') {
-    available = PLAYERS.filter(p => !drafted.includes(p.id) && p.pos === 'GK');
-  } else {
-    const city    = PLAYERS.filter(p => !drafted.includes(p.id) && p.team === 'home');
-    const watford = PLAYERS.filter(p => !drafted.includes(p.id) && p.team === 'away');
-    available = [...city, ...watford];
-  }
+// Track which round type the grid was last built for
+// so we only rebuild when the position group changes (GK→DEF→MID→ATT→SAB)
+let _gridBuiltForType = null;
 
-  state.teamStartIndex = {
-    home: 0,
-    away: available.filter(p => p.team === 'home').length
-  };
+function getStepGroupType(step) {
+  if (!step) return null;
+  if (step.type === 'gk' || step.type === 'auto_gk') return 'gk';
+  if (step.type === 'def')      return 'def';
+  if (step.type === 'mid')      return 'mid';
+  if (step.type === 'att')      return 'att';
+  if (step.type === 'sabotage') return 'sabotage';
+  return 'auto';
+}
 
-  for (const p of available) {
-    const isSelected = state.selectedPlayer === p.id;
-    const card = document.createElement('div');
-    card.className = 'player-card' + (isSelected ? ' selected' : '');
-    card.dataset.team = p.team;
-    card.onclick = () => selectPlayer(p.id);
-    card.innerHTML = `
-      <div class="card-pos">${p.pos}</div>
-      <div class="card-name">${p.name}</div>
-      <div class="card-team"><span class="card-team-dot ${p.team}-dot"></span>${p.teamName}</div>
-    `;
-    track.appendChild(card);
-  }
+function renderDraftGrid() {
+  const grid = document.getElementById('draft-grid');
+  if (!grid) return;
 
-  if (available.length === 0) {
-    track.innerHTML = '<div style="padding:20px;color:var(--muted);font-size:13px;">All players drafted</div>';
-  }
+  const step      = currentStep();
+  const isMyTurn  = step ? mp_isMyStep(step) : false;
+  const isSab     = step && step.type === 'sabotage';
+  const isGK      = step && (step.type === 'gk' || step.type === 'auto_gk');
+  const groupType = getStepGroupType(step);
+  const drafted   = [...state.myTeam, ...state.oppTeam];
 
-  requestAnimationFrame(() => {
-    if (scrollToTeam) {
-      // Tab tapped — jump to start of that team
-      const cards = track.querySelectorAll('.player-card');
-      const idx = state.teamStartIndex[scrollToTeam] || 0;
-      if (cards[idx]) {
-        container.scrollTo({ left: cards[idx].offsetLeft - 12, behavior: 'smooth' });
-      }
+  // ── Rebuild the grid only when the position group changes ────────────────
+  if (groupType !== _gridBuiltForType) {
+    _gridBuiltForType = groupType;
+    grid.innerHTML = '';
+    grid.className = 'draft-grid' + (isGK ? ' gk-layout' : '');
+
+    // Full pool for this position group (all players, whether drafted yet or not)
+    // We show all cards; drafted ones become invisible placeholders
+    let fullPool;
+    if (isGK) {
+      fullPool = PLAYERS.filter(p => p.pos === 'GK');
+    } else if (step && step.type === 'def') {
+      fullPool = PLAYERS.filter(p => DEF_POS.includes(p.pos));
+    } else if (step && step.type === 'mid') {
+      fullPool = PLAYERS.filter(p => MID_POS.includes(p.pos));
+    } else if (step && step.type === 'att') {
+      fullPool = PLAYERS.filter(p => ATT_POS.includes(p.pos));
     } else {
-      // Normal re-render — restore scroll position
-      container.scrollLeft = savedScroll;
+      // sabotage / auto — all remaining
+      fullPool = PLAYERS.filter(p => !drafted.includes(p.id));
+    }
+
+    const homePool = fullPool.filter(p => p.team === 'home');
+    const awayPool = fullPool.filter(p => p.team === 'away');
+
+    const dotColourHome = getComputedStyle(document.documentElement).getPropertyValue('--home-colour').trim() || '#888';
+    const dotColourAway = getComputedStyle(document.documentElement).getPropertyValue('--away-colour').trim() || '#888';
+
+    function makeCard(p) {
+      const dotColour = p.team === 'home' ? dotColourHome : dotColourAway;
+      const card = document.createElement('div');
+      card.className = 'tap-card';
+      card.dataset.pid = p.id;
+      card.innerHTML = `
+        <span class="tc-sab-badge">⚡</span>
+        <div class="tc-pos">${p.pos}</div>
+        <div class="tc-name">${getSurname(p)}</div>
+        <div class="tc-club">
+          <span class="tc-dot" style="background:${dotColour}"></span>
+          <span>${p.teamName || p.team}</span>
+        </div>
+      `;
+      // Listener attached once — tapDraftPlayer checks turn internally
+      card.addEventListener('click', () => tapDraftPlayer(p.id));
+      return card;
+    }
+
+    if (isGK) {
+      const row = document.createElement('div');
+      row.className = 'draft-grid-row';
+      fullPool.forEach(p => row.appendChild(makeCard(p)));
+      grid.appendChild(row);
+    } else {
+      if (homePool.length > 0) {
+        const row = document.createElement('div');
+        row.className = 'draft-grid-row';
+        homePool.forEach(p => row.appendChild(makeCard(p)));
+        grid.appendChild(row);
+      }
+      if (homePool.length > 0 && awayPool.length > 0) {
+        const divEl = document.createElement('div');
+        divEl.className = 'draft-grid-divider';
+        const homeName = homePool[0]?.teamName || 'Home';
+        const awayName = awayPool[0]?.teamName || 'Away';
+        divEl.textContent = homeName.toUpperCase() + '  ·  ' + awayName.toUpperCase();
+        grid.appendChild(divEl);
+      }
+      if (awayPool.length > 0) {
+        const row = document.createElement('div');
+        row.className = 'draft-grid-row';
+        awayPool.forEach(p => row.appendChild(makeCard(p)));
+        grid.appendChild(row);
+      }
+    }
+  }
+
+  // ── Update existing cards: hide drafted, dim on opp turn, sabotage tint ──
+  // Note: dataset values are strings, player IDs are numbers — coerce for comparison
+  const draftedSet = new Set([...state.myTeam, ...state.oppTeam].map(id => String(id)));
+  grid.querySelectorAll('.tap-card').forEach(card => {
+    const pid = card.dataset.pid; // string
+    if (draftedSet.has(pid)) {
+      card.style.visibility = 'hidden';
+      card.style.pointerEvents = 'none';
+      card.classList.remove('animating-mine', 'animating-opp');
+    } else {
+      card.style.visibility = 'visible';
+      card.style.opacity    = isMyTurn ? '1' : '0.45';
+      card.style.cursor     = isMyTurn ? 'pointer' : 'default';
+      card.classList.toggle('sabotage-mode', isSab);
     }
   });
 }
 
-function selectPlayer(id) {
-  state.selectedPlayer = state.selectedPlayer === id ? null : id;
-  renderCarousel();
+function tapDraftPlayer(id) {
+  const step = currentStep();
+  if (!step || !mp_isMyStep(step)) return; // not my turn — ignore tap
+
+  const drafted = [...state.myTeam, ...state.oppTeam];
+  if (drafted.includes(id)) return; // already taken
+
+  const p = getPlayer(id);
+  if (!p) return;
+
+  // Validate position matches step type
+  if (step.type === 'gk' && p.pos !== 'GK') return;
+  if (step.type === 'def' && !DEF_POS.includes(p.pos)) return;
+  if (step.type === 'mid' && !MID_POS.includes(p.pos)) return;
+  if (step.type === 'att' && !ATT_POS.includes(p.pos)) return;
+
+  // Animate the tapped card away then hide it in place
+  const card = document.querySelector(`.tap-card[data-pid="${id}"]`);
+  if (card) {
+    card.style.pointerEvents = 'none'; // prevent double-tap
+    card.classList.add('animating-mine');
+    setTimeout(() => {
+      card.style.visibility = 'hidden';
+      card.classList.remove('animating-mine');
+      _commitTapPick(id, step);
+    }, 320);
+  } else {
+    _commitTapPick(id, step);
+  }
 }
 
-function setTeamFilter(team) {
-  state.teamFilter = team;
-  document.getElementById('toggle-home').classList.toggle('active', team === 'home');
-  document.getElementById('toggle-away').classList.toggle('active', team === 'away');
-  renderCarousel(team);
+function _commitTapPick(id, step) {
+  if (step.type === 'sabotage') {
+    state.oppTeam.push(id);
+  } else {
+    state.myTeam.push(id);
+    if (!state.playerData[id]) state.playerData[id] = { pts: 0, events: [] };
+  }
+
+  state.selectedPlayer = null;
+  state.currentPick++;
+  resetTimer();
+  afterPick();
+}
+
+// Opponent card animation — flies upward to their slots, then hides in place
+function animateOppPick(id) {
+  const card = document.querySelector(`.tap-card[data-pid="${id}"]`);
+  if (card) {
+    card.classList.add('animating-opp');
+    setTimeout(() => {
+      card.style.visibility = 'hidden';
+      card.classList.remove('animating-opp');
+    }, 350);
+  }
 }
 
 function updateTurnUI() {
@@ -6051,9 +6480,10 @@ function updateTurnUI() {
   if (!step) return;
 
   const isMyTurn = mp_isMyStep(step);
-  const btn      = document.getElementById('btn-me');
+  const btn      = document.getElementById('btn-me'); // legacy hidden
   const turnEl   = document.getElementById('turn-text');
-  document.getElementById('btn-sabotage').style.display = 'none';
+  // Also update the new full-width action bar text (same element ID)
+  renderDraftGrid(); // refresh grid to show my-turn / opp-turn state
 
   // Opponent name — truncate long names to keep UI tidy
   const rawOppName = state.mp
@@ -6067,44 +6497,63 @@ function updateTurnUI() {
   const oppDone = state.sequence.slice(0, state.currentPick)
     .filter(s => !mp_isMyStep(s) && s.type === step.type).length;
 
-  // ── LEFT PILL: status text only (no button label logic here) ──
+  const posLabel = {
+    gk:      'Goalkeeper',
+    auto_gk: 'Goalkeeper',
+    def:     'Defender',
+    mid:     'Midfielder',
+    att:     'Attacker',
+    sabotage:'Player',
+    auto:    'Player',
+    normal:  'Player',
+  }[step.type] || 'Player';
+
+  const pickVerb = step.type === 'sabotage' ? 'Sabotage pick' : `Pick ${posLabel}`;
+
+  // Count total picks of this type for me and opp
+  const myTypeTotal  = state.sequence.filter(s => s.who === 'me'  && s.type === step.type).length;
+  const oppTypeTotal = state.sequence.filter(s => s.who === 'opp' && s.type === step.type).length;
+
+  // ── LEFT PILL: status text ──
   if (step.type === 'gk') {
     turnEl.innerHTML = isMyTurn
       ? '<strong>Pick your goalkeeper</strong><em>You won the toss</em>'
-      : `<strong>${oppName} picks GK</strong><em>You pick first after</em>`;
+      : `<strong>${oppName} picks GK</strong><em>You get the other</em>`;
+
+  } else if (step.type === 'auto_gk') {
+    turnEl.innerHTML = isMyTurn
+      ? '<strong>Goalkeeper assigned</strong><em>Auto-pick — you lost the toss</em>'
+      : `<strong>Goalkeeper assigned to ${oppName}</strong><em>Auto-pick</em>`;
 
   } else if (step.type === 'sabotage') {
     if (isMyTurn) {
       turnEl.innerHTML =
-        `<strong>⚡ Your sabotage pick</strong><em>${myDone + 1} of ${state.sequence.filter(s => s.who === 'me' && s.type === 'sabotage').length} · goes to ${oppName}</em>`;
+        `<strong>⚡ Sabotage pick</strong><em>${myDone + 1} of ${myTypeTotal} · goes to ${oppName}</em>`;
     } else {
       turnEl.innerHTML =
-        `<strong>⚡ ${oppName} sabotages you</strong><em>${oppDone + 1} of ${state.sequence.filter(s => s.who === 'opp' && s.type === 'sabotage').length} · wait for pick</em>`;
+        `<strong>⚡ ${oppName} sabotages</strong><em>${oppDone + 1} of ${oppTypeTotal}</em>`;
     }
 
   } else if (step.type === 'auto') {
-    turnEl.innerHTML = isMyTurn
-      ? '<strong>Last player incoming…</strong><em>Auto-assigned to you</em>'
-      : `<strong>Last player incoming…</strong><em>Auto-assigned to ${oppName}</em>`;
+    const autoWho = step.who === 'me' ? 'you' : oppName;
+    turnEl.innerHTML = `<strong>Last player</strong><em>Auto-assigned to ${autoWho}</em>`;
 
   } else {
+    // def / mid / att
     if (isMyTurn) {
       turnEl.innerHTML =
-        `<strong>Your pick</strong><em>${myDone + 1} of 7</em>`;
+        `<strong>Pick a ${posLabel}</strong><em>Your pick · ${myDone + 1} of ${myTypeTotal}</em>`;
     } else {
       turnEl.innerHTML =
-        `<strong>${oppName} is picking</strong><em>${oppDone + 1} of 7 · your turn next</em>`;
+        `<strong>${oppName} picks ${posLabel}</strong><em>${oppDone + 1} of ${oppTypeTotal}</em>`;
     }
   }
 
-  // ── RIGHT BUTTON: always "Pick Player", just enabled/disabled ──
-  btn.textContent = 'Pick Player';
-  btn.disabled    = !isMyTurn;
-  btn.style.background = isMyTurn
-    ? (step.type === 'sabotage' ? 'var(--red)' : 'var(--blue)')
-    : '#555';
-  btn.style.cursor = isMyTurn ? 'pointer' : 'default';
-  btn.style.opacity = isMyTurn ? '1' : '0.6';
+  // ── Action bar background colour hint for sabotage ──
+  const bar = document.querySelector('.draft-action-bar');
+  if (bar) {
+    bar.style.background = (step.type === 'sabotage' && isMyTurn) ? '#1a0505' : 'var(--black)';
+  }
 }
 
 // Helper: is this sequence step MY turn?
@@ -6116,52 +6565,28 @@ function mp_isMyStep(step) {
   return step.who === 'me';
 }
 
+// draftPlayer is now handled by tapDraftPlayer (tap-to-draft grid)
+// Kept as alias for timer auto-pick which still sets selectedPlayer
 function draftPlayer() {
   const step = currentStep();
-  if (!step || step.who !== 'me') return;
-  if (!state.selectedPlayer) { showToast('Select a player first!'); return; }
-
-  // Guard: player already drafted (race condition between timer and manual pick)
-  const alreadyDrafted = [...state.myTeam, ...state.oppTeam];
-  if (alreadyDrafted.includes(state.selectedPlayer)) {
-    state.selectedPlayer = null;
-    renderCarousel();
-    return;
+  if (!step || !mp_isMyStep(step)) return;
+  if (state.selectedPlayer) {
+    tapDraftPlayer(state.selectedPlayer);
   }
-
-  if (step.type === 'gk') {
-    const p = getPlayer(state.selectedPlayer);
-    if (p.pos !== 'GK') { showToast('Must pick a goalkeeper!'); return; }
-    state.myTeam.push(state.selectedPlayer);
-    const otherGK = PLAYERS.find(q => q.pos === 'GK' && q.id !== state.selectedPlayer);
-    state.oppTeam.push(otherGK.id);
-    showToast(`You pick ${p.name} · ${otherGK.name} goes to opponent`);
-
-  } else if (step.type === 'sabotage') {
-    state.oppTeam.push(state.selectedPlayer);
-
-  } else {
-    state.myTeam.push(state.selectedPlayer);
-  }
-
-  state.selectedPlayer = null;
-  state.currentPick++;
-  resetTimer();
-  afterPick();
 }
 
 function afterPick() {
   if (state.myTeam.length === 11 && state.oppTeam.length === 11) {
     clearInterval(state.timerInterval);
     renderDraftSlots();
-    renderCarousel();
+    renderDraftGrid();
     setTimeout(() => showCaptainScreen(), 600);
     return;
   }
 
   const next = currentStep();
   renderDraftSlots();
-  renderCarousel();
+  renderDraftGrid();
   updateTurnUI();
 
   // Tutorial hooks based on draft progression
@@ -6171,7 +6596,7 @@ function afterPick() {
     if (pickNum === 1 && state.myTeam.length === 1 && !state._tutShownGkForced) {
       state._tutShownGkForced = true;
       renderDraftSlots();
-      renderCarousel();
+      renderDraftGrid();
       updateTurnUI();
       showTutorialCard('gk_forced').then(() => {
         if (!state._tutShownYourPicks) {
@@ -6217,6 +6642,31 @@ function afterPick() {
   }
 
   // ── Auto step: last remaining player auto-assigned to loser ──
+  // auto_gk: assign the remaining goalkeeper automatically
+  if (next && next.type === 'auto_gk' && !state.autoPickLocked) {
+    state.autoPickLocked = true;
+    setTimeout(() => {
+      const drafted2 = [...state.myTeam, ...state.oppTeam];
+      const remainingGK = PLAYERS.find(p => p.pos === 'GK' && !drafted2.includes(p.id));
+      if (remainingGK) {
+        if (next.who === 'me') {
+          state.myTeam.push(remainingGK.id);
+          if (!state.playerData[remainingGK.id]) state.playerData[remainingGK.id] = { pts: 0, events: [] };
+        } else {
+          state.oppTeam.push(remainingGK.id);
+          if (!state.playerData[remainingGK.id]) state.playerData[remainingGK.id] = { pts: 0, events: [] };
+        }
+      }
+      state.autoPickLocked = false;
+      state.currentPick++;
+      renderDraftSlots();
+      renderDraftGrid(); // (was renderCarousel)
+      updateTurnUI();
+      afterPick();
+    }, 600);
+    return;
+  }
+
   if (next && next.type === 'auto' && !state.autoPickLocked) {
     state.autoPickLocked = true;
     const drafted = [...state.myTeam, ...state.oppTeam];
@@ -6246,19 +6696,22 @@ function afterPick() {
 
   if (next && next.who === 'opp') {
     setTimeout(() => autoPickOpponent(), 1100);
+  } else if (next && mp_isMyStep(next) && next.type !== 'auto' && next.type !== 'auto_gk') {
+    // It's my turn on a normal pick — start the timer
+    resetTimer();
   }
 }
 
 function autoPickGK() {
+  // Opponent won the coin toss — they pick their GK (pick 0).
+  // The remaining GK is assigned to the player via the auto_gk step (pick 1) in afterPick.
   const gks = PLAYERS.filter(p => p.pos === 'GK');
   const pick = gks.reduce((best, p) => (CHAOS_VALUES[p.id] || 0) > (CHAOS_VALUES[best.id] || 0) ? p : best, gks[0]);
-  const otherGK = gks.find(p => p.id !== pick.id);
+  animateOppPick(pick.id);
   state.oppTeam.push(pick.id);
-  state.myTeam.push(otherGK.id);
-  state.currentPick++;
-  showToast(`Opponent picks ${pick.name} · You get ${otherGK.name}`);
-  afterPick();
-  startTimer();
+  state.currentPick++; // advance past pick 0 (opp gk) → lands on pick 1 (auto_gk for me)
+  showToast(`Opponent picks ${getSurname(pick)} as goalkeeper`);
+  setTimeout(() => afterPick(), 380); // afterPick sees auto_gk and assigns remaining GK to player
 }
 
 // Chaos values computed dynamically from EVENTS for the loaded match.
@@ -6327,35 +6780,54 @@ function autoPickOpponent() {
   if (!step || step.who !== 'opp') return;
 
   const drafted = [...state.myTeam, ...state.oppTeam];
-  const available = PLAYERS.filter(p => !drafted.includes(p.id));
+  const DEF_POS_AI = ['CB','RB','LB','RWB','LWB','SW'];
+  const MID_POS_AI = ['CM','AM','DM','RM','LM'];
+  const ATT_POS_AI = ['ST','CF','RW','LW','SS'];
+
+  // Filter by position type — same rules as carousel and timer auto-pick
+  const pool = PLAYERS.filter(p => {
+    if (drafted.includes(p.id)) return false;
+    if (step.type === 'gk')  return p.pos === 'GK';
+    if (step.type === 'def') return DEF_POS_AI.includes(p.pos);
+    if (step.type === 'mid') return MID_POS_AI.includes(p.pos);
+    if (step.type === 'att') return ATT_POS_AI.includes(p.pos);
+    return true; // sabotage / auto — any remaining
+  });
+
+  const available = pool.length > 0 ? pool : PLAYERS.filter(p => !drafted.includes(p.id));
   if (available.length === 0) return;
 
   const sorted = [...available].sort((a, b) => (CHAOS_VALUES[b.id] || 0) - (CHAOS_VALUES[a.id] || 0));
 
   if (step.type === 'auto') {
-    // Last player — auto-assigned to opponent (they are the loser)
-    const pick = available[0]; // only one player left
+    const pick = available[0];
+    animateOppPick(pick.id);
     state.oppTeam.push(pick.id);
-    showToast(`Last man standing — ${pick.name} joins opponent's squad!`);
+    showToast(`Last man standing — ${getSurname(pick)} joins opponent's squad!`);
   } else if (step.type === 'sabotage') {
-    // Send the worst player (most harmful to player = lowest chaos) to my team
     const pick = sorted[sorted.length - 1];
+    animateOppPick(pick.id);
     state.myTeam.push(pick.id);
-    showToast(`⚡ Opponent sends ${pick.name} to your squad!`);
+    showToast(`⚡ Opponent sends ${getSurname(pick)} to your squad!`);
   } else {
-    // Normal pick: take best chaos player
     const pick = sorted[0];
+    animateOppPick(pick.id);
     state.oppTeam.push(pick.id);
   }
 
   state.currentPick++;
-  afterPick();
+  setTimeout(() => afterPick(), 380);
 }
 
 
 // Timer
 function getTimerDuration() {
-  return 20; // flat 20 seconds per pick
+  const step = currentStep();
+  if (!step) return 20;
+  if (step.type === 'gk') return 15;     // GK pick: 15 seconds
+  if (step.type === 'auto_gk') return 0; // auto-fires, no timer needed
+  if (step.type === 'auto') return 0;    // auto-fires
+  return 20; // all other picks: flat 20 seconds
 }
 
 function startTimer(durationOverride) {
@@ -6374,10 +6846,16 @@ function startTimer(durationOverride) {
       const isMyTurn = mp_isMyStep(step);
       if (step && isMyTurn) {
         const drafted = [...state.myTeam, ...state.oppTeam];
+        const DEF_POS2 = ['CB','RB','LB','RWB','LWB','SW'];
+        const MID_POS2 = ['CM','AM','DM','RM','LM'];
+        const ATT_POS2 = ['ST','CF','RW','LW','SS'];
         const available = PLAYERS.filter(p => {
           if (drafted.includes(p.id)) return false;
-          if (step.type === 'gk') return p.pos === 'GK';
-          return true;
+          if (step.type === 'gk')  return p.pos === 'GK';
+          if (step.type === 'def') return DEF_POS2.includes(p.pos);
+          if (step.type === 'mid') return MID_POS2.includes(p.pos);
+          if (step.type === 'att') return ATT_POS2.includes(p.pos);
+          return true; // sabotage — any remaining player
         });
         if (available.length > 0) {
           // Auto-pick highest chaos value on timer expiry
@@ -6394,7 +6872,7 @@ function resetTimer() {
   clearInterval(state.timerInterval);
   const step = currentStep();
   // Don't start timer for auto-assign steps — they fire themselves
-  if (step && step.type === 'auto') return;
+  if (step && (step.type === 'auto' || step.type === 'auto_gk')) return;
   startTimer();
 }
 
@@ -7267,7 +7745,7 @@ function showScorerQuestion(beat, onComplete) {
   fillEl.style.transition = 'none';
   fillEl.style.width = '100%';
   requestAnimationFrame(() => requestAnimationFrame(() => {
-    fillEl.style.transition = 'width 5s linear';
+    fillEl.style.transition = 'width 10s linear';
     fillEl.style.width = '0%';
   }));
 
@@ -7280,7 +7758,7 @@ function showScorerQuestion(beat, onComplete) {
       });
       onComplete(null, null);
     }
-  }, 5000);
+  }, 10000);
 }
 
 // Apply scored result and close overlay. msg = optional override message (e.g. "Too slow!")
@@ -7906,7 +8384,15 @@ function runBeats(beats, idx) {
 
       // Standard near-miss: show build, pause, resolve
       setCommentary(beat.build, '…');
+      // Spawn anticipation tile for a fake — name drifts, then quietly fades on resolve
+      const _fakeTiles = spawnAnticipationTiles(beat);
       simTimeout = setTimeout(() => {
+        // Quiet fade — no resolve colour, just disappear
+        _fakeTiles.forEach(t => {
+          clearTimeout(t._autoRemove);
+          t.style.animation = 'anticipation-fade-out 0.6s ease-out forwards';
+          setTimeout(() => { t.remove(); _anticipationTiles = _anticipationTiles.filter(x => x !== t); }, 600);
+        });
         setCommentary(beat.resolve, beat.emoji);
         const _missCont = () => runBeats(beats, idx + 1);
         _simContinuation = _missCont;
@@ -7916,7 +8402,7 @@ function runBeats(beats, idx) {
     }
 
     // Helper: process all events for this beat and trigger flashes
-    function applyBeatEvents() {
+    function applyBeatEvents(suppressTileIds = new Set()) {
       state.pendingFlashes = [];
       for (const e of beat.events) {
         processSimEvent(e);
@@ -7942,7 +8428,7 @@ function runBeats(beats, idx) {
       updateScoreDisplay(beat.matchMin, primaryEventType);
       renderSimPlayers();
       const flashes = state.pendingFlashes || [];
-      flashes.forEach(({ id, delta }) => flashPlayer(id, delta));
+      flashes.forEach(({ id, delta }) => flashPlayer(id, delta, suppressTileIds.has(id)));
       state.pendingFlashes = [];
     }
 
@@ -7960,6 +8446,31 @@ function runBeats(beats, idx) {
             const { correctId } = beat.scorerOptions;
             // NOW apply events (scores, flashes, tiles) AFTER question answered
             applyBeatEvents();
+            // Post-reveal anticipation: show the scorer's name box with emoji after reveal
+            const scorerPlayer = getPlayer(correctId);
+            if (scorerPlayer) {
+              const field = document.getElementById('pitch-field');
+              if (field) {
+                const revealTile = document.createElement('div');
+                revealTile.className = 'pitch-anticipation-tile drift-a';
+                revealTile.style.top  = (20 + Math.random() * 40) + '%';
+                revealTile.style.left = (15 + Math.random() * 45) + '%';
+                const pd = state.playerData[correctId];
+                const recentDelta = pd ? (pd.pts) : 0; // approximate
+                const goalEmoji = '⚽';
+                revealTile.innerHTML = `
+                  <span class="tile-name">${getSurname(scorerPlayer)}</span>
+                  <span class="tile-emoji">${goalEmoji}</span>
+                  <span class="tile-pts"></span>
+                `;
+                revealTile.classList.add('resolved-neg'); // goals are always negative pts
+                field.appendChild(revealTile);
+                setTimeout(() => {
+                  revealTile.style.animation = 'anticipation-fade-out 0.7s ease-out forwards';
+                  setTimeout(() => revealTile.remove(), 700);
+                }, 2200);
+              }
+            }
             submitScorerAnswer(isCorrect, correctId, () => runBeats(beats, idx + 1), null, beat);
           });
         }
@@ -7967,16 +8478,31 @@ function runBeats(beats, idx) {
       return;
     }
 
-    // Standard real event — process immediately and show commentary
-    applyBeatEvents();
-    if (beat.commentary) {
-      setCommentary(beat.commentary, beat.emoji);
-    }
-    // Always use setTimeout to prevent synchronous stack overflow on clustered events
-    // Store as _simContinuation so tutorial card dismissal can resume if timer was cleared
-    const _cont = () => runBeats(beats, idx + 1);
-    _simContinuation = _cont;
-    simTimeout = setTimeout(() => { _simContinuation = null; _cont(); }, 1500);
+    // ── Standard real event ──
+    // Snapshot pts before applying events, spawn anticipation tiles, then apply
+    const _anticipPtsBefore = {};
+    const _allDrafted = [...new Set([...state.myTeam, ...state.oppTeam])];
+    _allDrafted.forEach(id => { _anticipPtsBefore[id] = (state.playerData[id]?.pts || 0); });
+
+    const _anticipTiles = spawnAnticipationTiles(beat);
+    // Tag each tile with pts snapshot so resolve can calculate delta
+    _anticipTiles.forEach(t => { t._ptsBefore = _anticipPtsBefore[t._playerId] || 0; });
+    // Flag player IDs that already have anticipation tiles — suppress old flying tile for them
+    const _anticipPlayerIds = new Set(_anticipTiles.map(t => t._playerId));
+
+    // Small delay for anticipation to land before event resolves
+    const anticipDelay = _anticipTiles.length > 0 ? 1600 : 0;
+
+    simTimeout = setTimeout(() => {
+      applyBeatEvents(_anticipPlayerIds);
+      resolveAnticipationTiles(_anticipTiles, beat);
+      if (beat.commentary) {
+        setCommentary(beat.commentary, beat.emoji);
+      }
+      const _cont = () => runBeats(beats, idx + 1);
+      _simContinuation = _cont;
+      simTimeout = setTimeout(() => { _simContinuation = null; _cont(); }, 1500);
+    }, anticipDelay);
   }, delay);
 }
 
@@ -8368,7 +8894,147 @@ function queuePitchTile(playerId, delta) {
   if (!_pitchTileTimer) _drainPitchQueue();
 }
 
-function flashPlayer(playerId, delta) {
+// ── Anticipation drift system ────────────────────────────────
+// Spawns plain name boxes that drift on the pitch BEFORE an event resolves.
+// No emoji, no colour — just a name, building tension.
+// Returns array of tile elements so caller can resolve them later.
+
+let _anticipationTiles = []; // track active anticipation tiles
+
+function spawnAnticipationTiles(beat) {
+  // Never show before scorer questions
+  if (beat.isScorerQuestion) return [];
+
+  const field = document.getElementById('pitch-field');
+  if (!field) return [];
+
+  const events = beat.events || [];
+  if (!events.length && !beat.fake) return [];
+
+  // Decide which names to show
+  // For goal events: show scorer + maybe assist (randomly), positions randomised
+  // For fakes/near-misses: pick a random player name from all match players
+  // For cards/subs: show that player
+
+  const tiles = [];
+  const driftClasses = ['drift-a', 'drift-b', 'drift-c'];
+
+  // Build candidate list
+  let candidates = [];
+
+  if (beat.fake) {
+    // Fake beat — pick 1 random player from all 22 for tension
+    const allPlayers = PLAYERS.filter(p => p);
+    const pick = allPlayers[Math.floor(Math.random() * allPlayers.length)];
+    if (pick) candidates.push({ player: pick, role: 'unknown' });
+  } else {
+    const goalEvent   = events.find(e => e.type === 'goal' || e.type === 'own_goal');
+    const assistEvent = events.find(e => e.type === 'assist');
+
+    if (goalEvent) {
+      // Goal beat: show scorer, and randomly add assist provider (not cards/subs)
+      const scorer = getPlayer(goalEvent.playerId);
+      if (scorer) candidates.push({ player: scorer, role: goalEvent.type });
+
+      if (assistEvent && Math.random() < 0.6) {
+        const ap = getPlayer(assistEvent.playerId);
+        if (ap) candidates.unshift({ player: ap, role: 'assist' }); // assist drifts first
+      }
+    } else {
+      // No goal — show card/sub/etc (max 1 tile, keep it simple)
+      const primaryEvent = events.find(e =>
+        ['yellow', 'red', 'missed_pen', 'sub'].includes(e.type)
+      );
+      if (primaryEvent) {
+        const p = getPlayer(primaryEvent.playerId);
+        if (p) candidates.push({ player: p, role: primaryEvent.type });
+      }
+    }
+    // Hard cap: max 2 tiles
+    candidates = candidates.slice(0, 2);
+  }
+
+  candidates.forEach((c, i) => {
+    const tile = document.createElement('div');
+    tile.className = 'pitch-anticipation-tile ' + (driftClasses[i] || 'drift-a');
+    tile._role     = c.role;
+    tile._playerId = c.player.id;
+
+    // Random position: spread across pitch, avoid centre overlap if 2 tiles
+    const topPct  = 15 + Math.random() * 60;
+    const leftPct = 8  + Math.random() * 60;
+    tile.style.top  = topPct  + '%';
+    tile.style.left = leftPct + '%';
+
+    tile.innerHTML = `
+      <span class="tile-name">${getSurname(c.player)}</span>
+      <span class="tile-emoji"></span>
+      <span class="tile-pts"></span>
+    `;
+
+    field.appendChild(tile);
+    tiles.push(tile);
+    _anticipationTiles.push(tile);
+
+    // Auto-remove after 4s if not resolved
+    tile._autoRemove = setTimeout(() => {
+      tile.style.animation = 'anticipation-fade-out 0.6s ease-out forwards';
+      setTimeout(() => tile.remove(), 600);
+      _anticipationTiles = _anticipationTiles.filter(t => t !== tile);
+    }, 4000);
+  });
+
+  return tiles;
+}
+
+function resolveAnticipationTiles(tiles, beat) {
+  // Called after applyBeatEvents — adds emoji + pts to each tile, colours it
+  if (!tiles || !tiles.length) return;
+
+  tiles.forEach(tile => {
+    clearTimeout(tile._autoRemove);
+    const playerId = tile._playerId;
+    const pd = state.playerData[playerId];
+    if (!pd) { tile.remove(); return; }
+
+    const delta = pd.pts - (tile._ptsBefore || 0); // pts gained this beat
+    const isPos = delta > 0;
+
+    // Determine emoji from last event
+    const lastEvt = pd.events[pd.events.length - 1];
+    const emojiMap = {
+      goal: '⚽', assist: '🤝', yellow: '🟨', red: '🟥',
+      own_goal: '🤦', missed_pen: '❌', sub: '🔄',
+    };
+    const emoji = emojiMap[lastEvt] || '';
+    const ptsStr = (delta > 0 ? '+' : '') + Math.round(delta);
+
+    tile.classList.add(isPos ? 'resolved-pos' : 'resolved-neg');
+    const emojiEl = tile.querySelector('.tile-emoji');
+    const ptsEl   = tile.querySelector('.tile-pts');
+    if (emojiEl) emojiEl.textContent = emoji;
+    if (ptsEl)   ptsEl.textContent   = ptsStr;
+
+    // Fade out after showing resolved state
+    setTimeout(() => {
+      tile.style.animation = 'anticipation-fade-out 0.7s ease-out forwards';
+      setTimeout(() => {
+        tile.remove();
+        _anticipationTiles = _anticipationTiles.filter(t => t !== tile);
+      }, 700);
+    }, 1800);
+  });
+}
+
+function clearAnticipationTiles() {
+  _anticipationTiles.forEach(t => {
+    clearTimeout(t._autoRemove);
+    t.remove();
+  });
+  _anticipationTiles = [];
+}
+
+function flashPlayer(playerId, delta, suppressPitchTile = false) {
   // Always flash the commentary bar so something always visible reacts
   const feed = document.querySelector('.commentary-feed');
   if (feed) {
@@ -8394,7 +9060,8 @@ function flashPlayer(playerId, delta) {
   }
 
   // Spawn a pitch tile animation for significant events
-  queuePitchTile(playerId, delta);
+  // (skipped if an anticipation tile already handled this player)
+  if (!suppressPitchTile) queuePitchTile(playerId, delta);
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -8810,28 +9477,100 @@ function _renderResults() {
     reportEl.innerHTML = statsHtml + gbuHtml;
   }
 
-  // ── WORST ELEVEN LEADERBOARD ─────────────────────────────────
-  // Top 11 players by pts across both teams
-  withPts.sort((a, b) => b.pts - a.pts);
-  const top11 = withPts.slice(0, 11);
+  // ── WORST ELEVEN FORMATION DISPLAY ──────────────────────────
+  // Pick best from each position group separately — strict positional slots
+  // 1 GK · 4 DEF · 3 MID · 3 ATT  (from all 22 players across both teams)
+
+  const WX_DEF = ['CB','RB','LB','RWB','LWB','SW'];
+  const WX_MID = ['CM','AM','DM','RM','LM'];
+  const WX_ATT = ['ST','CF','RW','LW','SS'];
+
+  // withPts includes all 22 drafted players — sort desc for each group
+  function topByPos(posArr, count) {
+    return withPts
+      .filter(item => posArr.includes(item.player.pos))
+      .sort((a, b) => b.pts - a.pts)
+      .slice(0, count);
+  }
+  function topGK(count) {
+    return withPts
+      .filter(item => item.player.pos === 'GK')
+      .sort((a, b) => b.pts - a.pts)
+      .slice(0, count);
+  }
+
+  const wxGK  = topGK(1);
+  const wxDEF = topByPos(WX_DEF, 4);
+  const wxMID = topByPos(WX_MID, 3);
+  const wxATT = topByPos(WX_ATT, 3);
+
+  // Worst player = highest pts across the whole formation
+  const wxAll = [...wxATT, ...wxMID, ...wxDEF, ...wxGK];
+  const worstPlayerId = wxAll.sort((a,b) => b.pts - a.pts)[0]?.player?.id;
+
+  // Team colours from match state
+  const hc = state.resolvedHomeColour || m?.meta?.homeColour || '#6CABDD';
+  const ac = state.resolvedAwayColour || m?.meta?.awayColour || '#FBEE23';
+
+  function hexToRgb(hex) {
+    const h = hex.replace('#','');
+    const r = parseInt(h.slice(0,2),16);
+    const g = parseInt(h.slice(2,4),16);
+    const b = parseInt(h.slice(4,6),16);
+    return `${r},${g},${b}`;
+  }
+
+  function makeTile(item) {
+    if (!item) return '';
+    const p       = item.player;
+    const isWorst = p.id === worstPlayerId;
+    const isMine  = item.mine;
+    const pts     = Math.round(item.pts);
+    const ptsStr  = (pts > 0 ? '+' : '') + pts;
+    const ptsCls  = pts > 0 ? 'pts-pos' : pts < 0 ? 'pts-neg' : 'pts-zero';
+
+    // Team colour for tile background
+    const teamHex = p.team === 'home' ? hc : ac;
+    const rgb     = hexToRgb(teamHex);
+    const bgStyle = `background:rgba(${rgb},0.28);border-color:rgba(${rgb},0.55)`;
+
+    // Event icons — de-dup, cap at 3
+    const evtMap = { goal:'⚽', assist:'🤝', yellow:'🟨', red:'🟥', own_goal:'🤦', missed_pen:'❌', sub:'🔄' };
+    const evts   = [...new Set((item.events || []).map(e => evtMap[e]).filter(Boolean))].slice(0,3);
+    const evtStr = evts.join('') || '·';
+
+    const cls     = ['wx11-tile', isWorst ? 'is-worst' : ''].filter(Boolean).join(' ');
+    const ownerTxt = isMine ? 'YOU' : 'OPP';
+    const skull    = isWorst ? '<span class="wx11-worst-badge">💀</span>' : '';
+
+    return `<div class="${cls}" style="${bgStyle}">
+      ${skull}
+      <div class="wx-owner">${ownerTxt}</div>
+      <div class="wx-pos">${p.pos}</div>
+      <div class="wx-name">${getSurname(p)}</div>
+      <div class="wx-events">${evtStr}</div>
+      <div class="wx-pts ${ptsCls}">${ptsStr}</div>
+    </div>`;
+  }
+
+  function makeRow(items) {
+    return `<div class="wx11-row">${items.map(makeTile).join('')}</div>`;
+  }
+
+  // Build legend — home/away colours with team names
+  const homeName = m?.meta?.home || 'Home';
+  const awayName = m?.meta?.away || 'Away';
+
   const contList = document.getElementById('contributors-list');
   if (contList) {
-    contList.innerHTML = '';
-    for (const item of top11) {
-      const row = document.createElement('div');
-      row.className = 'contributor-row';
-      const ownerLabel = item.mine
-        ? '<span style="color:var(--blue);font-size:10px;font-weight:700;">YOU</span>'
-        : '<span style="color:var(--red);font-size:10px;font-weight:700;">OPP</span>';
-      const ptsColor = item.pts > 0 ? '#22c55e' : item.pts < 0 ? 'var(--red)' : 'var(--muted)';
-      row.innerHTML = `
-        <div class="contributor-pos">${item.player.pos}</div>
-        <div class="contributor-name">${item.player.name} <span class="contributor-team">${item.player.teamName}</span></div>
-        <div style="margin-right:8px;">${ownerLabel}</div>
-        <div class="contributor-pts" style="color:${ptsColor}">${item.pts >= 0 ? '+' : ''}${item.pts}</div>
-      `;
-      contList.appendChild(row);
-    }
+    contList.innerHTML = `
+      <div class="wx11-pitch">
+        ${makeRow(wxATT)}
+        ${makeRow(wxMID)}
+        ${makeRow(wxDEF)}
+        ${makeRow(wxGK)}
+      </div>
+`;
   }
 
   // ── BADGES ────────────────────────────────────────────────────
@@ -9352,35 +10091,40 @@ function showHtSwapUI(onComplete) {
   const outPts    = Math.round(state.playerData[offer.outId]?.pts || 0);
   const inPts     = Math.round(state.playerData[offer.inId]?.pts || 0);
 
-  // Populate offer card
-  const outName = document.getElementById('ht-offer-out-name');
-  const outPtsEl = document.getElementById('ht-offer-out-pts');
-  const inName  = document.getElementById('ht-offer-in-name');
-  const inPtsEl = document.getElementById('ht-offer-in-pts');
+  // Populate new tile elements
+  const setEl = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
 
-  if (outName)  outName.textContent  = outPlayer ? outPlayer.name.split(' ').pop() : '?';
-  if (outPtsEl) outPtsEl.textContent = `${outPlayer?.pos || ''} · ${outPts >= 0 ? '+' : ''}${outPts} pts this half`;
-  if (inName)   inName.textContent   = inPlayer  ? inPlayer.name.split(' ').pop()  : '?';
-  if (inPtsEl)  inPtsEl.textContent  = `${inPlayer?.pos || ''} · ${inPts >= 0 ? '+' : ''}${inPts} pts this half`;
+  setEl('ht-out-pos',  outPlayer?.pos  || '');
+  setEl('ht-out-name', outPlayer ? getSurname(outPlayer) : '?');
+  setEl('ht-out-club', outPlayer?.teamName || '');
+  setEl('ht-out-pts',  (outPts >= 0 ? '+' : '') + outPts + ' PTS');
+
+  setEl('ht-in-pos',   inPlayer?.pos   || '');
+  setEl('ht-in-name',  inPlayer  ? getSurname(inPlayer)  : '?');
+  setEl('ht-in-club',  inPlayer?.teamName  || '');
+  setEl('ht-in-pts',   (inPts  >= 0 ? '+' : '') + inPts  + ' PTS');
 
   // Tutorial: explain the swap mechanic
   if (_tutorialActive) {
     showTutorialCard('ht_swap', false).then(() => {});
   }
 
-  // 15s timer
+  // 15s timer — CSS transition drives the bar, JS tracks seconds for auto-decline
   let secs = 15;
-  const timerLabel = document.getElementById('ht-timer-label');
-  const timerBar   = document.getElementById('ht-timer-bar');
-  if (timerLabel) timerLabel.textContent = secs;
-  if (timerBar)   timerBar.style.width = '100%';
+  const timerBar = document.getElementById('ht-timer-bar');
+  if (timerBar) {
+    timerBar.style.transition = 'none';
+    timerBar.style.width = '100%';
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      timerBar.style.transition = 'width 15s linear';
+      timerBar.style.width = '0%';
+    }));
+  }
 
   state._htTimerSecsRemaining = secs;
   state.htTimerInterval = setInterval(() => {
     secs--;
     state._htTimerSecsRemaining = secs;
-    if (timerLabel) timerLabel.textContent = secs;
-    if (timerBar)   timerBar.style.width = (secs / 15 * 100) + '%';
     if (secs <= 0) {
       clearInterval(state.htTimerInterval);
       if (!state.htSwapDone) declineHtSwap(); // timer = auto-decline
@@ -9898,7 +10642,7 @@ function _mpEnterDraft(mp, gkWinner) {
   }
 
   renderDraftSlots();
-  renderCarousel();
+  renderDraftGrid(); // (was renderCarousel)
   updateTurnUI();
 
   showToast('🔴 LIVE — playing vs ' + mp.oppName);
@@ -9932,7 +10676,7 @@ function _mpSyncPicks(mp, picks) {
     const step = seq[i];
     if (!step || !pick) continue;
 
-    if (step.type === 'gk') {
+    if (step.type === 'gk' || step.type === 'auto_gk') {
       // teamA / teamB are absolute player IDs
       if (pick.teamA !== undefined) {
         newMy.push( mp.role === 'A' ? pick.teamA : pick.teamB);
@@ -9962,7 +10706,7 @@ function _mpSyncPicks(mp, picks) {
   state.timerInterval = null;
 
   renderDraftSlots();
-  renderCarousel();
+  renderDraftGrid(); // (was renderCarousel)
   updateTurnUI();
 
   // ── Draft complete? ──
@@ -9989,10 +10733,16 @@ function _mpSyncPicks(mp, picks) {
     } else {
       // Check if there's only 1 player available — auto-pick immediately
       const drafted = [...state.myTeam, ...state.oppTeam];
+      const DEF_POS3 = ['CB','RB','LB','RWB','LWB','SW'];
+      const MID_POS3 = ['CM','AM','DM','RM','LM'];
+      const ATT_POS3 = ['ST','CF','RW','LW','SS'];
       const available = PLAYERS.filter(p => {
         if (drafted.includes(p.id)) return false;
-        if (nextStep.type === 'gk') return p.pos === 'GK';
-        return true;
+        if (nextStep.type === 'gk')  return p.pos === 'GK';
+        if (nextStep.type === 'def') return DEF_POS3.includes(p.pos);
+        if (nextStep.type === 'mid') return MID_POS3.includes(p.pos);
+        if (nextStep.type === 'att') return ATT_POS3.includes(p.pos);
+        return true; // sabotage / auto
       });
       if (available.length === 1) {
         // Only one option — auto-assign after brief delay
@@ -10001,8 +10751,7 @@ function _mpSyncPicks(mp, picks) {
           window.draftPlayer();
         }, 600);
       } else {
-        const dur = nextStep.type === 'gk' ? 10 : undefined;
-        startTimer(dur);
+        startTimer(getTimerDuration());
       }
     }
   }
@@ -10036,13 +10785,28 @@ async function mpDraftPlayer() {
   const drafted = [...state.myTeam, ...state.oppTeam];
   if (drafted.includes(state.selectedPlayer)) {
     state.selectedPlayer = null;
-    renderCarousel();
+    renderDraftGrid(); // (was renderCarousel)
     return;
   }
 
   if (step.type === 'gk') {
     const p = getPlayer(state.selectedPlayer);
     if (!p || p.pos !== 'GK') { showToast('Pick a goalkeeper!'); return; }
+  }
+  const _DEF = ['CB','RB','LB','RWB','LWB','SW'];
+  const _MID = ['CM','AM','DM','RM','LM'];
+  const _ATT = ['ST','CF','RW','LW','SS'];
+  if (step.type === 'def') {
+    const p = getPlayer(state.selectedPlayer);
+    if (!p || !_DEF.includes(p.pos)) { showToast('Pick a defender!'); return; }
+  }
+  if (step.type === 'mid') {
+    const p = getPlayer(state.selectedPlayer);
+    if (!p || !_MID.includes(p.pos)) { showToast('Pick a midfielder!'); return; }
+  }
+  if (step.type === 'att') {
+    const p = getPlayer(state.selectedPlayer);
+    if (!p || !_ATT.includes(p.pos)) { showToast('Pick an attacker!'); return; }
   }
 
   // Kill timer immediately to prevent double-fire
@@ -10227,7 +10991,7 @@ function mpShowScorerQuestion(beat, onComplete) {
     }
   });
 
-  // Auto-resolve after 6s (1s grace beyond the 5s UI timer)
+  // Auto-resolve after 11s (1s grace beyond the 10s UI timer)
   const autoResolve = setTimeout(() => {
     window._fb.get(questionRef).then(snap => {
       if (!resolved) {
@@ -10619,11 +11383,29 @@ function _mpFireBeat(beat, beats, onDone) {
   }
 
   // ── Standard real event ──
-  _mpApplyBeatEvents(beat);
-  if (beat.commentary) setCommentary(beat.commentary, beat.emoji);
-  _mpPushScore();
-
-  setTimeout(onDone, 1500);
+  // Spawn anticipation tiles, then apply events after brief delay
+  if (!beat.isScorerQuestion) {
+    const _mpAnticipPtsBefore = {};
+    [...new Set([...state.myTeam, ...state.oppTeam])].forEach(id => {
+      _mpAnticipPtsBefore[id] = (state.playerData[id]?.pts || 0);
+    });
+    const _mpAnticipTiles = spawnAnticipationTiles(beat);
+    _mpAnticipTiles.forEach(t => { t._ptsBefore = _mpAnticipPtsBefore[t._playerId] || 0; });
+    window._mpAnticipPlayerIds = new Set(_mpAnticipTiles.map(t => t._playerId));
+    const anticipDelay = _mpAnticipTiles.length > 0 ? 1600 : 0;
+    setTimeout(() => {
+      _mpApplyBeatEvents(beat);
+      resolveAnticipationTiles(_mpAnticipTiles, beat);
+      if (beat.commentary) setCommentary(beat.commentary, beat.emoji);
+      _mpPushScore();
+      setTimeout(onDone, 1500);
+    }, anticipDelay);
+  } else {
+    _mpApplyBeatEvents(beat);
+    if (beat.commentary) setCommentary(beat.commentary, beat.emoji);
+    _mpPushScore();
+    setTimeout(onDone, 1500);
+  }
 }
 
 function _mpTickClock(beat) {
@@ -10672,7 +11454,11 @@ function _mpApplyBeatEvents(beat) {
     : null;
   updateScoreDisplay(beat.matchMin, primaryEventType);
   renderSimPlayers();
-  (state.pendingFlashes || []).forEach(({ id, delta }) => flashPlayer(id, delta));
+  (state.pendingFlashes || []).forEach(({ id, delta }) => {
+    // In MP, anticipation tiles tracked in _mpAnticipPlayerIds set (set before calling this)
+    const suppress = (window._mpAnticipPlayerIds || new Set()).has(id);
+    flashPlayer(id, delta, suppress);
+  });
   state.pendingFlashes = [];
 }
 
@@ -10726,12 +11512,12 @@ function _mpWaitForHtBothConfirmed(beats, onBothReady) {
 
     // Show "waiting for opponent" if I'm done but they're not
     if (myDone && !oppDone) {
-      const timerLabel = document.getElementById('ht-timer-label');
       const acceptBtn  = document.getElementById('ht-accept-btn');
       const declineBtn = document.getElementById('ht-decline-btn');
-      if (timerLabel) timerLabel.textContent = '⏳';
-      if (acceptBtn)  { acceptBtn.disabled = true; acceptBtn.textContent = 'Waiting for opponent…'; }
-      if (declineBtn) declineBtn.disabled = true;
+      const timerBar2  = document.getElementById('ht-timer-bar');
+      if (timerBar2)   { timerBar2.style.transition = 'none'; timerBar2.style.width = '0%'; }
+      if (acceptBtn)   { acceptBtn.disabled = true; acceptBtn.style.opacity = '0.5'; acceptBtn.textContent = 'Waiting for opponent…'; }
+      if (declineBtn)  declineBtn.disabled = true;
       return;
     }
 
@@ -10950,12 +11736,9 @@ function _resumeAllTimers() {
   if (_htTimerPaused && state._htTimerSecsRemaining > 0) {
     _htTimerPaused = false;
     const remaining = state._htTimerSecsRemaining;
-    const timerLabel = document.getElementById('ht-timer-label');
-    const timerBar   = document.getElementById('ht-timer-bar');
+    // Resume timer — just let interval count down, bar already animating via CSS
     state.htTimerInterval = setInterval(() => {
       state._htTimerSecsRemaining--;
-      if (timerLabel) timerLabel.textContent = state._htTimerSecsRemaining;
-      if (timerBar)   timerBar.style.width = (state._htTimerSecsRemaining / 20 * 100) + '%';
       if (state._htTimerSecsRemaining <= 0) {
         clearInterval(state.htTimerInterval);
         if (!state.htSwapDone) autoCompleteHtSwap(state._htSwapCallback);

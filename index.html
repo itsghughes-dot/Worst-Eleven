@@ -2099,6 +2099,15 @@
   .commentary-feed.feed-flash-neg {
     animation: flash-red 1.6s ease forwards;
   }
+  .commentary-feed.feed-flash-yellow {
+    animation: flash-yellow 1.2s ease forwards;
+  }
+  @keyframes flash-yellow {
+    0%   { background: #111; }
+    15%  { background: #3d2e00; }
+    50%  { background: #2a1f00; }
+    100% { background: #111; }
+  }
   @keyframes flash-green {
     0%   { background: #14532d; }
     10%  { background: #14532d; }
@@ -2966,6 +2975,50 @@
   }
   .result-view-profile-btn:hover { background: #222; }
 
+  .result-archive-wrap {
+    margin-top: 16px;
+    padding-top: 14px;
+    border-top: 1px solid var(--border);
+  }
+  .result-archive-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+  .result-archive-title {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--muted);
+  }
+  .result-archive-bar-track {
+    height: 6px;
+    background: #e5e7eb;
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .result-archive-bar-fill {
+    height: 100%;
+    background: var(--black);
+    border-radius: 3px;
+    transition: width 0.6s ease;
+  }
+  .result-archive-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 6px;
+  }
+  .result-archive-hook {
+    font-size: 12px;
+    color: #444;
+    margin-top: 6px;
+    line-height: 1.5;
+    font-style: italic;
+  }
+
   /* Coin flip screen — full loading/reveal experience */
   #screen-coin {
     background: var(--black);
@@ -3330,7 +3383,7 @@ function mpSimCleanup() {
       <div class="profile-section-title">Archive Progress</div>
       <div class="profile-archive-bar-wrap">
         <div class="profile-archive-bar"><div class="profile-archive-fill" id="profile-archive-fill"></div></div>
-        <div class="profile-archive-label" id="profile-archive-label">0 / 7 matches played</div>
+        <div class="profile-archive-label" id="profile-archive-label">0 / 29 matches played</div>
       </div>
     </div>
 
@@ -3387,6 +3440,9 @@ function mpSimCleanup() {
         <div class="coin-countdown-fill" id="coin-countdown-fill"></div>
       </div>
       <div class="coin-countdown-label" id="coin-countdown-label">Coin flip in 10…</div>
+      <div id="different-match-wrap" style="display:none;margin-top:16px;text-align:center;">
+        <button id="different-match-btn" onclick="tryDifferentMatch()" style="background:transparent;border:1px solid rgba(255,255,255,0.25);color:rgba(255,255,255,0.6);font-family:inherit;font-size:13px;padding:8px 18px;border-radius:20px;cursor:pointer;letter-spacing:0.4px;">↺ Try a different match</button>
+      </div>
     </div>
 
     <!-- Phase 3: Coin flip -->
@@ -3644,6 +3700,16 @@ function mpSimCleanup() {
         <div class="result-form-title">Form — last 5</div>
         <div class="result-form-row" id="result-form-strip"></div>
         <div class="result-form-stats" id="result-form-stats"></div>
+        <div class="result-archive-wrap">
+          <div class="result-archive-header">
+            <span class="result-archive-title">Archive Progress</span>
+          </div>
+          <div class="result-archive-bar-track">
+            <div class="result-archive-bar-fill" id="result-archive-fill"></div>
+          </div>
+          <div class="result-archive-label" id="result-archive-label">0 of 29 matches played</div>
+          <div class="result-archive-hook" id="result-archive-hook"></div>
+        </div>
         <button class="result-view-profile-btn" onclick="viewActiveProfile()">View Full Profile →</button>
       </div>
     </div>
@@ -3773,20 +3839,25 @@ const ALL_MATCHES = [
       { id:22, name: `Deulofeu`,    pos: 'LW', team: 'away', teamName: `Watford` },
     ],
     events: [
+      { min: 12, type: 'assist',  playerId:  9 },  // Bernardo — Agüero first
       { min: 12, type: 'goal',    playerId: 10 },
       { min: 21, type: 'assist',  playerId:  8 },
       { min: 21, type: 'goal',    playerId: 10 },
+      { min: 24, type: 'assist',  playerId:  6 },  // Gündogan — Bernardo
       { min: 24, type: 'goal',    playerId:  9 },
       { min: 34, type: 'yellow',  playerId: 17 },
       { min: 38, type: 'own_goal',playerId: 14 },
       { min: 40, type: 'sub',     playerId: 14 },
+      { min: 50, type: 'assist',  playerId: 11 },  // Mahrez — De Bruyne
       { min: 50, type: 'goal',    playerId:  8 },
       { min: 59, type: 'goal',    playerId: 10 },
+      { min: 65, type: 'assist',  playerId:  8 },  // De Bruyne — Mahrez
       { min: 65, type: 'goal',    playerId: 11 },
       { min: 70, type: 'sub',     playerId: 22 },
       { min: 72, type: 'sub',     playerId: 19 },
       { min: 76, type: 'yellow',  playerId: 21 },
       { min: 80, type: 'goal',    playerId: 10 },
+      { min: 85, type: 'assist',  playerId: 10 },  // Agüero — Bernardo
       { min: 85, type: 'goal',    playerId:  9 },
       { min: 90, type: 'full_90' },
     ],
@@ -4287,13 +4358,18 @@ const ALL_MATCHES = [
       { id: 22, name: `Firmino`,     pos: 'ST', team: 'away', teamName: `Liverpool` },
     ],
     events: [
+      { min:  4, type: 'assist',  playerId:  7 },  // McGinn — Watkins first
       { min:  4, type: 'goal',    playerId: 11 },  // Watkins
       { min: 22, type: 'goal',    playerId: 21 },  // Salah
+      { min: 26, type: 'assist',  playerId: 10 },  // Grealish — Watkins second
       { min: 26, type: 'goal',    playerId: 11 },  // Watkins
+      { min: 28, type: 'assist',  playerId: 10 },  // Grealish — Barkley
       { min: 28, type: 'goal',    playerId:  8 },  // Barkley
       { min: 41, type: 'goal',    playerId: 11 },  // Watkins hat-trick
       { min: 55, type: 'goal',    playerId: 21 },  // Salah
+      { min: 58, type: 'assist',  playerId: 11 },  // Watkins — McGinn
       { min: 58, type: 'goal',    playerId:  7 },  // McGinn
+      { min: 66, type: 'assist',  playerId:  9 },  // Trezeguet — Grealish
       { min: 66, type: 'goal',    playerId: 10 },  // Grealish
       { min: 75, type: 'goal',    playerId:  9 },  // Trezeguet
       { min: 76, type: 'yellow',  playerId: 17 },  // Fabinho
@@ -4403,7 +4479,7 @@ const ALL_MATCHES = [
     meta: {
       home: 'Chelsea', away: 'Man City', score: '4-4', homeColour: '#034694', awayColour: '#6CABDD',
       date: '12 Nov 2023', label: `Premier League · Sun 12 Nov 2023 · 2:00pm GMT`,
-      blurb: `Stamford Bridge. <strong>Chelsea led 4-0 at half time.</strong> The reigning treble winners were being demolished. Four City goals in the second half completed the most stunning comeback of the season.`,
+      blurb: `Stamford Bridge. <strong>Chelsea are flying under Pochettino</strong> — Cole Palmer electric in his debut season, Jackson sharp up front. <strong>Man City arrive as treble winners</strong> and league leaders. Haaland hasn't stopped scoring. Foden and Doku provide the width. A home side with something to prove against the best team in England.`,
       finalCommentary: `<strong>Full time.</strong> Chelsea 4–4 Manchester City. The most remarkable second half of the season.`,
       lateCommentary: `Equaliser! City complete an extraordinary comeback!`,
     },
@@ -4432,14 +4508,20 @@ const ALL_MATCHES = [
       { id: 22, name: `Doku`,        pos: 'RW', team: 'away', teamName: `Man City` },
     ],
     events: [
+      { min: 11, type: 'assist',  playerId:  6 },  // Caicedo — Palmer first goal
       { min: 11, type: 'goal',    playerId:  8 },  // Palmer
       { min: 24, type: 'goal',    playerId: 10 },  // Jackson
+      { min: 30, type: 'assist',  playerId: 11 },  // Gallagher — Sterling
       { min: 30, type: 'goal',    playerId:  9 },  // Sterling
+      { min: 40, type: 'assist',  playerId:  7 },  // Fernández — Palmer second
       { min: 40, type: 'goal',    playerId:  8 },  // Palmer
+      { min: 54, type: 'assist',  playerId: 20 },  // Foden — Haaland first
       { min: 54, type: 'goal',    playerId: 21 },  // Haaland
       { min: 60, type: 'goal',    playerId: 20 },  // Foden
       { min: 71, type: 'yellow',  playerId:  6 },  // Caicedo
+      { min: 75, type: 'assist',  playerId: 18 },  // De Bruyne — Haaland second
       { min: 75, type: 'goal',    playerId: 21 },  // Haaland
+      { min: 88, type: 'assist',  playerId: 21 },  // Haaland — Foden
       { min: 88, type: 'goal',    playerId: 20 },  // Foden
       { min: 90, type: 'full_90' },
     ],
@@ -4594,7 +4676,7 @@ const ALL_MATCHES = [
     meta: {
       home: 'Man City', away: 'Leeds United', score: '7-0', homeColour: '#6CABDD', awayColour: '#FFCD00',
       date: '14 Dec 2021', label: `Premier League · Tue 14 Dec 2021 · 7:30pm GMT`,
-      blurb: `The Etihad. <strong>Leeds were already struggling</strong> in their second season back in the top flight. City were the champions. Mahrez with two. City went seven without reply. A brutal Tuesday night in Manchester.`,
+      blurb: `The Etihad. <strong>Leeds were already struggling</strong> in their second season back in the top flight — Bielsa's system exposed by top sides. <strong>City were the champions</strong>, Guardiola's machine purring at home. Mahrez and De Bruyne in devastating form. A Tuesday night with very different expectations on either side.`,
       finalCommentary: `<strong>Full time.</strong> Manchester City 7–0 Leeds United. A complete and utter demolition.`,
       lateCommentary: `Seven! Leeds have run out of ideas entirely. City are ruthless.`,
     },
@@ -4915,7 +4997,7 @@ const ALL_MATCHES = [
     meta: {
       home: 'Chelsea', away: 'Arsenal', score: '6-0', homeColour: '#034694', awayColour: '#EF0107',
       date: '22 Mar 2014', label: `Premier League · Sat 22 Mar 2014 · 5:30pm GMT`,
-      blurb: `Stamford Bridge. <strong>Arsenal's heaviest defeat in 115 years.</strong> They arrived as title contenders. Mourinho's Chelsea were clinical, organised, merciless. Özil invisible. Fabianski at fault. A day Arsenal fans have spent a decade trying to forget.`,
+      blurb: `Stamford Bridge. <strong>Arsenal arrived as Premier League title contenders</strong> — Wenger's side sitting second, Özil pulling strings, Giroud up front. <strong>Mourinho's Chelsea were the benchmark</strong>, ruthlessly organised at home. Hazard and Matic controlled games with ease. A London derby with enormous title implications.`,
       finalCommentary: `<strong>Full time.</strong> Chelsea 6–0 Arsenal. Arsenal's worst defeat in over a century.`,
       lateCommentary: `Six! Mourinho punches the air. Arsenal are shellshocked.`,
     },
@@ -5332,21 +5414,22 @@ function posGroup(pos) {
 }
 
 const SCORE_TABLE = {
-  goal:       { fwd: -3,  mid: -4,  def: -6,  gk: -12 },
-  assist:     { fwd: -3,  mid: -4,  def: -6,  gk: -10 },
-  clean_sheet:{ fwd: -1,  mid: -2,  def: -2,  gk: -3  },
-  full_90:    { fwd: -3,  mid: -3,  def: -3,  gk:  0  },
-  yellow:     { fwd:  4,  mid:  4,  def:  4,  gk:  8  },
-  red:        { fwd: 10,  mid: 10,  def: 10,  gk: 20  },
+  // V1 scoring — "badness points" (positive = worse for Worst XI)
+  goal:       { fwd: -6,  mid: -6,  def: -6,  gk: -6  },
+  assist:     { fwd: -4,  mid: -4,  def: -4,  gk: -4  },
+  clean_sheet:{ fwd:  0,  mid:  0,  def: -4,  gk: -5  },
+  full_90:    { fwd:  0,  mid:  0,  def:  0,  gk:  0  }, // no longer used — V1 has no full_90 bonus
+  yellow:     { fwd:  2,  mid:  2,  def:  2,  gk:  2  },
+  red:        { fwd:  6,  mid:  6,  def:  6,  gk:  6  },
   own_goal:   10,
   missed_pen: 10,
-  pen_save:  -10,
-  concede_def: 1,   // per goal conceded (defender)
-  concede_gk:  2,   // per goal conceded (GK)
-  // subs — two tiers
-  sub_halftime: { fwd: 5, mid: 5, def: 5, gk: 10 }, // subbed at or before HT (min <= 45)
-  sub_before70: { fwd: 1, mid: 1, def: 2, gk:  5 }, // subbed 46–69
-  // subbed 70+ = no bonus (zero)
+  pen_save:   -5,
+  concede_def: 1,   // per goal conceded while on pitch (cap 4 = max +4)
+  concede_gk:  2,   // per goal conceded (cap 6 = max +12)
+  // subs — all positions, <60 min = bad (manager lost faith)
+  sub_halftime: { fwd: 3, mid: 3, def: 3, gk: 3 }, // HT or earlier (min <= 45)
+  sub_before60: { fwd: 3, mid: 3, def: 3, gk: 3 }, // 46–59 min
+  // subbed 60+ = no bonus
 };
 
 function getScoreForEvent(eventType, player, extraData = {}) {
@@ -5375,9 +5458,9 @@ function getScoreForEvent(eventType, player, extraData = {}) {
       return g === 'gk' ? SCORE_TABLE.concede_gk : (g === 'def' ? SCORE_TABLE.concede_def : 0);
     case 'sub': {
       const min = extraData.min || 90;
-      if (min <= 45) return SCORE_TABLE.sub_halftime[g];
-      if (min < 70)  return SCORE_TABLE.sub_before70[g];
-      return 0;
+      if (min <= 45) return SCORE_TABLE.sub_halftime[g];   // HT or earlier — all positions
+      if (min < 60)  return SCORE_TABLE.sub_before60[g];   // 46–59 min — all positions
+      return 0;  // 60+ = tactical, no penalty
     }
     default: return 0;
   }
@@ -5431,7 +5514,7 @@ function initPlayerData() {
 // ═══════════════════════════════════════════════════════════════
 
 const PROFILE_STORAGE_KEY = 'worst-eleven-profiles';
-const ARCHIVE_TOTAL = 7; // update as matches are added
+const ARCHIVE_TOTAL = 29; // total matches in ALL_MATCHES
 
 // ── Badge definitions ─────────────────────────────────────────
 const BADGE_DEFS = [
@@ -5729,10 +5812,15 @@ function renderPostMatchFormTile() {
   const title = document.getElementById('result-form-section-title');
   if (title) title.textContent = profile.emoji + ' ' + profile.name;
 
-  const wins = profile.matches.filter(m => m.result === 'W').length;
+  const wins   = profile.matches.filter(m => m.result === 'W').length;
   const played = profile.matches.length;
-  const form = profile.matches.slice(-5);
+  const unique = uniqueMatchesPlayed(profile);
+  const total  = ALL_MATCHES.length;
+  const archivePct = Math.round(unique / total * 100);
+  const remaining  = total - unique;
+  const form   = profile.matches.slice(-5);
 
+  // Form strip
   const stripEl = document.getElementById('result-form-strip');
   if (stripEl) {
     stripEl.innerHTML = Array.from({ length: 5 }, (_, i) => {
@@ -5742,8 +5830,33 @@ function renderPostMatchFormTile() {
     }).join('');
   }
 
+  // Stats row
   const statsEl = document.getElementById('result-form-stats');
   if (statsEl) statsEl.textContent = `${wins}W from ${played} played · ${played ? Math.round(wins/played*100) : 0}% win rate`;
+
+  // Archive progress bar
+  const arcBarEl  = document.getElementById('result-archive-fill');
+  const arcLblEl  = document.getElementById('result-archive-label');
+  const arcHookEl = document.getElementById('result-archive-hook');
+  if (arcBarEl) arcBarEl.style.width = archivePct + '%';
+  if (arcLblEl) arcLblEl.textContent = `${unique} of ${total} matches played`;
+  if (arcHookEl) {
+    if (remaining === 0) {
+      arcHookEl.textContent = `🏆 Complete! You've played every match in the archive.`;
+    } else if (remaining === 1) {
+      arcHookEl.textContent = `Just 1 match left in the archive — can you complete it?`;
+    } else {
+      // Personalised hook based on record
+      const winRate = played ? wins/played : 0;
+      if (winRate < 0.4 && played >= 3) {
+        arcHookEl.textContent = `${remaining} matches still to play — time to turn this record around 👀`;
+      } else if (winRate >= 0.7 && played >= 3) {
+        arcHookEl.textContent = `${remaining} matches left — keep the streak going 🔥`;
+      } else {
+        arcHookEl.textContent = `${remaining} matches still hiding in the archive.`;
+      }
+    }
+  }
 }
 
 // ── Init ──────────────────────────────────────────────────────
@@ -5853,12 +5966,41 @@ function revealMatch(m) {
   // Firebase coinFlipStart timestamp has been written/read.
 }
 
+// Globals for the escape-hatch "try a different match" button
+let _coinCountdownInterval = null;
+let _differentMatchTimeout = null;
+
+function tryDifferentMatch() {
+  // Cancel the running countdown
+  if (_coinCountdownInterval) { clearInterval(_coinCountdownInterval); _coinCountdownInterval = null; }
+  if (_differentMatchTimeout) { clearTimeout(_differentMatchTimeout); _differentMatchTimeout = null; }
+  // Hide escape button
+  const wrap = document.getElementById('different-match-wrap');
+  if (wrap) wrap.style.display = 'none';
+  // Show loading phase and pick a fresh match
+  showCoinPhase('loading');
+  startCoinFlow();
+}
+
 // Start the coin countdown bar synced to a wall-clock timestamp.
 // startAt = Date.now()-compatible ms timestamp when the 10s countdown began.
 function startCoinCountdown(startAt) {
   const fill  = document.getElementById('coin-countdown-fill');
   const label = document.getElementById('coin-countdown-label');
   const TOTAL = 10;
+
+  // Show the "try a different match" escape button for the first 5 seconds only
+  const wrap = document.getElementById('different-match-wrap');
+  if (wrap && !state.mp) {
+    wrap.style.display = 'block';
+    if (_differentMatchTimeout) clearTimeout(_differentMatchTimeout);
+    _differentMatchTimeout = setTimeout(() => {
+      wrap.style.opacity = '0';
+      wrap.style.transition = 'opacity 0.4s';
+      setTimeout(() => { wrap.style.display = 'none'; wrap.style.opacity = ''; wrap.style.transition = ''; }, 400);
+      _differentMatchTimeout = null;
+    }, 5000);
+  }
 
   // Calculate how much time has already elapsed (for late-joining guest)
   const elapsed = Math.min((Date.now() - startAt) / 1000, TOTAL);
@@ -5887,13 +6029,19 @@ function startCoinCountdown(startAt) {
   let secsLeft = Math.ceil(remaining);
   if (label) label.textContent = secsLeft > 0 ? `Coin flip in ${secsLeft}…` : 'Flipping…';
 
-  const tick = setInterval(() => {
+  if (_coinCountdownInterval) clearInterval(_coinCountdownInterval);
+  _coinCountdownInterval = setInterval(() => {
     secsLeft--;
     const nowElapsed = (Date.now() - startAt) / 1000;
     const nowRemaining = TOTAL - nowElapsed;
     if (nowRemaining <= 0) {
-      clearInterval(tick);
+      clearInterval(_coinCountdownInterval);
+      _coinCountdownInterval = null;
       if (label) label.textContent = 'Flipping…';
+      // Hide the escape button if still showing
+      const w = document.getElementById('different-match-wrap');
+      if (w) { w.style.display = 'none'; }
+      if (_differentMatchTimeout) { clearTimeout(_differentMatchTimeout); _differentMatchTimeout = null; }
       runCoinFlip();
     } else {
       if (label) label.textContent = `Coin flip in ${Math.ceil(nowRemaining)}…`;
@@ -6602,16 +6750,12 @@ function afterPick() {
         if (!state._tutShownYourPicks) {
           state._tutShownYourPicks = true;
           showTutorialCard('your_picks').then(() => {
-            const n = currentStep();
-            if (n && n.who === 'opp') {
-              setTimeout(() => autoPickOpponent(), 800);
-            }
+            // Resume normal draft flow — afterPick handles auto_gk assignment
+            // then will call autoPickOpponent for the first opp def pick
+            setTimeout(() => afterPick(), 400);
           });
         } else {
-          const n = currentStep();
-          if (n && n.who === 'opp') {
-            setTimeout(() => autoPickOpponent(), 800);
-          }
+          setTimeout(() => afterPick(), 400);
         }
       });
       return;
@@ -6649,18 +6793,22 @@ function afterPick() {
       const drafted2 = [...state.myTeam, ...state.oppTeam];
       const remainingGK = PLAYERS.find(p => p.pos === 'GK' && !drafted2.includes(p.id));
       if (remainingGK) {
-        if (next.who === 'me') {
-          state.myTeam.push(remainingGK.id);
-          if (!state.playerData[remainingGK.id]) state.playerData[remainingGK.id] = { pts: 0, events: [] };
-        } else {
-          state.oppTeam.push(remainingGK.id);
-          if (!state.playerData[remainingGK.id]) state.playerData[remainingGK.id] = { pts: 0, events: [] };
+        // Double-push guard: verify not already in either team
+        const alreadyDrafted = state.myTeam.includes(remainingGK.id) || state.oppTeam.includes(remainingGK.id);
+        if (!alreadyDrafted) {
+          if (next.who === 'me') {
+            state.myTeam.push(remainingGK.id);
+            if (!state.playerData[remainingGK.id]) state.playerData[remainingGK.id] = { pts: 0, events: [] };
+          } else {
+            state.oppTeam.push(remainingGK.id);
+            if (!state.playerData[remainingGK.id]) state.playerData[remainingGK.id] = { pts: 0, events: [] };
+          }
         }
       }
       state.autoPickLocked = false;
       state.currentPick++;
       renderDraftSlots();
-      renderDraftGrid(); // (was renderCarousel)
+      renderDraftGrid();
       updateTurnUI();
       afterPick();
     }, 600);
@@ -6671,17 +6819,18 @@ function afterPick() {
     state.autoPickLocked = true;
     const drafted = [...state.myTeam, ...state.oppTeam];
     const remaining = PLAYERS.filter(p => !drafted.includes(p.id));
-    if (remaining.length === 1) {
+    if (remaining.length >= 1) {
       const autoPick = remaining[0];
       clearInterval(state.timerInterval);
       setTimeout(() => {
         state.autoPickLocked = false;
         if (state.myTeam.includes(autoPick.id) || state.oppTeam.includes(autoPick.id)) return;
         if (next.who === 'me') {
-          showToast(`Last man standing — ${autoPick.name} joins your squad!`);
+          showToast(`Last man standing — ${getSurname(autoPick)} joins your squad!`);
           state.myTeam.push(autoPick.id);
+          if (!state.playerData[autoPick.id]) state.playerData[autoPick.id] = { pts: 0, events: [] };
         } else {
-          showToast(`Last man standing — ${autoPick.name} joins opponent's squad!`);
+          showToast(`Last man standing — ${getSurname(autoPick)} joins opponent's squad!`);
           state.oppTeam.push(autoPick.id);
         }
         state.selectedPlayer = null;
@@ -6714,6 +6863,224 @@ function autoPickGK() {
   setTimeout(() => afterPick(), 380); // afterPick sees auto_gk and assigns remaining GK to player
 }
 
+// ═══════════════════════════════════════════════════════════════
+// V1 PLAYER STATS — API-Football data keyed by match id + player name
+// Applied post-match via applyV1Stats() after applyFull90()
+// Stats drive both scoring deltas AND commentary hooks
+// ═══════════════════════════════════════════════════════════════
+
+const PLAYER_STATS = {
+
+  // ── Man City 8-0 Watford (21 Sep 2019) ─────────────────────────
+  'mci_8-0_wat_2019': {
+    'Ederson':      { dribbled_past:1, tackles:1, key_passes:0, pass_acc:95, passes:22, shots_total:0, shots_on:0, offsides:0, fouls_drawn:0, fouls_committed:0, saves:4 },
+    'Cancelo':      { dribbled_past:0, tackles:2, key_passes:1, pass_acc:88, passes:41, shots_total:1, shots_on:0, offsides:0, fouls_drawn:0, fouls_committed:1, saves:0 },
+    'Otamendi':     { dribbled_past:1, tackles:3, key_passes:0, pass_acc:95, passes:44, shots_total:2, shots_on:1, offsides:0, fouls_drawn:0, fouls_committed:0, saves:0 },
+    'Fernandinho':  { dribbled_past:0, tackles:2, key_passes:0, pass_acc:93, passes:77, shots_total:0, shots_on:0, offsides:0, fouls_drawn:0, fouls_committed:0, saves:0 },
+    'Mendy':        { dribbled_past:0, tackles:1, key_passes:1, pass_acc:87, passes:45, shots_total:0, shots_on:0, offsides:0, fouls_drawn:0, fouls_committed:0, saves:0 },
+    'Gündogan':     { dribbled_past:1, tackles:2, key_passes:2, pass_acc:89, passes:62, shots_total:1, shots_on:1, offsides:0, fouls_drawn:0, fouls_committed:0, saves:0 },
+    'Rodri':        { dribbled_past:0, tackles:1, key_passes:1, pass_acc:91, passes:74, shots_total:0, shots_on:0, offsides:0, fouls_drawn:0, fouls_committed:1, saves:0 },
+    'De Bruyne':    { dribbled_past:2, tackles:0, key_passes:8, pass_acc:86, passes:58, shots_total:4, shots_on:1, offsides:0, fouls_drawn:0, fouls_committed:0, saves:0 },
+    'Bernardo':     { dribbled_past:0, tackles:4, key_passes:2, pass_acc:96, passes:54, shots_total:5, shots_on:4, offsides:0, fouls_drawn:0, fouls_committed:2, saves:0 },
+    'Agüero':       { dribbled_past:0, tackles:1, key_passes:3, pass_acc:77, passes:31, shots_total:6, shots_on:1, offsides:0, fouls_drawn:0, fouls_committed:0, saves:0 },
+    'Mahrez':       { dribbled_past:1, tackles:2, key_passes:5, pass_acc:92, passes:49, shots_total:4, shots_on:2, offsides:1, fouls_drawn:0, fouls_committed:0, saves:0 },
+    'Foster':       { dribbled_past:0, tackles:0, key_passes:0, pass_acc:19, passes:6,  shots_total:0, shots_on:0, offsides:0, fouls_drawn:0, fouls_committed:1, saves:3 },
+    'Femenia':      { dribbled_past:3, tackles:1, key_passes:0, pass_acc:76, passes:21, shots_total:0, shots_on:0, offsides:0, fouls_drawn:0, fouls_committed:2, saves:0 },
+    'Kabasele':     { dribbled_past:2, tackles:0, key_passes:0, pass_acc:87, passes:28, shots_total:0, shots_on:0, offsides:0, fouls_drawn:0, fouls_committed:1, saves:0 },
+    'Cathcart':     { dribbled_past:1, tackles:1, key_passes:0, pass_acc:90, passes:30, shots_total:0, shots_on:0, offsides:0, fouls_drawn:0, fouls_committed:0, saves:0 },
+    'Masina':       { dribbled_past:2, tackles:0, key_passes:0, pass_acc:80, passes:25, shots_total:0, shots_on:0, offsides:0, fouls_drawn:0, fouls_committed:1, saves:0 },
+    'Doucoure':     { dribbled_past:3, tackles:2, key_passes:1, pass_acc:81, passes:39, shots_total:1, shots_on:0, offsides:0, fouls_drawn:0, fouls_committed:2, saves:0 },
+    'Capoue':       { dribbled_past:4, tackles:2, key_passes:1, pass_acc:92, passes:39, shots_total:0, shots_on:0, offsides:0, fouls_drawn:0, fouls_committed:0, saves:0 },
+    'Hughes':       { dribbled_past:2, tackles:1, key_passes:0, pass_acc:72, passes:18, shots_total:1, shots_on:0, offsides:0, fouls_drawn:0, fouls_committed:1, saves:0 },
+    'Pereyra':      { dribbled_past:1, tackles:0, key_passes:1, pass_acc:68, passes:12, shots_total:2, shots_on:1, offsides:1, fouls_drawn:0, fouls_committed:0, saves:0 },
+    'Deeney':       { dribbled_past:0, tackles:1, key_passes:0, pass_acc:55, passes:11, shots_total:2, shots_on:0, offsides:0, fouls_drawn:0, fouls_committed:2, saves:0 },
+    'Deulofeu':     { dribbled_past:1, tackles:0, key_passes:0, pass_acc:92, passes:13, shots_total:3, shots_on:3, offsides:0, fouls_drawn:0, fouls_committed:0, saves:0 },
+  },
+
+  // ── Leicester 9-0 Southampton (25 Oct 2019) ─────────────────────
+  'lei_9-0_sou_2019': {
+    'Schmeichel':   { dribbled_past:0, tackles:0, key_passes:0, pass_acc:87, passes:14, shots_total:0, shots_on:0, offsides:0, fouls_drawn:0, fouls_committed:0, saves:3 },
+    'Pereira':      { dribbled_past:2, tackles:7, key_passes:0, pass_acc:76, passes:56, shots_total:0, shots_on:0, offsides:0, fouls_drawn:0, fouls_committed:1, saves:0 },
+    'Evans':        { dribbled_past:1, tackles:0, key_passes:0, pass_acc:94, passes:82, shots_total:1, shots_on:0, offsides:0, fouls_drawn:0, fouls_committed:0, saves:0 },
+    'Söyüncü':      { dribbled_past:2, tackles:2, key_passes:0, pass_acc:87, passes:75, shots_total:0, shots_on:0, offsides:0, fouls_drawn:0, fouls_committed:1, saves:0 },
+    'Chilwell':     { dribbled_past:2, tackles:2, key_passes:6, pass_acc:84, passes:77, shots_total:3, shots_on:1, offsides:0, fouls_drawn:0, fouls_committed:1, saves:0 },
+    'Ndidi':        { dribbled_past:1, tackles:7, key_passes:1, pass_acc:89, passes:65, shots_total:1, shots_on:0, offsides:0, fouls_drawn:0, fouls_committed:3, saves:0 },
+    'Tielemans':    { dribbled_past:5, tackles:0, key_passes:3, pass_acc:82, passes:66, shots_total:2, shots_on:1, offsides:0, fouls_drawn:0, fouls_committed:2, saves:0 },
+    'Maddison':     { dribbled_past:1, tackles:3, key_passes:0, pass_acc:88, passes:88, shots_total:2, shots_on:1, offsides:0, fouls_drawn:0, fouls_committed:0, saves:0 },
+    'Barnes':       { dribbled_past:1, tackles:0, key_passes:4, pass_acc:87, passes:28, shots_total:3, shots_on:2, offsides:0, fouls_drawn:0, fouls_committed:1, saves:0 },
+    'Pérez':        { dribbled_past:3, tackles:3, key_passes:1, pass_acc:80, passes:32, shots_total:7, shots_on:5, offsides:0, fouls_drawn:0, fouls_committed:2, saves:0 },
+    'Vardy':        { dribbled_past:0, tackles:1, key_passes:0, pass_acc:83, passes:10, shots_total:5, shots_on:4, offsides:0, fouls_drawn:5, fouls_committed:1, saves:0 },
+    'Gunn':         { dribbled_past:0, tackles:1, key_passes:0, pass_acc:19, passes:4,  shots_total:0, shots_on:0, offsides:0, fouls_drawn:0, fouls_committed:0, saves:6 },
+    'Valery':       { dribbled_past:3, tackles:2, key_passes:0, pass_acc:38, passes:7,  shots_total:1, shots_on:1, offsides:0, fouls_drawn:0, fouls_committed:0, saves:0 },
+    'Bednarek':     { dribbled_past:1, tackles:4, key_passes:0, pass_acc:60, passes:14, shots_total:0, shots_on:0, offsides:0, fouls_drawn:0, fouls_committed:2, saves:0 },
+    'Yoshida':      { dribbled_past:2, tackles:1, key_passes:0, pass_acc:63, passes:17, shots_total:0, shots_on:0, offsides:0, fouls_drawn:0, fouls_committed:0, saves:0 },
+    'Vestergaard':  { dribbled_past:1, tackles:0, key_passes:0, pass_acc:53, passes:8,  shots_total:0, shots_on:0, offsides:0, fouls_drawn:0, fouls_committed:0, saves:0 },
+    'Bertrand':     { dribbled_past:1, tackles:1, key_passes:0, pass_acc:50, passes:1,  shots_total:0, shots_on:0, offsides:0, fouls_drawn:0, fouls_committed:0, saves:0 },
+    'Romeu':        { dribbled_past:7, tackles:2, key_passes:0, pass_acc:71, passes:23, shots_total:0, shots_on:0, offsides:0, fouls_drawn:0, fouls_committed:0, saves:0 },
+    'Højbjerg':     { dribbled_past:2, tackles:0, key_passes:3, pass_acc:80, passes:24, shots_total:0, shots_on:0, offsides:0, fouls_drawn:0, fouls_committed:0, saves:0 },
+    'Ings':         { dribbled_past:1, tackles:1, key_passes:0, pass_acc:60, passes:6,  shots_total:1, shots_on:0, offsides:0, fouls_drawn:2, fouls_committed:0, saves:0 },
+    'Redmond':      { dribbled_past:0, tackles:2, key_passes:0, pass_acc:77, passes:21, shots_total:2, shots_on:1, offsides:1, fouls_drawn:0, fouls_committed:1, saves:0 },
+  },
+
+  // ── West Ham 2-3 Tottenham (23 Nov 2019) ────────────────────────
+  'whu_2-3_tot_2019': {
+    'Jimenez':      { dribbled_past:0, tackles:0, key_passes:0, pass_acc:47, passes:10, shots_total:0, shots_on:0, offsides:0, fouls_drawn:0, fouls_committed:0, saves:3 },
+    'Cresswell':    { dribbled_past:2, tackles:6, key_passes:1, pass_acc:81, passes:45, shots_total:1, shots_on:0, offsides:0, fouls_drawn:0, fouls_committed:1, saves:0 },
+    'Ogbonna':      { dribbled_past:0, tackles:0, key_passes:0, pass_acc:81, passes:36, shots_total:1, shots_on:1, offsides:0, fouls_drawn:0, fouls_committed:1, saves:0 },
+    'Noble':        { dribbled_past:0, tackles:3, key_passes:2, pass_acc:84, passes:44, shots_total:0, shots_on:0, offsides:0, fouls_drawn:0, fouls_committed:1, saves:0 },
+    'Rice':         { dribbled_past:0, tackles:2, key_passes:0, pass_acc:91, passes:43, shots_total:0, shots_on:0, offsides:1, fouls_drawn:0, fouls_committed:0, saves:0 },
+    'Antonio':      { dribbled_past:0, tackles:0, key_passes:1, pass_acc:62, passes:10, shots_total:3, shots_on:2, offsides:1, fouls_drawn:0, fouls_committed:0, saves:0 },
+    'Snodgrass':    { dribbled_past:2, tackles:1, key_passes:5, pass_acc:83, passes:20, shots_total:1, shots_on:0, offsides:1, fouls_drawn:0, fouls_committed:2, saves:0 },
+    'Haller':       { dribbled_past:2, tackles:0, key_passes:0, pass_acc:56, passes:18, shots_total:5, shots_on:1, offsides:1, fouls_drawn:0, fouls_committed:3, saves:0 },
+    'Gazzaniga':    { dribbled_past:0, tackles:0, key_passes:0, pass_acc:44, passes:12, shots_total:0, shots_on:0, offsides:0, fouls_drawn:0, fouls_committed:0, saves:3 },
+    'Aurier':       { dribbled_past:1, tackles:2, key_passes:2, pass_acc:83, passes:41, shots_total:0, shots_on:0, offsides:0, fouls_drawn:0, fouls_committed:1, saves:0 },
+    'Alderweireld': { dribbled_past:0, tackles:0, key_passes:0, pass_acc:85, passes:42, shots_total:2, shots_on:0, offsides:0, fouls_drawn:0, fouls_committed:1, saves:0 },
+    'Sanchez':      { dribbled_past:0, tackles:1, key_passes:0, pass_acc:93, passes:56, shots_total:1, shots_on:1, offsides:1, fouls_drawn:0, fouls_committed:2, saves:0 },
+    'Dier':         { dribbled_past:1, tackles:1, key_passes:1, pass_acc:77, passes:48, shots_total:2, shots_on:0, offsides:0, fouls_drawn:0, fouls_committed:2, saves:0 },
+    'Winks':        { dribbled_past:1, tackles:1, key_passes:1, pass_acc:89, passes:49, shots_total:0, shots_on:0, offsides:0, fouls_drawn:0, fouls_committed:0, saves:0 },
+    'Alli':         { dribbled_past:2, tackles:4, key_passes:2, pass_acc:76, passes:26, shots_total:2, shots_on:0, offsides:0, fouls_drawn:0, fouls_committed:1, saves:0 },
+    'Son':          { dribbled_past:1, tackles:2, key_passes:3, pass_acc:88, passes:22, shots_total:3, shots_on:2, offsides:1, fouls_drawn:0, fouls_committed:0, saves:0 },
+    'Moura':        { dribbled_past:2, tackles:3, key_passes:1, pass_acc:79, passes:27, shots_total:3, shots_on:1, offsides:1, fouls_drawn:0, fouls_committed:1, saves:0 },
+    'Kane':         { dribbled_past:1, tackles:2, key_passes:1, pass_acc:60, passes:17, shots_total:2, shots_on:2, offsides:3, fouls_drawn:0, fouls_committed:4, saves:0 },
+  },
+
+  // ── Aston Villa 7-2 Liverpool (4 Oct 2020) ──────────────────────
+  'avl_7-2_liv_2020': {
+    'Martínez':         { dribbled_past:0, tackles:0, key_passes:0, pass_acc:10, passes:30, shots_total:0, shots_on:0, offsides:0, fouls_drawn:0, fouls_committed:0, saves:6 },
+    'Cash':             { dribbled_past:1, tackles:1, key_passes:1, pass_acc:11, passes:21, shots_total:0, shots_on:0, offsides:0, fouls_drawn:1, fouls_committed:0, saves:0 },
+    'Konsa':            { dribbled_past:0, tackles:1, key_passes:0, pass_acc:8,  passes:13, shots_total:0, shots_on:0, offsides:0, fouls_drawn:1, fouls_committed:0, saves:0 },
+    'Mings':            { dribbled_past:1, tackles:1, key_passes:0, pass_acc:18, passes:24, shots_total:0, shots_on:0, offsides:0, fouls_drawn:1, fouls_committed:0, saves:0 },
+    'Targett':          { dribbled_past:2, tackles:0, key_passes:0, pass_acc:12, passes:14, shots_total:0, shots_on:0, offsides:0, fouls_drawn:0, fouls_committed:1, saves:0 },
+    'McGinn':           { dribbled_past:1, tackles:3, key_passes:1, pass_acc:18, passes:31, shots_total:1, shots_on:1, offsides:0, fouls_drawn:2, fouls_committed:0, saves:0 },
+    'Barkley':          { dribbled_past:1, tackles:0, key_passes:1, pass_acc:26, passes:32, shots_total:5, shots_on:2, offsides:0, fouls_drawn:3, fouls_committed:0, saves:0 },
+    'Trezeguet':        { dribbled_past:4, tackles:3, key_passes:3, pass_acc:20, passes:25, shots_total:1, shots_on:1, offsides:0, fouls_drawn:0, fouls_committed:2, saves:0 },
+    'Grealish':         { dribbled_past:0, tackles:3, key_passes:5, pass_acc:28, passes:36, shots_total:2, shots_on:2, offsides:0, fouls_drawn:1, fouls_committed:0, saves:0 },
+    'Douglas Luiz':     { dribbled_past:2, tackles:1, key_passes:0, pass_acc:13, passes:19, shots_total:0, shots_on:0, offsides:0, fouls_drawn:0, fouls_committed:2, saves:0 },
+    'Watkins':          { dribbled_past:0, tackles:2, key_passes:2, pass_acc:15, passes:24, shots_total:5, shots_on:4, offsides:0, fouls_drawn:1, fouls_committed:1, saves:0 },
+    'Adrián':           { dribbled_past:0, tackles:0, key_passes:0, pass_acc:20, passes:26, shots_total:0, shots_on:0, offsides:0, fouls_drawn:0, fouls_committed:0, saves:4 },
+    'Alexander-Arnold': { dribbled_past:0, tackles:2, key_passes:1, pass_acc:50, passes:61, shots_total:0, shots_on:0, offsides:0, fouls_drawn:0, fouls_committed:0, saves:0 },
+    'Gomez':            { dribbled_past:1, tackles:0, key_passes:0, pass_acc:56, passes:63, shots_total:0, shots_on:0, offsides:0, fouls_drawn:0, fouls_committed:1, saves:0 },
+    'Van Dijk':         { dribbled_past:0, tackles:2, key_passes:0, pass_acc:82, passes:91, shots_total:0, shots_on:0, offsides:0, fouls_drawn:0, fouls_committed:1, saves:0 },
+    'Robertson':        { dribbled_past:0, tackles:1, key_passes:2, pass_acc:71, passes:82, shots_total:1, shots_on:1, offsides:0, fouls_drawn:0, fouls_committed:0, saves:0 },
+    'Keita':            { dribbled_past:1, tackles:0, key_passes:0, pass_acc:28, passes:31, shots_total:0, shots_on:0, offsides:0, fouls_drawn:0, fouls_committed:1, saves:0 },
+    'Fabinho':          { dribbled_past:3, tackles:2, key_passes:1, pass_acc:65, passes:73, shots_total:0, shots_on:0, offsides:0, fouls_drawn:1, fouls_committed:0, saves:0 },
+    'Wijnaldum':        { dribbled_past:0, tackles:2, key_passes:0, pass_acc:48, passes:57, shots_total:0, shots_on:0, offsides:0, fouls_drawn:1, fouls_committed:0, saves:0 },
+    'Milner':           { dribbled_past:3, tackles:1, key_passes:1, pass_acc:14, passes:17, shots_total:0, shots_on:0, offsides:0, fouls_drawn:0, fouls_committed:2, saves:0 },
+    'Salah':            { dribbled_past:0, tackles:1, key_passes:3, pass_acc:36, passes:40, shots_total:2, shots_on:2, offsides:0, fouls_drawn:2, fouls_committed:0, saves:0 },
+    'Firmino':          { dribbled_past:0, tackles:0, key_passes:2, pass_acc:19, passes:28, shots_total:2, shots_on:2, offsides:0, fouls_drawn:0, fouls_committed:2, saves:0 },
+    'Jota':             { dribbled_past:2, tackles:1, key_passes:1, pass_acc:34, passes:41, shots_total:4, shots_on:3, offsides:0, fouls_drawn:1, fouls_committed:3, saves:0 },
+  },
+
+  // ── Chelsea 4-4 Man City (12 Nov 2023) ──────────────────────────
+  'che_4-4_mci_2023': {
+    'R. Sanchez':   { dribbled_past:0, tackles:0, key_passes:0, pass_acc:25, passes:35, shots_total:0, shots_on:0, offsides:0, fouls_drawn:0, fouls_committed:0, saves:6 },
+    'Disasi':       { dribbled_past:0, tackles:1, key_passes:0, pass_acc:66, passes:70, shots_total:0, shots_on:0, offsides:0, fouls_drawn:0, fouls_committed:0, saves:0 },
+    'T. Silva':     { dribbled_past:1, tackles:0, key_passes:0, pass_acc:51, passes:55, shots_total:1, shots_on:1, offsides:0, fouls_drawn:1, fouls_committed:0, saves:0 },
+    'Cucurella':    { dribbled_past:2, tackles:4, key_passes:1, pass_acc:32, passes:38, shots_total:0, shots_on:0, offsides:0, fouls_drawn:2, fouls_committed:2, saves:0 },
+    'R. James':     { dribbled_past:2, tackles:5, key_passes:2, pass_acc:27, passes:33, shots_total:1, shots_on:1, offsides:0, fouls_drawn:1, fouls_committed:0, saves:0 },
+    'Caicedo':      { dribbled_past:1, tackles:1, key_passes:2, pass_acc:30, passes:34, shots_total:0, shots_on:0, offsides:0, fouls_drawn:0, fouls_committed:3, saves:0 },
+    'Fernández':    { dribbled_past:2, tackles:1, key_passes:0, pass_acc:35, passes:41, shots_total:0, shots_on:0, offsides:0, fouls_drawn:2, fouls_committed:0, saves:0 },
+    'Palmer':       { dribbled_past:1, tackles:1, key_passes:1, pass_acc:26, passes:33, shots_total:2, shots_on:2, offsides:0, fouls_drawn:1, fouls_committed:0, saves:0 },
+    'Gallagher':    { dribbled_past:1, tackles:3, key_passes:2, pass_acc:38, passes:40, shots_total:3, shots_on:2, offsides:0, fouls_drawn:2, fouls_committed:5, saves:0 },
+    'Sterling':     { dribbled_past:2, tackles:3, key_passes:1, pass_acc:15, passes:25, shots_total:2, shots_on:1, offsides:1, fouls_drawn:3, fouls_committed:3, saves:0 },
+    'Jackson':      { dribbled_past:0, tackles:0, key_passes:0, pass_acc:6,  passes:12, shots_total:2, shots_on:2, offsides:0, fouls_drawn:0, fouls_committed:0, saves:0 },
+    'Ederson':      { dribbled_past:0, tackles:0, key_passes:0, pass_acc:34, passes:37, shots_total:0, shots_on:0, offsides:0, fouls_drawn:0, fouls_committed:0, saves:5 },
+    'Walker':       { dribbled_past:1, tackles:3, key_passes:1, pass_acc:38, passes:46, shots_total:1, shots_on:0, offsides:0, fouls_drawn:1, fouls_committed:3, saves:0 },
+    'Dias':         { dribbled_past:2, tackles:1, key_passes:0, pass_acc:75, passes:83, shots_total:0, shots_on:0, offsides:0, fouls_drawn:1, fouls_committed:2, saves:0 },
+    'Gvardiol':     { dribbled_past:0, tackles:3, key_passes:0, pass_acc:51, passes:54, shots_total:1, shots_on:1, offsides:0, fouls_drawn:1, fouls_committed:1, saves:0 },
+    'Rodri':        { dribbled_past:3, tackles:1, key_passes:3, pass_acc:66, passes:75, shots_total:1, shots_on:1, offsides:0, fouls_drawn:2, fouls_committed:3, saves:0 },
+    'Akanji':       { dribbled_past:0, tackles:2, key_passes:0, pass_acc:57, passes:61, shots_total:1, shots_on:1, offsides:0, fouls_drawn:1, fouls_committed:0, saves:0 },
+    'B. Silva':     { dribbled_past:1, tackles:2, key_passes:2, pass_acc:47, passes:51, shots_total:0, shots_on:0, offsides:0, fouls_drawn:0, fouls_committed:1, saves:0 },
+    'Álvarez':      { dribbled_past:0, tackles:0, key_passes:1, pass_acc:31, passes:35, shots_total:1, shots_on:1, offsides:0, fouls_drawn:0, fouls_committed:1, saves:0 },
+    'Foden':        { dribbled_past:1, tackles:1, key_passes:1, pass_acc:32, passes:35, shots_total:3, shots_on:2, offsides:0, fouls_drawn:2, fouls_committed:0, saves:0 },
+    'Doku':         { dribbled_past:1, tackles:2, key_passes:0, pass_acc:10, passes:14, shots_total:1, shots_on:1, offsides:0, fouls_drawn:0, fouls_committed:1, saves:0 },
+    'Haaland':      { dribbled_past:0, tackles:0, key_passes:3, pass_acc:10, passes:11, shots_total:4, shots_on:3, offsides:0, fouls_drawn:2, fouls_committed:2, saves:0 },
+  },
+
+  // ── Arsenal 4-3 Liverpool (14 Aug 2016) ─────────────────────────
+  'ars_4-3_liv_2016': {
+    'Čech':         { dribbled_past:0, tackles:0, key_passes:0, pass_acc:61, passes:19, shots_total:0, shots_on:0, offsides:0, fouls_drawn:0, fouls_committed:0, saves:3 },
+    'Bellerín':     { dribbled_past:0, tackles:1, key_passes:0, pass_acc:78, passes:25, shots_total:0, shots_on:0, offsides:0, fouls_drawn:0, fouls_committed:1, saves:0 },
+    'Holding':      { dribbled_past:0, tackles:2, key_passes:0, pass_acc:74, passes:43, shots_total:0, shots_on:0, offsides:0, fouls_drawn:0, fouls_committed:1, saves:0 },
+    'Chambers':     { dribbled_past:1, tackles:2, key_passes:0, pass_acc:82, passes:70, shots_total:2, shots_on:1, offsides:0, fouls_drawn:2, fouls_committed:0, saves:0 },
+    'Monreal':      { dribbled_past:1, tackles:3, key_passes:0, pass_acc:84, passes:56, shots_total:0, shots_on:0, offsides:0, fouls_drawn:0, fouls_committed:0, saves:0 },
+    'Coquelin':     { dribbled_past:4, tackles:3, key_passes:1, pass_acc:75, passes:28, shots_total:0, shots_on:0, offsides:0, fouls_drawn:3, fouls_committed:4, saves:0 },
+    'Walcott':      { dribbled_past:2, tackles:4, key_passes:1, pass_acc:76, passes:13, shots_total:2, shots_on:2, offsides:0, fouls_drawn:3, fouls_committed:2, saves:0 },
+    'Iwobi':        { dribbled_past:1, tackles:1, key_passes:1, pass_acc:71, passes:20, shots_total:0, shots_on:0, offsides:0, fouls_drawn:1, fouls_committed:1, saves:0 },
+    'Cazorla':      { dribbled_past:0, tackles:4, key_passes:2, pass_acc:94, passes:16, shots_total:1, shots_on:0, offsides:0, fouls_drawn:0, fouls_committed:0, saves:0 },
+    'Oxlade-Chamberlain': { dribbled_past:0, tackles:0, key_passes:0, pass_acc:63, passes:7, shots_total:1, shots_on:1, offsides:0, fouls_drawn:1, fouls_committed:0, saves:0 },
+    'Sánchez':      { dribbled_past:0, tackles:1, key_passes:1, pass_acc:75, passes:12, shots_total:1, shots_on:0, offsides:4, fouls_drawn:1, fouls_committed:0, saves:0 },
+    'Mignolet':     { dribbled_past:0, tackles:0, key_passes:0, pass_acc:60, passes:18, shots_total:0, shots_on:0, offsides:0, fouls_drawn:0, fouls_committed:0, saves:2, pen_saved:1 },
+    'Clyne':        { dribbled_past:2, tackles:3, key_passes:1, pass_acc:75, passes:34, shots_total:1, shots_on:1, offsides:0, fouls_drawn:1, fouls_committed:2, saves:0 },
+    'Lovren':       { dribbled_past:1, tackles:1, key_passes:0, pass_acc:75, passes:39, shots_total:0, shots_on:0, offsides:0, fouls_drawn:0, fouls_committed:2, saves:0 },
+    'Klavan':       { dribbled_past:0, tackles:2, key_passes:0, pass_acc:85, passes:53, shots_total:1, shots_on:0, offsides:0, fouls_drawn:0, fouls_committed:1, saves:0 },
+    'Moreno':       { dribbled_past:0, tackles:1, key_passes:1, pass_acc:76, passes:29, shots_total:0, shots_on:0, offsides:0, fouls_drawn:3, fouls_committed:2, saves:0 },
+    'Lallana':      { dribbled_past:3, tackles:0, key_passes:3, pass_acc:87, passes:27, shots_total:2, shots_on:1, offsides:0, fouls_drawn:0, fouls_committed:2, saves:0 },
+    'Henderson':    { dribbled_past:1, tackles:5, key_passes:2, pass_acc:87, passes:62, shots_total:1, shots_on:0, offsides:0, fouls_drawn:1, fouls_committed:2, saves:0 },
+    'Wijnaldum':    { dribbled_past:1, tackles:2, key_passes:2, pass_acc:84, passes:32, shots_total:1, shots_on:1, offsides:0, fouls_drawn:1, fouls_committed:0, saves:0 },
+    'Mané':         { dribbled_past:1, tackles:6, key_passes:0, pass_acc:89, passes:26, shots_total:3, shots_on:1, offsides:1, fouls_drawn:6, fouls_committed:3, saves:0 },
+    'Firmino':      { dribbled_past:0, tackles:1, key_passes:1, pass_acc:67, passes:25, shots_total:4, shots_on:0, offsides:1, fouls_drawn:0, fouls_committed:2, saves:0 },
+    'Coutinho':     { dribbled_past:1, tackles:0, key_passes:2, pass_acc:78, passes:18, shots_total:3, shots_on:3, offsides:1, fouls_drawn:1, fouls_committed:0, saves:0 },
+  },
+};
+
+// ── V1 stat scoring — applied once after full time ──────────────────
+// Uses PLAYER_STATS keyed by match id + player name.
+// Handles all stat-based points: dribbled past, shots off, pass acc,
+// key passes, fouls, chaos bonuses, -25 floor cap.
+// applyV1Stats: only fires end-of-match-ONLY bonuses that require the full 90 mins to be known.
+// Per-unit stats (dribbled_past, tackles, key_passes, shots_off, fouls, saves) are dripped
+// across the match as silent beats in buildBeats — scores move smoothly, not in a cliff at 90.
+function applyV1Stats() {
+  const match = ALL_MATCHES[state.matchIdx];
+  if (!match) return;
+  const statsMap = PLAYER_STATS[match.id];
+  if (!statsMap) return;
+
+  const inMpMode = !!state.mp;
+  const allDrafted = [...new Set([...state.myTeam, ...state.oppTeam])];
+
+  for (const id of allDrafted) {
+    const player = getPlayer(id);
+    if (!player) continue;
+    const st = statsMap[player.name] || statsMap[player.name.split(' ')[0]];
+    if (!st) continue;
+
+    const g   = posGroup(player.pos);
+    const cap = captainMultiplier(id);
+    const pd  = state.playerData[id];
+    if (!pd) continue;
+
+    let delta = 0;
+
+    // MID: pass accuracy bonus — needs full match to know final figure
+    if (g === 'mid') {
+      if ((st.passes || 0) >= 20 && (st.pass_acc || 0) >= 90) delta += -2;
+    }
+
+    // FWD: chaos bonus — needs final goal count for the match
+    if (g === 'fwd') {
+      const playerGoals = EVENTS.filter(e => e.type === 'goal' && e.playerId === id).length;
+      if ((st.shots_total || 0) >= 5 && playerGoals === 0) delta += 5;
+    }
+
+    if (delta === 0) continue;
+
+    const rawDelta    = delta * cap;
+    const currentPts  = pd.pts;
+    const floored     = Math.max(currentPts + rawDelta, -25);
+    const cappedDelta = floored - currentPts;
+    if (cappedDelta === 0) continue;
+
+    if (state.myTeam.includes(id))               state.myScore  += cappedDelta;
+    if (state.oppTeam.includes(id) && !inMpMode) state.oppScore += cappedDelta;
+    pd.pts += cappedDelta;
+  }
+
+  updateScoreDisplay();
+  renderSimPlayers();
+}
+
 // Chaos values computed dynamically from EVENTS for the loaded match.
 // Higher = more chaos potential (cards, own goals, concedes, early subs)
 // Lower = too good (goals, assists = bad for opponent to have)
@@ -6732,45 +7099,50 @@ function computeChaosValues() {
   const goalsAgainst = { home: awayGoals, away: homeGoals };
 
   // Position-based chaos priors — what a knowledgeable fan would expect
-  // before knowing exactly what happened
-  // Higher = more likely to generate chaos points (cards, subs, own goals)
-  // Lower  = more likely to be a "good" contributor (goals, assists)
   const POSITION_PRIOR = {
-    GK:  5,   // moderate — could be busy if team conceded, but quiet if clean sheet
-    CB:  8,   // defenders often get subbed, carded; rarely score
+    GK:  5,
+    CB:  8,
     RB:  6,
     LB:  6,
-    DM:  7,   // holding midfielders: bookings, early subs
-    CM:  5,   // could go either way
-    AM:  3,   // attacking mid — more likely to contribute positively (bad for us)
-    RW:  2,   // wingers and forwards — goal threat, avoid
+    DM:  7,
+    CM:  5,
+    AM:  3,
+    RW:  2,
     LW:  2,
-    ST:  1,   // strikers most likely to score — lowest chaos prior
+    ST:  1,
   };
+
+  // Check if V1 API stats are available for this match
+  const match = ALL_MATCHES[state.matchIdx];
+  const statsMap = match ? (PLAYER_STATS[match.id] || null) : null;
 
   for (const p of PLAYERS) {
     const prior = POSITION_PRIOR[p.pos] || 5;
-
-    // Contextual adjustment: defenders on the leaky side are more valuable
-    // (they'll have conceded goals = chaos points for us)
-    // A fan would reason: "that team got battered, their defenders must have had a mare"
     const isBackline = ['GK','CB','RB','LB'].includes(p.pos);
     const concededByTeam = goalsAgainst[p.team] || 0;
     const leakyBonus = isBackline ? concededByTeam * 2.5 : 0;
-
-    // Forwards on the high-scoring side are dangerous to pick (they probably scored)
-    // A fan would reason: "their attack was on fire — don't pick them"
     const isAttacker = ['ST','RW','LW','AM'].includes(p.pos);
     const goalsScoredByTeam = p.team === 'home' ? homeGoals : awayGoals;
     const attackerPenalty = isAttacker ? goalsScoredByTeam * 1.5 : 0;
 
-    // Base estimate before noise
-    const baseEstimate = prior + leakyBonus - attackerPenalty;
+    let baseEstimate = prior + leakyBonus - attackerPenalty;
 
-    // Add ±35% noise — the AI is going on gut feel and reputation,
-    // not a spreadsheet. Sometimes it'll get it badly wrong.
+    // If V1 stats available, refine estimate with actual stat signals
+    // (simulates a fan who has seen some pre-match stats coverage)
+    if (statsMap) {
+      const st = statsMap[p.name] || statsMap[p.name.split(' ')[0]];
+      if (st) {
+        // Bad signs — dribbled past, shots off target, fouls committed
+        baseEstimate += (st.dribbled_past || 0) * 0.8;
+        baseEstimate += Math.max(0, (st.shots_total || 0) - (st.shots_on || 0)) * 0.5;
+        baseEstimate += (st.fouls_committed || 0) * 0.4;
+        // Good signs — goals/assists handled by events; key passes hint at creativity
+        baseEstimate -= (st.key_passes || 0) * 0.6;
+        baseEstimate -= (st.saves || 0) * 0.5;
+      }
+    }
+
     const noise = baseEstimate * (Math.random() * 0.7 - 0.35);
-
     CHAOS_VALUES[p.id] = baseEstimate + noise;
   }
 }
@@ -6778,6 +7150,8 @@ function computeChaosValues() {
 function autoPickOpponent() {
   const step = currentStep();
   if (!step || step.who !== 'opp') return;
+  // auto_gk is handled exclusively by the afterPick auto_gk block — never here
+  if (step.type === 'auto_gk') return;
 
   const drafted = [...state.myTeam, ...state.oppTeam];
   const DEF_POS_AI = ['CB','RB','LB','RWB','LWB','SW'];
@@ -6906,129 +7280,115 @@ const COMMENTARY = {
   // ── GOALS ──
   goal: [
     // Tier 1 — flat/dry
-    (name) => `<strong>${name}</strong>. Goal. It's in. Ball's in the net.`,
-    (name) => `<strong>${name}</strong> finds the back of the net. Nothing the keeper could do, apparently.`,
-    (name) => `And it's <strong>${name}</strong>. Clinical. Or something like it.`,
-    (name) => `<strong>${name}</strong> scores. As forwards occasionally do.`,
-    (name) => `<strong>${name}</strong>. In off the post. It's in.`,
-    (name) => `Goal. <strong>${name}</strong>. Simple as that.`,
-    (name) => `<strong>${name}</strong>. One touch. Top corner. In.`,
-    (name) => `Net. <strong>${name}</strong>. That's a goal.`,
-    // Tier 2 — warm
-    (name) => `Oh that's a goal. <strong>${name}</strong>. Clean finish, no complaints, plenty of chaos implications.`,
-    (name) => `<strong>${name}</strong> pulls the trigger and it's in. The keeper had a look at it and decided against intervening.`,
-    (name) => `<strong>${name}</strong> — well, he's supposed to score, isn't he. And yet somehow here we are, surprised.`,
-    (name) => `Lovely finish from <strong>${name}</strong>. Textbook. Aesthetically pleasing. Whether it helps you is another matter.`,
-    (name) => `There it is. <strong>${name}</strong>. The net ripples. The crowd reacts. The chaos points shift accordingly.`,
-    (name) => `<strong>${name}</strong> with the finish. He'll be pleased with that. Whether you are depends entirely on his shirt colour.`,
-    (name) => `<strong>${name}</strong> makes it look easy. Sweeps it home. Absolutely no drama. Which is either great or terrible.`,
-    (name) => `Low drive from <strong>${name}</strong> — keeper guessed wrong, ball went the other way. Goal. Simple, effective, conclusive.`,
-    (name) => `<strong>${name}</strong> arrives late into the box and tucks it away. Where was the marking. Doesn't matter. It's in.`,
-    (name) => `Header from <strong>${name}</strong>. Planted. Keeper had no chance. The physics of it were very clear.`,
-    (name) => `<strong>${name}</strong> cuts inside, shapes for the shot, and finds the bottom corner. The crowd didn't see it coming. The keeper didn't either.`,
-    (name) => `It bobbles, it squirms, it crosses the line. <strong>${name}</strong> claims it. Ugly. Effective. On the board.`,
-    (name) => `<strong>${name}</strong> from close range — it was always going in. No credit to the finish. Full credit for being there.`,
-    (name) => `Free kick. <strong>${name}</strong> over the ball. Up. Over the wall. In. That's what free kicks are supposed to do.`,
-    // Tier 2 — knowing/Worst Eleven aware
-    (name) => `<strong>${name}</strong> with the goal. Whether that's good or bad for your score depends entirely on whose team he's in. You know what you did.`,
-    (name) => `<strong>${name}</strong> scores and somewhere out there a Worst Eleven player is either celebrating or staring at the ceiling.`,
-    (name) => `<strong>${name}</strong> on the scoresheet. This is either exactly what you wanted or the opposite. No middle ground in this game.`,
-    (name) => `Goal for <strong>${name}</strong>. The chaos ledger updates itself. You'll see the number change. Make of it what you will.`,
+    (name) => `<strong>${name}</strong>. Goal.`,
+    (name) => `<strong>${name}</strong> finds the net.`,
+    (name) => `<strong>${name}</strong>. It's in.`,
+    (name) => `Goal. <strong>${name}</strong>.`,
+    (name) => `<strong>${name}</strong>. One touch. In.`,
+    // Tier 2 — dry warmth
+    (name) => `Low drive from <strong>${name}</strong> — keeper went the wrong way.`,
+    (name) => `<strong>${name}</strong> arrives late and tucks it in. Good run, clean finish.`,
+    (name) => `Header from <strong>${name}</strong>. Planted. Keeper had no chance.`,
+    (name) => `<strong>${name}</strong> cuts inside and finds the bottom corner.`,
+    (name) => `<strong>${name}</strong> from close range. It was always going in.`,
+    (name) => `It bobbles, squirms, crosses the line. <strong>${name}</strong> claims it.`,
+    (name) => `Free kick. <strong>${name}</strong> over the ball. Up. Over the wall. In.`,
+    (name) => `<strong>${name}</strong> pulls the trigger. Keeper got a hand to it. Didn't matter.`,
+    (name) => `<strong>${name}</strong> sweeps it home. No fuss.`,
   ],
 
   // ── OWN GOALS ──
   own_goal: [
-    // Tier 1 — deadpan
-    (name) => `<strong>${name}</strong> — own goal. Ball in his own net. These things happen.`,
-    (name) => `Oh. <strong>${name}</strong> has turned that one in. Unfortunate.`,
-    // Tier 2 — warm
-    (name) => `<strong>${name}</strong> with the own goal. He assessed the options and selected the worst one with some conviction.`,
-    (name) => `That is going in off <strong>${name}</strong>. He came for it, he didn't get it, and now we all have to think about what just happened.`,
-    (name) => `<strong>${name}</strong> — own goal. A flap, a fumble, a moment of chaos for the ages. The keeper won't be mentioning this one.`,
-    (name) => `Oh no. <strong>${name}</strong> has redirected that perfectly into his own net. Technically quite impressive. Entirely the wrong goal.`,
-    // Tier 3 — losing it briefly
-    (name) => `That is an own goal. That is absolutely an own goal. <strong>${name}</strong> has scored for the other team. In his own net. With his knee. At a corner. I have questions.`,
-    (name) => `<strong>${name}</strong> — own goal. The keeper came for a cross he had absolutely no business attempting, missed it by a yard, and the ball rolled in apologetically. I need a moment.`,
+    // Tier 1
+    (name) => `<strong>${name}</strong> — own goal.`,
+    (name) => `Oh. <strong>${name}</strong> has turned that one in.`,
+    // Tier 2
+    (name) => `<strong>${name}</strong> with the own goal. The worst option, taken decisively.`,
+    (name) => `In off <strong>${name}</strong>. He went for it. He shouldn't have gone for it.`,
+    (name) => `<strong>${name}</strong> — own goal. A deflection, a horrible bounce, a moment he'll want back.`,
+    (name) => `<strong>${name}</strong> redirects it perfectly into his own net.`,
+    // Tier 3 — controlled disbelief, used sparingly
+    (name) => `That is an own goal from <strong>${name}</strong>. His own net, his own knee, his own afternoon unravelling in real time.`,
+    (name) => `<strong>${name}</strong> — own goal. The keeper committed. <strong>${name}</strong> committed. Neither stopped it. These things happen, apparently.`,
   ],
 
   // ── RED CARDS ──
   red: [
     // Tier 1
-    (name) => `<strong>${name}</strong> is off. Red card. He's walking.`,
-    (name) => `Red for <strong>${name}</strong>. No arguments. Off he goes.`,
+    (name) => `<strong>${name}</strong> — red card. He's off.`,
+    (name) => `Red for <strong>${name}</strong>. Off he goes.`,
     // Tier 2
-    (name) => `<strong>${name}</strong> shown a straight red and given his marching orders. He looks surprised. Nobody else is.`,
-    (name) => `Two yellows. <strong>${name}</strong> is off. He saw the first one coming and decided to do it anyway. Bold.`,
-    (name) => `<strong>${name}</strong> — off. The referee had seen enough, and honestly so had we.`,
-    (name) => `<strong>${name}</strong> goes in late, referee reaches for his pocket, and off comes the red. He didn't try to make it look accidental. Some respect for the craft would have been appreciated.`,
-    (name) => `Straight red for <strong>${name}</strong>. He'll have plenty of time to think about that one on the way home.`,
+    (name) => `<strong>${name}</strong> is shown a straight red. He looks surprised. The ground doesn't share his surprise.`,
+    (name) => `Two yellows. <strong>${name}</strong> is walking. He knew that was coming from the moment the first one went in.`,
+    (name) => `<strong>${name}</strong> — off. That tackle left the referee no choice.`,
+    (name) => `Straight red for <strong>${name}</strong>. Late, high, no attempt to play the ball.`,
+    (name) => `<strong>${name}</strong> goes in and the referee reaches for red immediately.`,
     // Tier 3
-    (name) => `Straight red. Straight red. <strong>${name}</strong> didn't even try to make it look accidental. Some respect for the craft would be appreciated.`,
-    (name) => `Two yellows. <strong>${name}</strong> is walking. He had a complete shocker and he is walking and I genuinely feel something. I'm not sure what. But something.`,
+    (name) => `That's a red. Straight red. <strong>${name}</strong> won't argue, and if he does, he shouldn't.`,
+    (name) => `Two yellows, <strong>${name}</strong> is walking. From the first booking you could see where this was heading.`,
   ],
 
   // ── YELLOW CARDS ──
   yellow: [
     // Tier 1
-    (name) => `<strong>${name}</strong> booked. In the book.`,
-    (name) => `Yellow for <strong>${name}</strong>. He's lucky it's not more.`,
-    (name) => `<strong>${name}</strong> in the referee's notebook.`,
+    (name) => `Yellow for <strong>${name}</strong>.`,
+    (name) => `<strong>${name}</strong> booked.`,
+    (name) => `<strong>${name}</strong> in the book.`,
     // Tier 2
-    (name) => `<strong>${name}</strong> booked for that. The referee had a word. Several words. The card came out. A predictable sequence of events.`,
-    (name) => `Oh that's a yellow. <strong>${name}</strong> knew it was a yellow. The referee knew it was a yellow. Everyone in the ground knew it was a yellow.`,
-    (name) => `<strong>${name}</strong> went in a bit there. Booked. He's appealing which, given what he just did, takes some nerve.`,
-    (name) => `Yellow card for <strong>${name}</strong> — something about unsporting conduct. Bit rich, but the referee's made his decision.`,
-    (name) => `Booked. <strong>${name}</strong>. Frustration spilling over into poor decision-making. A relatable sequence.`,
+    (name) => `<strong>${name}</strong> booked — late challenge, ref had a clear view.`,
+    (name) => `<strong>${name}</strong> goes in and the card comes out. He'll need to be careful now.`,
+    (name) => `Yellow for <strong>${name}</strong>. He knew it. Appealing anyway.`,
+    (name) => `<strong>${name}</strong> catches his man, referee's hand goes to the pocket.`,
   ],
 
   // ── SUBSTITUTIONS ──
   sub: [
     // Tier 1
-    (name) => `<strong>${name}</strong> coming off. Substitution.`,
-    (name) => `Off comes <strong>${name}</strong>. Change made.`,
+    (name) => `<strong>${name}</strong> coming off.`,
+    (name) => `Off comes <strong>${name}</strong>.`,
     // Tier 2
-    (name) => `<strong>${name}</strong> withdrawn. The manager's seen enough. The manager has definitely seen enough.`,
-    (name) => `<strong>${name}</strong> hauled off before the hour. The dugout had been watching. They did not enjoy what they saw.`,
-    (name) => `Off comes <strong>${name}</strong> — early bath. He won't be pleased. The manager almost certainly is.`,
-    (name) => `<strong>${name}</strong> gets the hook. Fifty-something minutes and that's your lot. The fans give him a reception that tells its own story.`,
-    (name) => `<strong>${name}</strong> replaced. Tactical, apparently. We'll leave it at that.`,
+    (name) => `<strong>${name}</strong> withdrawn. The manager has made his call.`,
+    (name) => `<strong>${name}</strong> hooked before the hour. The numbers don't lie sometimes.`,
+    (name) => `Off comes <strong>${name}</strong> — he'll want longer, the manager disagrees.`,
+    (name) => `<strong>${name}</strong> replaced. The board goes up. He doesn't look thrilled.`,
+    (name) => `Change made. <strong>${name}</strong> off, something different on.`,
   ],
 
   // ── ASSISTS ──
   assist: [
-    (name) => `Lovely ball from <strong>${name}</strong> — that had to be finished.`,
-    (name) => `<strong>${name}</strong> with the assist. He's been running this game quietly.`,
-    (name) => `<strong>${name}</strong> picks out his man perfectly. Some delivery that.`,
-    (name) => `<strong>${name}</strong> threading it through on a plate. Couldn't miss.`,
+    (name) => `Good ball from <strong>${name}</strong> — that had to be finished.`,
+    (name) => `<strong>${name}</strong> picks out his man. Fine delivery.`,
+    (name) => `<strong>${name}</strong> with the assist. He's been involved all afternoon.`,
+    (name) => `<strong>${name}</strong> threads it through. Couldn't have been easier to finish.`,
+    (name) => `<strong>${name}</strong> finding the right pass at the right time.`,
   ],
 
   // ── HAT-TRICKS ──
   hat_trick: [
     // Tier 2
-    (name) => `Hat-trick. <strong>${name}</strong> completes it. Three goals. In one game. Whether you're happy about that depends entirely on what you were hoping for today.`,
-    (name) => `<strong>${name}</strong> — hat-trick. Third goal. The match ball is his. His manager is delighted. Your feelings are more complicated.`,
-    // Tier 3 — only fires once per game via rate limit
-    (name) => `HAT-TRICK. <strong>${name}</strong>. Three goals. In the same match. I'm going to need someone to explain to me what happened today because I have watched football for thirty years and this — this is something.`,
+    (name) => `Hat-trick. <strong>${name}</strong>. Three goals. The match ball is his.`,
+    (name) => `<strong>${name}</strong> completes the hat-trick. Third goal. His manager is delighted.`,
+    // Tier 3
+    (name) => `<strong>${name}</strong> — hat-trick. Three goals in one match. It does happen. It's happening now.`,
   ],
 
   // ── NEUTRAL / QUIET SPELLS ──
   neutral: [
-    // Tier 1 — flat/dry (most of these)
-    () => `Ball goes sideways. Then sideways again. Football, everyone.`,
-    () => `Nothing much happening. Both sides feeling each other out.`,
-    () => `The referee checks his watch. We check our phones. A shared moment.`,
-    () => `Possession retained. The status quo defended. Another minute passes.`,
-    () => `A corner, swung in, headed away. The cycle continues.`,
-    () => `He looks up. He plays it safe. He'll sleep well tonight.`,
-    () => `Tight game so far. Plenty of running but little creativity.`,
-    () => `A free kick in a dangerous area. Dangerous for whom remains unclear.`,
-    () => `The full back overlaps. Comes to nothing. He'll be back.`,
-    // Tier 2 — a bit warmer
-    () => `Late tension building. Everything still to play for. Theoretically.`,
-    () => `The referee's having a quiet afternoon. For now.`,
-    () => `Tactical foul. Yellow card. The shape is maintained. Everyone moves on.`,
+    () => `Ball going sideways. Nothing developing.`,
+    () => `Both sides setting up. No real threat either way.`,
+    () => `Midfield battle. Neither team getting through.`,
+    () => `Corner. Headed away. Play resumes.`,
+    () => `Keeper claims the cross. No danger.`,
+    () => `Free kick in a decent area. Nothing comes of it.`,
+    () => `Tight. Physical. Referee's busy.`,
+    () => `Pressure building but no clear opening.`,
+    () => `Full back gets forward. Ball runs out for a throw.`,
+    () => `Late in the half. Both sides cautious.`,
+    () => `Referee stops play. Brief treatment. Back underway.`,
+    () => `Plenty of effort. Not much product.`,
   ],
 };
+
 
 // Tracks whether the tier-3 "losing it" lines and tier-4 meltdown have fired this game
 // Reset in startSimulation
@@ -7074,36 +7434,35 @@ function getComment(type, name) {
 // Near-miss fake beats — { setup, build, resolve, emoji }
 const NEAR_MISSES = {
   shot: [
-    { setup: (n) => `<strong>${n}</strong> picks it up on the edge of the box, nobody closing him down…`,        build: (n) => `<strong>${n}</strong> shaping up for a shot here…`,                resolve: (n) => `…just over the bar. <strong>${n}</strong> puts his hands on his head.`,                    emoji: '😬' },
-    { setup: (n) => `<strong>${n}</strong> driving at goal, defenders backing off, inviting the shot…`,          build: (n) => `<strong>${n}</strong> cuts inside, pulls the trigger…`,              resolve: (n) => `…straight at the keeper. He'll be disappointed with that.`,                                emoji: '🧤' },
-    { setup: (n) => `Free kick awarded, dangerous position. <strong>${n}</strong> standing over it…`,            build: (n) => `<strong>${n}</strong> steps up from the free kick…`,                resolve: (n) => `…into the wall. Nothing comes of it. The wall does its one job.`,                          emoji: '🧱' },
-    { setup: (n) => `<strong>${n}</strong> played in behind — it's just him and the keeper now…`,                build: (n) => `<strong>${n}</strong> through on goal here, one on one…`,            resolve: (n) => `…keeper spreads himself and saves it. Not today, not ever.`,                               emoji: '🧤' },
-    { setup: (n) => `Corner coming in, <strong>${n}</strong> getting across his man at the back stick…`,         build: (n) => `Header from <strong>${n}</strong>!`,                                resolve: (n) => `…off the post! Agonising. The woodwork saves them once again.`,                            emoji: '😩' },
-    { setup: (n) => `<strong>${n}</strong> has space, 30 yards out, eyeing up the top corner…`,                  build: (n) => `<strong>${n}</strong> lines up from distance, worth a go…`,          resolve: (n) => `…blazes it wide. Not his finest moment. Not his finest day, frankly.`,                    emoji: '😅' },
-    { setup: (n) => `<strong>${n}</strong> peeling off his marker at the back post, corner coming…`,             build: (n) => `<strong>${n}</strong> lurking at the back post, free header…`,      resolve: (n) => `…over! He'll say he got a touch. Nobody believes him.`,                                   emoji: '🙈' },
-    { setup: (n) => `<strong>${n}</strong> receives it in the channel, one touch to set himself…`,               build: (n) => `<strong>${n}</strong> into the area, going for goal…`,              resolve: (n) => `…blocked! Last-ditch defending. The ball bounces clear.`,                                  emoji: '🙅' },
+    { setup: (n) => `<strong>${n}</strong> picks it up on the edge, time to shoot…`,                  build: (n) => `<strong>${n}</strong> shaping up — going for goal…`,              resolve: (n) => `…over the bar. <strong>${n}</strong> not happy with himself.`,           emoji: '😬' },
+    { setup: (n) => `<strong>${n}</strong> driving at defenders, they're backing off…`,                build: (n) => `<strong>${n}</strong> cuts inside, pulls the trigger…`,             resolve: (n) => `…straight at the keeper. Should've done better.`,                        emoji: '🧤' },
+    { setup: (n) => `Free kick. Dangerous area. <strong>${n}</strong> over the ball.`,                 build: (n) => `<strong>${n}</strong> steps up…`,                                  resolve: (n) => `…into the wall. The wall does its job.`,                                  emoji: '🧱' },
+    { setup: (n) => `<strong>${n}</strong> played in — just him and the keeper…`,                      build: (n) => `<strong>${n}</strong> one on one, has to score…`,                   resolve: (n) => `…keeper spreads himself. Brilliant save.`,                                emoji: '🧤' },
+    { setup: (n) => `Corner coming in, <strong>${n}</strong> attacking the back post…`,                build: (n) => `Header from <strong>${n}</strong>!`,                                resolve: (n) => `…off the post! Inches away.`,                                             emoji: '😩' },
+    { setup: (n) => `<strong>${n}</strong> in space, 30 yards out, has a look…`,                       build: (n) => `<strong>${n}</strong> lets fly from distance…`,                    resolve: (n) => `…wide. Not by much, but wide.`,                                           emoji: '😅' },
+    { setup: (n) => `<strong>${n}</strong> lurking at the back post, corner coming in…`,               build: (n) => `Free header for <strong>${n}</strong>!`,                            resolve: (n) => `…up and over. Should've hit the target.`,                                 emoji: '🙈' },
+    { setup: (n) => `<strong>${n}</strong> in the channel, one touch to set himself…`,                 build: (n) => `<strong>${n}</strong> into the area…`,                             resolve: (n) => `…blocked. Last-ditch defending.`,                                         emoji: '🙅' },
   ],
   card: [
-    { setup: (n) => `<strong>${n}</strong> charging in — he's going to be late on this…`,                        build: (n) => `Ooh, <strong>${n}</strong> goes in late there, referee has a look…`,  resolve: (n) => `…plays on. Ref keeps his cards in his pocket. Lucky escape. Very lucky.`,                emoji: '😤' },
-    { setup: (n) => `<strong>${n}</strong> fuming after that decision, storming over to the referee…`,           build: (n) => `<strong>${n}</strong> not happy, getting in the ref's face here…`,   resolve: (n) => `…just a word. He's getting away with that. This time.`,                                   emoji: '🫣' },
-    { setup: (n) => `Tempers fraying, <strong>${n}</strong> right in the middle of it near the touchline…`,      build: (n) => `Bit of handbags near the touchline, <strong>${n}</strong> involved…`, resolve: (n) => `…ref steps in. No card, but he's noted the name. The notebook is out.`,                  emoji: '📋' },
-    { setup: (n) => `<strong>${n}</strong> sliding in, studs showing — this looks bad from here…`,               build: (n) => `Nasty challenge from <strong>${n}</strong>, crowd baying for a card…`, resolve: (n) => `…ref says play on. Remarkable decision. Truly remarkable.`,                             emoji: '🤯' },
-    { setup: (n) => `<strong>${n}</strong> going in high, the ref is running across from the other side…`,       build: (n) => `<strong>${n}</strong> catches his man studs up, ref coming over…`,   resolve: (n) => `…talking to him. Pointing. No card. He won't be told twice. He's already been told twice.`, emoji: '😬' },
-    { setup: (n) => `<strong>${n}</strong> has been walking a tightrope all afternoon. Already on a yellow.`,    build: (n) => `<strong>${n}</strong> goes in again — he cannot do this…`,           resolve: (n) => `…ref waves it away. Incredible. The laws of physics and football have both been suspended.`, emoji: '😱' },
+    { setup: (n) => `<strong>${n}</strong> going in late here…`,                                       build: (n) => `<strong>${n}</strong> goes in — referee checks…`,                  resolve: (n) => `…plays on. Lucky escape.`,                                                emoji: '😤' },
+    { setup: (n) => `<strong>${n}</strong> unhappy with the decision, heading over to the referee…`,   build: (n) => `<strong>${n}</strong> in the referee's face here…`,                resolve: (n) => `…just a word. He'll take it.`,                                            emoji: '🫣' },
+    { setup: (n) => `Tempers up. <strong>${n}</strong> right in the middle of it.`,                    build: (n) => `Bit of a melee, <strong>${n}</strong> involved…`,                   resolve: (n) => `…referee steps in. No card. Names noted.`,                                emoji: '📋' },
+    { setup: (n) => `<strong>${n}</strong> sliding in, studs up — referee running across…`,            build: (n) => `Ugly challenge from <strong>${n}</strong>…`,                       resolve: (n) => `…plays on. Crowd didn't enjoy that.`,                                     emoji: '🤯' },
+    { setup: (n) => `<strong>${n}</strong> on a yellow, going into everything…`,                       build: (n) => `<strong>${n}</strong> in again — he can't keep doing this…`,        resolve: (n) => `…referee waves it away. He won't get away with that a third time.`,       emoji: '😬' },
   ],
   var: [
-    { setup: (n) => `Play stopped. The officials are huddling, looking at the screen. <strong>${n}</strong> waiting.`, build: (n) => `Hold on — VAR check. <strong>${n}</strong> might be in trouble here…`, resolve: (n) => `…no action. They're waving play on. The crowd express an opinion about this.`, emoji: '📺' },
-    { setup: (n) => `VAR intervenes. Everyone's waiting. <strong>${n}</strong> looking at the big screen.`,      build: (n) => `Referee goes to the monitor to review <strong>${n}</strong>'s challenge…`, resolve: (n) => `…no card. Close. Very close. The technology has spoken and the technology is forgiving today.`, emoji: '📺' },
+    { setup: (n) => `Play stopped. Officials at the screen. <strong>${n}</strong> waiting.`,           build: (n) => `VAR check — <strong>${n}</strong>'s challenge under review…`,      resolve: (n) => `…no action. Play on. The crowd has opinions about this.`,                 emoji: '📺' },
+    { setup: (n) => `VAR intervenes. <strong>${n}</strong> looking at the big screen.`,                build: (n) => `Referee going to the monitor…`,                                    resolve: (n) => `…no card. Close, but no card.`,                                           emoji: '📺' },
   ],
   injury: [
-    { setup: (n) => `<strong>${n}</strong> pulling up short, holding his hamstring…`,                            build: (n) => `<strong>${n}</strong> down injured, physios running on…`,             resolve: (n) => `…up on his feet. Just cramp, apparently. He'll be fine. He doesn't look fine.`,           emoji: '🩺' },
-    { setup: (n) => `<strong>${n}</strong> takes a heavy challenge, doesn't look right, staying down…`,          build: (n) => `<strong>${n}</strong> taking a knock, looking sore…`,               resolve: (n) => `…back on his feet. Gets on with it. Hard as nails, apparently.`,                          emoji: '💪' },
-    { setup: (n) => `<strong>${n}</strong> holding his ankle after that collision, wincing…`,                    build: (n) => `<strong>${n}</strong> down, referee stops play…`,                  resolve: (n) => `…magic sponge applied. He's back up. The magic sponge remains undefeated.`,              emoji: '🩺' },
+    { setup: (n) => `<strong>${n}</strong> pulling up short, holding his hamstring…`,                  build: (n) => `<strong>${n}</strong> down, physios on the pitch…`,                resolve: (n) => `…back on his feet. Cramp, apparently.`,                                   emoji: '🩺' },
+    { setup: (n) => `<strong>${n}</strong> takes a knock, staying down…`,                              build: (n) => `<strong>${n}</strong> getting treatment…`,                         resolve: (n) => `…up and going. Gets on with it.`,                                         emoji: '💪' },
+    { setup: (n) => `<strong>${n}</strong> holding his ankle after that collision…`,                   build: (n) => `<strong>${n}</strong> down, referee stops play…`,                  resolve: (n) => `…he's up. Back in position.`,                                             emoji: '🩺' },
   ],
   chance: [
-    { setup: (n) => `<strong>${n}</strong> twisting in the area — contact there, surely, arm across him…`,       build: (n) => `Penalty shout! <strong>${n}</strong> goes down in the box…`,          resolve: (n) => `…nothing given. Referee not interested. <strong>${n}</strong> absolutely furious. Rightly so.`, emoji: '😡' },
-    { setup: (n) => `Ball strikes an arm in the area — <strong>${n}</strong> already appealing…`,                build: (n) => `<strong>${n}</strong> appeals for handball, both arms in the air…`,  resolve: (n) => `…play continues. The ref isn't buying it. Nobody is buying it. Except <strong>${n}</strong>.`, emoji: '🙅' },
-    { setup: (n) => `<strong>${n}</strong> found in acres of space, nobody tracking his run…`,                   build: (n) => `<strong>${n}</strong> arriving late into the box — this looks dangerous…`, resolve: (n) => `…offside! Flag's up. Fractional. He'll be livid. Rightfully so.`,                       emoji: '🚩' },
+    { setup: (n) => `<strong>${n}</strong> twisting in the box — contact there, arm across him…`,      build: (n) => `Penalty shout! <strong>${n}</strong> goes down…`,                  resolve: (n) => `…nothing given. Referee waves play on. <strong>${n}</strong> furious.`,   emoji: '😡' },
+    { setup: (n) => `Ball strikes an arm in the area — <strong>${n}</strong> appealing immediately…`,  build: (n) => `<strong>${n}</strong> wants a handball…`,                          resolve: (n) => `…play continues. Referee not interested.`,                                emoji: '🙅' },
+    { setup: (n) => `<strong>${n}</strong> in behind, nobody tracking his run…`,                       build: (n) => `<strong>${n}</strong> arriving into the box — dangerous…`,          resolve: (n) => `…flag's up. Offside. Fractional.`,                                        emoji: '🚩' },
   ],
 };
 
@@ -7127,26 +7486,26 @@ function pickNearMiss(playerName, allowVar = true) {
 // Pre-event teasers — planted 1-2 mins before a real dramatic event
 const PRE_EVENT_TEASERS = {
   red: [
-    { setup: (n) => `<strong>${n}</strong> has been walking a tightrope all afternoon — already in the book, still flying in…`,    trigger: (n) => `<strong>${n}</strong> goes in late again — this time the referee is not letting it go…` },
-    { setup: (n) => `<strong>${n}</strong> and the referee have been having words since the first whistle…`,                       trigger: (n) => `Another reckless foul from <strong>${n}</strong>, referee reaching for his pocket…` },
-    { setup: (n) => `The crowd on <strong>${n}</strong>'s back every time he touches it. He's not helping himself…`,              trigger: (n) => `<strong>${n}</strong> snaps — challenge from behind, referee blowing immediately…` },
-    { setup: (n) => `<strong>${n}</strong> on a yellow, and he's still going into every tackle like it's the last one…`,         trigger: (n) => `Oh here we go — <strong>${n}</strong> in on the keeper, studs up, that cannot be legal…` },
+    { setup: (n) => `<strong>${n}</strong> already on a yellow, still going in hard…`,          trigger: (n) => `<strong>${n}</strong> goes in late again — referee's hand is going to his pocket…` },
+    { setup: (n) => `<strong>${n}</strong> and the referee have been exchanging views all half…`, trigger: (n) => `Reckless challenge from <strong>${n}</strong>, referee's had enough…` },
+    { setup: (n) => `<strong>${n}</strong> not helping himself here. Every tackle a debate.`,    trigger: (n) => `<strong>${n}</strong> goes in from behind — referee blowing immediately…` },
+    { setup: (n) => `On a yellow and still flying in. <strong>${n}</strong> pushing his luck.`,  trigger: (n) => `<strong>${n}</strong> in on the keeper — studs showing…` },
   ],
   yellow: [
-    { setup: (n) => `<strong>${n}</strong> has been giving the referee problems all game — this can only go one way…`,           trigger: (n) => `<strong>${n}</strong> pulls back his man cynically, referee's had enough…` },
-    { setup: (n) => `Frustration building in <strong>${n}</strong>'s body language — something's coming here…`,                  trigger: (n) => `<strong>${n}</strong> clatters into the challenge — no attempt to play the ball…` },
-    { setup: (n) => `<strong>${n}</strong> arguing with the fourth official now. The fourth official. The one with no power.`,   trigger: (n) => `And <strong>${n}</strong> is at it again — goes right through the back of him…` },
+    { setup: (n) => `<strong>${n}</strong> has been getting into it with the referee all game.`, trigger: (n) => `<strong>${n}</strong> goes through the back of him — referee's patience gone…` },
+    { setup: (n) => `Frustration creeping into <strong>${n}</strong>'s game. He's wound up.`,    trigger: (n) => `<strong>${n}</strong> goes in — no real attempt to play the ball…` },
+    { setup: (n) => `<strong>${n}</strong> at the fourth official now. Not a great sign.`,       trigger: (n) => `<strong>${n}</strong> in again — cynical, referee won't let it go…` },
   ],
   goal: [
-    { setup: (n) => `<strong>${n}</strong> has looked sharp all afternoon — something is definitely building here…`,              trigger: (n) => `<strong>${n}</strong> picks it up in space, carries it forward, beats his man…` },
-    { setup: (n) => `The ball keeps finding <strong>${n}</strong> in dangerous positions. It's only a matter of time…`,          trigger: (n) => `<strong>${n}</strong> through on goal — the defender's completely lost him…` },
-    { setup: (n) => `<strong>${n}</strong> dropping deep, linking things together, dictating. Something's brewing.`,             trigger: (n) => `<strong>${n}</strong> plays the one-two and bursts into the box…` },
-    { setup: (n) => `<strong>${n}</strong> winning every header, dominating this channel — pressure building…`,                  trigger: (n) => `Ball drops to <strong>${n}</strong> in the area, six yards out, first time…` },
+    { setup: (n) => `<strong>${n}</strong> looking lively. Keeps finding pockets of space.`,     trigger: (n) => `<strong>${n}</strong> picks it up, beats his man, bearing down on goal…` },
+    { setup: (n) => `<strong>${n}</strong> involved in everything going forward today.`,          trigger: (n) => `<strong>${n}</strong> through — defender nowhere near him…` },
+    { setup: (n) => `<strong>${n}</strong> linking play well, moving into dangerous areas.`,      trigger: (n) => `<strong>${n}</strong> plays the one-two, into the box…` },
+    { setup: (n) => `<strong>${n}</strong> winning the physical battles, causing problems.`,      trigger: (n) => `Ball drops to <strong>${n}</strong> in the area — first time…` },
   ],
   own_goal: [
-    { setup: (n) => `<strong>${n}</strong> has been nervy today — miscontrolling, misdirecting, under pressure constantly…`,     trigger: (n) => `Cross comes in — <strong>${n}</strong> has to deal with this under pressure…` },
-    { setup: (n) => `The back line looks shaky. <strong>${n}</strong> hasn't been convincing at all this half.`,                 trigger: (n) => `<strong>${n}</strong> attempting to clear — awkward bounce, going the wrong way…` },
-    { setup: (n) => `<strong>${n}</strong> has been miscommunicating with his keeper all game. This is dangerous.`,              trigger: (n) => `Keeper comes — <strong>${n}</strong> goes — neither shouts, both go for it…` },
+    { setup: (n) => `<strong>${n}</strong> been sloppy in possession. Nerves showing.`,          trigger: (n) => `Cross coming in — <strong>${n}</strong> has to deal with this…` },
+    { setup: (n) => `Back line looking uncomfortable. <strong>${n}</strong> unconvincing.`,       trigger: (n) => `<strong>${n}</strong> has to clear — awkward bounce, going the wrong way…` },
+    { setup: (n) => `<strong>${n}</strong> and the keeper haven't been communicating well.`,      trigger: (n) => `Both go for it — neither shouts…` },
   ],
 };
 
@@ -7202,7 +7561,29 @@ function autoCompleteMatch() {
   document.getElementById('match-clock').textContent = "90'";
   setCommentary('<strong>Full time.</strong> Skipped to the result.', '🏁');
 
+  // Apply all stat drip beats instantly (they normally fire silently mid-match)
+  const draftedIdsAC = [...new Set([...state.myTeam, ...state.oppTeam])];
+  const acDripBeats = buildStatDripBeats(draftedIdsAC);
+  const inMpAC = !!state.mp;
+  for (const b of acDripBeats) {
+    const id  = b.statPlayerId;
+    const pts = b.statDelta;
+    const pd  = state.playerData[id];
+    const cap = captainMultiplier(id);
+    if (pd && pts) {
+      const rawDelta    = pts * cap;
+      const floored     = Math.max(pd.pts + rawDelta, -25);
+      const cappedDelta = floored - pd.pts;
+      if (cappedDelta !== 0) {
+        if (state.myTeam.includes(id))               state.myScore  += cappedDelta;
+        if (state.oppTeam.includes(id) && !inMpAC)   state.oppScore += cappedDelta;
+        pd.pts += cappedDelta;
+      }
+    }
+  }
+
   applyFull90();
+  applyV1Stats();
   updateScoreDisplay();
   renderSimPlayers();
 
@@ -7825,6 +8206,90 @@ function flashPredResult(text, cls) {
 // ═══════════════════════════════════════════════════════════════
 // BEAT BUILDER
 // ═══════════════════════════════════════════════════════════════
+// ── Stat drip beats ──────────────────────────────────────────
+// Pre-computes per-unit V1 stat deltas for each drafted player and distributes
+// them as silent score nudges spread across the match. No commentary, no tiles —
+// just the score moving naturally so the graph doesn't cliff at minute 90.
+// End-of-match-only bonuses (pass accuracy, chaos bonus) stay in applyV1Stats().
+function buildStatDripBeats(draftedIds) {
+  const match = ALL_MATCHES[state.matchIdx];
+  if (!match) return [];
+  const statsMap = PLAYER_STATS[match.id];
+  if (!statsMap) return [];
+
+  const dripBeats = [];
+
+  for (const id of draftedIds) {
+    const player = getPlayer(id);
+    if (!player) continue;
+    const st = statsMap[player.name] || statsMap[player.name.split(' ')[0]];
+    if (!st) continue;
+
+    const g = posGroup(player.pos);
+
+    // Build a list of (pointValue, label) increments for this player
+    const increments = [];
+
+    if (g === 'gk') {
+      for (let i = 0; i < (st.saves || 0); i++)      increments.push(-1);
+      for (let i = 0; i < (st.pen_saved || 0); i++)  increments.push(-5);
+      for (let i = 0; i < (st.dribbled_past || 0); i++) increments.push(+1);
+    }
+
+    if (g === 'def') {
+      for (let i = 0; i < (st.tackles || 0); i++)      increments.push(-1);
+      for (let i = 0; i < (st.key_passes || 0); i++)   increments.push(-2);
+      for (let i = 0; i < (st.dribbled_past || 0); i++) increments.push(+1);
+    }
+
+    if (g === 'mid') {
+      for (let i = 0; i < (st.dribbled_past || 0); i++)   increments.push(+1);
+      for (let i = 0; i < (st.fouls_committed || 0); i++) increments.push(+1);
+      for (let i = 0; i < (st.key_passes || 0); i++)      increments.push(-2);
+      // fouls drawn handled per-3: -1 per 3
+      const fdBonus = Math.floor((st.fouls_drawn || 0) / 3);
+      for (let i = 0; i < fdBonus; i++) increments.push(-1);
+    }
+
+    if (g === 'fwd') {
+      const shots_off = Math.max(0, (st.shots_total || 0) - (st.shots_on || 0));
+      for (let i = 0; i < shots_off; i++)              increments.push(+1);
+      for (let i = 0; i < (st.offsides || 0); i++)     increments.push(+1);
+      for (let i = 0; i < (st.dribbled_past || 0); i++) increments.push(+1);
+      const fdBonus = Math.floor((st.fouls_drawn || 0) / 3);
+      for (let i = 0; i < fdBonus; i++) increments.push(-1);
+    }
+
+    if (increments.length === 0) continue;
+
+    // Spread increments evenly across minutes 5–87, avoiding 44–46 (HT)
+    const slots = [];
+    for (let m = 5; m <= 87; m++) {
+      if (m >= 44 && m <= 46) continue;
+      slots.push(m);
+    }
+
+    // Deterministically space the increments across available slots
+    const step = Math.max(1, Math.floor(slots.length / increments.length));
+    increments.forEach((pts, i) => {
+      const slotIdx = Math.min(i * step + Math.floor(step / 2), slots.length - 1);
+      const matchMin = slots[slotIdx];
+      const realTime = Math.round((matchMin / 90) * 62000);
+      dripBeats.push({
+        realTime,
+        matchMin,
+        events:    [],
+        fake:      true,
+        isSilent:  true,        // no commentary, no tile, no flash
+        statPlayerId: id,
+        statDelta:    pts,
+      });
+    });
+  }
+
+  return dripBeats;
+}
+
 function buildBeats() {
   const beats = [];
   const m = ALL_MATCHES[state.matchIdx]; // declare once at top
@@ -7836,7 +8301,7 @@ function buildBeats() {
 
   for (const e of eventsToShow) {
     const realTime = mapMatchMinToReal(e.min);
-    let beat = beats.find(b => !b.fake && Math.abs(b.realTime - realTime) < 2000);
+    let beat = beats.find(b => !b.fake && Math.abs(b.realTime - realTime) < 800);
     if (!beat) {
       beat = { realTime, matchMin: e.min, events: [], commentary: '', emoji: '🏟️' };
       beats.push(beat);
@@ -7852,6 +8317,20 @@ function buildBeats() {
         ? getComment('hat_trick', p ? p.name : '')
         : getComment(e.type, p ? p.name : '');
       beat.emoji = isHatTrick ? EVENT_EMOJI.hat_trick : (EVENT_EMOJI[e.type] || '🏟️');
+    }
+  }
+
+  // Attach assist events to their goal's beat so anticipation tiles show both names
+  const assistEvents = EVENTS.filter(e => e.type === 'assist');
+  for (const a of assistEvents) {
+    // Find the goal event at the same minute
+    const goalBeat = beats.find(b =>
+      !b.fake &&
+      b.matchMin === a.min &&
+      b.events.some(e => e.type === 'goal' || e.type === 'own_goal')
+    );
+    if (goalBeat && !goalBeat.events.find(e => e.type === 'assist')) {
+      goalBeat.events.push(a);
     }
   }
 
@@ -8070,8 +8549,32 @@ function buildBeats() {
   // Get all drafted player names for realistic fake commentary
   const draftedIds = [...new Set([...state.myTeam, ...state.oppTeam])];
   const draftedPlayers = draftedIds.map(id => getPlayer(id)).filter(Boolean);
-  const outfield = draftedPlayers.filter(p => p.pos !== 'GK');
-  const candidatePool = outfield.length > 0 ? outfield : draftedPlayers;
+
+  // ── Stat drip beats: spread V1 per-unit stat points across the match ──
+  // Silent — no commentary, no tiles. Keeps the score curve smooth.
+  const statDripBeats = buildStatDripBeats(draftedIds);
+  beats.push(...statDripBeats);
+
+  // Build a map of "minute when player left the pitch" (red card or sub off)
+  const offPitchFrom = {}; // playerId → minute they left
+  for (const e of EVENTS) {
+    if (e.type === 'red') offPitchFrom[e.playerId] = e.min;
+    if (e.type === 'sub')  offPitchFrom[e.playerId] = e.min; // sub'd off player
+  }
+
+  // candidatePool for a given minute = drafted outfield players still on the pitch
+  function getCandidatePool(atMin) {
+    const eligible = draftedPlayers.filter(p =>
+      p.pos !== 'GK' &&
+      (offPitchFrom[p.id] === undefined || offPitchFrom[p.id] > atMin)
+    );
+    return eligible.length > 0 ? eligible : draftedPlayers.filter(p =>
+      offPitchFrom[p.id] === undefined || offPitchFrom[p.id] > atMin
+    );
+  }
+
+  // Legacy single pool for compatibility (used where no minute context available)
+  const candidatePool = draftedPlayers.filter(p => p.pos !== 'GK');
 
   // Work out if this match is VAR-era (PL VAR started 2019/20 season)
   const matchYear = m ? parseInt(m.meta.date.split(' ').pop()) : 2000;
@@ -8139,7 +8642,9 @@ function buildBeats() {
         if (tooClose || usedMinutes.has(fakeMin)) continue;
         usedMinutes.add(fakeMin);
 
-        const player = candidatePool[Math.floor(Math.random() * candidatePool.length)];
+        const poolAtMin = getCandidatePool(fakeMin);
+        if (poolAtMin.length === 0) continue; // no eligible players
+        const player = poolAtMin[Math.floor(Math.random() * poolAtMin.length)];
         const miss   = pickNearMiss(getSurname(player), allowVar);
 
         fakesToInsert.push({
@@ -8191,7 +8696,7 @@ function buildBeats() {
     // predIsReal = false means "no" is always the correct answer.
     if (chosen.length < 2) {
       const FALLBACK_TYPES = ['shot', 'card', 'yellow', 'goal'];
-      const shuffledPool = shuffle(outfield.length > 0 ? outfield : candidatePool);
+      const shuffledPool = shuffle(getCandidatePool(45));
       const needed = 2 - chosen.length;
 
       for (let fi = 0; fi < needed && fi < shuffledPool.length; fi++) {
@@ -8233,9 +8738,15 @@ function buildBeats() {
     if (b.isHalfTime) continue;
     const diff = b.realTime - htRealTime;
     if (Math.abs(diff) < 2500) {
-      b.realTime = diff < 0
-        ? htRealTime - 2800  // push before HT
-        : htRealTime + 2800; // push after HT
+      if (diff < 0) {
+        b.realTime = htRealTime - 2800; // push before HT
+        // Clamp matchMin to be at most 44 (still first half)
+        b.matchMin = Math.min(b.matchMin, 44);
+      } else {
+        b.realTime = htRealTime + 2800; // push after HT
+        // Clamp matchMin to be at least 46 (second half has started)
+        b.matchMin = Math.max(b.matchMin, 46);
+      }
     }
   }
   beats.push({
@@ -8262,6 +8773,7 @@ function mapMatchMinToReal(min) {
 function runBeats(beats, idx) {
   if (idx >= beats.length) {
     applyFull90();
+    applyV1Stats();
     setTimeout(() => showResults(), 2000);
     return;
   }
@@ -8292,17 +8804,63 @@ function runBeats(beats, idx) {
       let tickMin = prevMin;
       _clockTicker = setInterval(() => {
         tickMin = Math.min(tickMin + 1, targetMin);
-        // Show 46' for first minute of second half 
-        const displayMin = tickMin;
-        clockEl.textContent = displayMin + "'";
+        clockEl.textContent = tickMin + "'";
         if (tickMin >= targetMin) {
           clearInterval(_clockTicker);
           _clockTicker = null;
+          // After reaching the beat's minute, keep ticking slowly so clock
+          // never looks frozen during gaps between beats (1 min per 3s)
+          if (targetMin < 90) {
+            let idleMin = targetMin;
+            const nextBeat = beats[idx + 1];
+            // idleCap: tick up to 1 before next beat's minute, but never go backward
+            // Also never tick past 44 in first half or past 90 total
+            const rawCap = nextBeat ? nextBeat.matchMin - 1 : 89;
+            const idleCap = Math.max(targetMin, Math.min(rawCap, 89));
+            if (idleCap > idleMin) {
+              _clockTicker = setInterval(() => {
+                idleMin = Math.min(idleMin + 1, idleCap);
+                clockEl.textContent = idleMin + "'";
+                if (idleMin >= idleCap) {
+                  clearInterval(_clockTicker);
+                  _clockTicker = null;
+                }
+              }, 3000); // gentle idle: 1 minute every 3 seconds
+            }
+          }
         }
       }, Math.max(40, msPerMin)); // never faster than 40ms/tick
     }
 
+    // Always clear stale floating tiles from previous beats before this one runs
+    clearAnticipationTiles();
+
     if (beat.fake) {
+      // ── Silent stat drip beat — apply score nudge, no UI ──
+      if (beat.isSilent) {
+        const id    = beat.statPlayerId;
+        const pts   = beat.statDelta;
+        const pd    = state.playerData[id];
+        const cap   = captainMultiplier(id);
+        const inMp  = !!state.mp;
+        if (pd && pts) {
+          const rawDelta    = pts * cap;
+          const floored     = Math.max(pd.pts + rawDelta, -25);
+          const cappedDelta = floored - pd.pts;
+          if (cappedDelta !== 0) {
+            if (state.myTeam.includes(id))               state.myScore  += cappedDelta;
+            if (state.oppTeam.includes(id) && !inMp)     state.oppScore += cappedDelta;
+            pd.pts += cappedDelta;
+          }
+        }
+        updateScoreDisplay(beat.matchMin);
+        renderSimPlayers();
+        const _silentCont = () => runBeats(beats, idx + 1);
+        _simContinuation = _silentCont;
+        simTimeout = setTimeout(() => { _simContinuation = null; _silentCont(); }, 50);
+        return;
+      }
+
       if (beat.isHalfTime) {
         const htOverlay = document.getElementById('ht-overlay');
         const htScore   = document.getElementById('ht-score');
@@ -8350,12 +8908,34 @@ function runBeats(beats, idx) {
       if (beat.isPrediction) {
         const feed = document.getElementById('commentary-feed');
         if (feed) feed.classList.add('feed-building');
-        // Use setup/build for teaser-style beats, commentary for card/yes-no beats
-        const atmosLine = beat.setup || beat.build || beat.commentary || '';
-        const triggerLine = beat.build || beat.commentary || atmosLine;
-        setCommentary(atmosLine, '👁️');
-        simTimeout = setTimeout(() => {
-          setCommentary(triggerLine, '…');
+        // setup = atmospherics/context line; build = tension/trigger line
+        // These must be different strings — if only one exists, go straight to question
+        const atmosLine   = beat.setup || '';
+        const triggerLine = beat.build || beat.commentary || '';
+        const hasTwo      = atmosLine && triggerLine && atmosLine !== triggerLine;
+
+        if (hasTwo) {
+          setCommentary(atmosLine, '👁️');
+          simTimeout = setTimeout(() => {
+            setCommentary(triggerLine, '…');
+            simTimeout = setTimeout(() => {
+              showPrediction(beat, (playerAnswer) => {
+                if (feed) feed.classList.remove('feed-building');
+                if (beat.predIsReal) {
+                  setCommentary('Watch this space…', '👀');
+                } else {
+                  setCommentary(beat.resolve || 'Nothing doing. Play continues.', beat.emoji || '💨');
+                }
+                applyPredictionResult(playerAnswer, beat.predIsReal);
+                const _predCont = () => runBeats(beats, idx + 1);
+                _simContinuation = _predCont;
+                simTimeout = setTimeout(() => { _simContinuation = null; _predCont(); }, 2800);
+              });
+            }, 1400);
+          }, 1800);
+        } else {
+          // Single line — go straight to question after one beat
+          setCommentary(triggerLine || atmosLine, '…');
           simTimeout = setTimeout(() => {
             showPrediction(beat, (playerAnswer) => {
               if (feed) feed.classList.remove('feed-building');
@@ -8369,8 +8949,8 @@ function runBeats(beats, idx) {
               _simContinuation = _predCont;
               simTimeout = setTimeout(() => { _simContinuation = null; _predCont(); }, 2800);
             });
-          }, 1400);
-        }, 1800);
+          }, 1800);
+        }
         return;
       }
 
@@ -8406,16 +8986,22 @@ function runBeats(beats, idx) {
       state.pendingFlashes = [];
       for (const e of beat.events) {
         processSimEvent(e);
-        if (e.type === 'goal') {
+        if (e.type === 'goal' || e.type === 'own_goal') {
           const scorer = getPlayer(e.playerId);
-          if (scorer && scorer.team === 'home') {
-            state.liveHomeScore = (state.liveHomeScore || 0) + 1;
-            const h = document.getElementById('live-home-score');
-            if (h) h.textContent = state.liveHomeScore;
-          } else if (scorer && scorer.team === 'away') {
-            state.liveAwayScore = (state.liveAwayScore || 0) + 1;
-            const a = document.getElementById('live-away-score');
-            if (a) a.textContent = state.liveAwayScore;
+          if (scorer) {
+            // own_goal scores for the OTHER team
+            const scoringTeam = e.type === 'own_goal'
+              ? (scorer.team === 'home' ? 'away' : 'home')
+              : scorer.team;
+            if (scoringTeam === 'home') {
+              state.liveHomeScore = (state.liveHomeScore || 0) + 1;
+              const h = document.getElementById('live-home-score');
+              if (h) h.textContent = state.liveHomeScore;
+            } else {
+              state.liveAwayScore = (state.liveAwayScore || 0) + 1;
+              const a = document.getElementById('live-away-score');
+              if (a) a.textContent = state.liveAwayScore;
+            }
           }
         }
       }
@@ -8428,7 +9014,7 @@ function runBeats(beats, idx) {
       updateScoreDisplay(beat.matchMin, primaryEventType);
       renderSimPlayers();
       const flashes = state.pendingFlashes || [];
-      flashes.forEach(({ id, delta }) => flashPlayer(id, delta, suppressTileIds.has(id)));
+      flashes.forEach(({ id, delta, eventType }) => flashPlayer(id, delta, suppressTileIds.has(id), eventType));
       state.pendingFlashes = [];
     }
 
@@ -8444,33 +9030,15 @@ function runBeats(beats, idx) {
         } else {
           showScorerQuestion(beat, (isCorrect, playerId) => {
             const { correctId } = beat.scorerOptions;
-            // NOW apply events (scores, flashes, tiles) AFTER question answered
-            applyBeatEvents();
-            // Post-reveal anticipation: show the scorer's name box with emoji after reveal
-            const scorerPlayer = getPlayer(correctId);
-            if (scorerPlayer) {
-              const field = document.getElementById('pitch-field');
-              if (field) {
-                const revealTile = document.createElement('div');
-                revealTile.className = 'pitch-anticipation-tile drift-a';
-                revealTile.style.top  = (20 + Math.random() * 40) + '%';
-                revealTile.style.left = (15 + Math.random() * 45) + '%';
-                const pd = state.playerData[correctId];
-                const recentDelta = pd ? (pd.pts) : 0; // approximate
-                const goalEmoji = '⚽';
-                revealTile.innerHTML = `
-                  <span class="tile-name">${getSurname(scorerPlayer)}</span>
-                  <span class="tile-emoji">${goalEmoji}</span>
-                  <span class="tile-pts"></span>
-                `;
-                revealTile.classList.add('resolved-neg'); // goals are always negative pts
-                field.appendChild(revealTile);
-                setTimeout(() => {
-                  revealTile.style.animation = 'anticipation-fade-out 0.7s ease-out forwards';
-                  setTimeout(() => revealTile.remove(), 700);
-                }, 2200);
-              }
-            }
+            // Apply events after question answered — suppress pit tiles for non-primary events
+            // (assister tile after scorer question is confusing — looks like 2 people scored)
+            const primaryId = new Set([correctId]);
+            const nonPrimaryIds = new Set(
+              beat.events
+                .filter(e => e.type !== 'goal' && e.type !== 'red' && e.type !== 'own_goal')
+                .map(e => e.playerId)
+            );
+            applyBeatEvents(nonPrimaryIds); // suppress tiles for assists etc
             submitScorerAnswer(isCorrect, correctId, () => runBeats(beats, idx + 1), null, beat);
           });
         }
@@ -8489,6 +9057,10 @@ function runBeats(beats, idx) {
     _anticipTiles.forEach(t => { t._ptsBefore = _anticipPtsBefore[t._playerId] || 0; });
     // Flag player IDs that already have anticipation tiles — suppress old flying tile for them
     const _anticipPlayerIds = new Set(_anticipTiles.map(t => t._playerId));
+
+    // When tiles are floating, CLEAR commentary so tile names are the only communication.
+    // Commentary fires only AFTER tiles resolve — and only if it names the same player.
+    if (_anticipTiles.length > 0) setCommentary('', '');
 
     // Small delay for anticipation to land before event resolves
     const anticipDelay = _anticipTiles.length > 0 ? 1600 : 0;
@@ -8553,7 +9125,15 @@ function processSimEvent(event) {
     const defenders = PLAYERS.filter(p =>
       p.team === concedingTeam && ['GK','CB','RB','LB'].includes(p.pos)
     );
+    // Count goals already conceded by this team (to enforce caps)
+    const goalsSoFar = EVENTS.filter(e =>
+      e.type === 'goal' && e.min <= event.min &&
+      PLAYERS.find(p => p.id === e.playerId && p.team === scoringTeam)
+    ).length;
     for (const dp of defenders) {
+      const isGK = dp.pos === 'GK';
+      const cap  = isGK ? 6 : 4;  // GK cap 6 goals (+12 max), DEF cap 4 goals (+4 max)
+      if (goalsSoFar > cap) continue; // already at cap — no more concede points
       const concedeDelta = getScoreForEvent('concede', dp) * captainMultiplier(dp.id);
       if (concedeDelta === 0) continue;
       const dpInMine = state.myTeam.includes(dp.id);
@@ -8570,7 +9150,7 @@ function processSimEvent(event) {
     }
   }
 
-  if (delta !== 0) state.pendingFlashes = (state.pendingFlashes || []).concat({ id: player.id, delta });
+  if (delta !== 0) state.pendingFlashes = (state.pendingFlashes || []).concat({ id: player.id, delta, eventType: event.type });
 }
 
 function applyFull90() {
@@ -8923,10 +9503,18 @@ function spawnAnticipationTiles(beat) {
   let candidates = [];
 
   if (beat.fake) {
-    // Fake beat — pick 1 random player from all 22 for tension
-    const allPlayers = PLAYERS.filter(p => p);
-    const pick = allPlayers[Math.floor(Math.random() * allPlayers.length)];
-    if (pick) candidates.push({ player: pick, role: 'unknown' });
+    // Fake beat — use the SAME player as the commentary (linkedPlayerName)
+    // so the name in the floating tile always matches what the commentary says
+    let fakePick = null;
+    if (beat.linkedPlayerName) {
+      fakePick = PLAYERS.find(p => getSurname(p) === beat.linkedPlayerName);
+    }
+    if (!fakePick) {
+      // Fallback: random drafted player
+      const draftedFake = [...state.myTeam, ...state.oppTeam].map(id => getPlayer(id)).filter(Boolean);
+      fakePick = draftedFake[Math.floor(Math.random() * draftedFake.length)] || PLAYERS[0];
+    }
+    if (fakePick) candidates.push({ player: fakePick, role: 'unknown' });
   } else {
     const goalEvent   = events.find(e => e.type === 'goal' || e.type === 'own_goal');
     const assistEvent = events.find(e => e.type === 'assist');
@@ -8936,9 +9524,10 @@ function spawnAnticipationTiles(beat) {
       const scorer = getPlayer(goalEvent.playerId);
       if (scorer) candidates.push({ player: scorer, role: goalEvent.type });
 
-      if (assistEvent && Math.random() < 0.6) {
+      if (assistEvent) {
+        // Always show the assist tile alongside the scorer — this is the feature
         const ap = getPlayer(assistEvent.playerId);
-        if (ap) candidates.unshift({ player: ap, role: 'assist' }); // assist drifts first
+        if (ap) candidates.unshift({ player: ap, role: 'assist' }); // assist shown alongside scorer
       }
     } else {
       // No goal — show card/sub/etc (max 1 tile, keep it simple)
@@ -9034,15 +9623,20 @@ function clearAnticipationTiles() {
   _anticipationTiles = [];
 }
 
-function flashPlayer(playerId, delta, suppressPitchTile = false) {
+function flashPlayer(playerId, delta, suppressPitchTile = false, eventType = null) {
   // Always flash the commentary bar so something always visible reacts
   const feed = document.querySelector('.commentary-feed');
   if (feed) {
-    const feedCls = delta > 0 ? 'feed-flash-pos' : 'feed-flash-neg';
-    feed.classList.remove('feed-flash-pos', 'feed-flash-neg'); // reset if already animating
+    let feedCls;
+    if (eventType === 'yellow') {
+      feedCls = 'feed-flash-yellow'; // subtle warm glow — no strobe
+    } else {
+      feedCls = delta > 0 ? 'feed-flash-pos' : 'feed-flash-neg';
+    }
+    feed.classList.remove('feed-flash-pos', 'feed-flash-neg', 'feed-flash-yellow');
     void feed.offsetWidth; // force reflow to restart animation
     feed.classList.add(feedCls);
-    setTimeout(() => feed.classList.remove(feedCls), 1600);
+    setTimeout(() => feed.classList.remove(feedCls), eventType === 'yellow' ? 1200 : 1600);
   }
 
   // Also flash the player row if it happens to be in the current view
@@ -9338,48 +9932,40 @@ function _renderResults() {
       const missedPen = evts.includes('missed_pen');
 
       if (redCard && ownGoal) return pick([
-        `<strong>${n}</strong> managed to score an own goal AND get sent off in the same game. In the same <em>half</em>. You could not have scripted this. <strong>+${pts} pts</strong> — an all-time performance.`,
-        `<strong>${n}</strong> put one in his own net, collected a red card, and left the pitch early. A complete and utter masterpiece. <strong>+${pts} pts</strong>. Frame it.`,
+        `<strong>${n}</strong> scored an own goal and collected a red card. Own goal first, then the red. A complete afternoon. <strong>+${pts} pts</strong>.`,
+        `<strong>${n}</strong> put one in the wrong net, then got himself sent off. You couldn't have asked for more. <strong>+${pts} pts</strong>.`,
       ]);
       if (redCard) return pick([
-        `<strong>${n}</strong> was shown a straight red and given his marching orders before most people had finished their half-time tea. Commitment to the cause. <strong>+${pts} pts</strong>.`,
-        `<strong>${n}</strong> lasted ${pick(['58','44','51','67'])} minutes before deciding the laws of football no longer applied to him personally. Off he went. Brilliant. <strong>+${pts} pts</strong>.`,
-        `<strong>${n}</strong> went in two-footed, appealed, got booked, appealed again, got sent off, and trudged away looking furious about the whole thing. <strong>+${pts} pts</strong>. Hall of fame.`,
-        `Two yellows. Same half. <strong>${n}</strong> saw the first one coming and did it anyway. Bold. Stupid. Beautiful. <strong>+${pts} pts</strong>.`,
-        `<strong>${n}</strong> collected a straight red for something the referee described as reckless. We'd describe it as generous. <strong>+${pts} pts</strong>.`,
+        `<strong>${n}</strong> was shown a straight red. Off he went. He didn't look happy about it. <strong>+${pts} pts</strong>.`,
+        `Two yellows. <strong>${n}</strong> saw the first one coming and didn't adjust. <strong>+${pts} pts</strong>.`,
+        `<strong>${n}</strong> went in late, referee reached for his pocket. Red. Simple as that. <strong>+${pts} pts</strong>.`,
+        `<strong>${n}</strong> collected a straight red for a challenge the referee had no interest in debating. <strong>+${pts} pts</strong>.`,
       ]);
       if (ownGoal) return pick([
-        `<strong>${n}</strong> assessed all his options, considered the situation carefully, and put the ball into his own net. Technically an assist for the other side. We're counting it. <strong>+${pts} pts</strong>.`,
-        `<strong>${n}</strong> took one touch and scored — tragically, for the wrong team. A flap, a fumble, the ball rolled over the line apologetically. Poetry. <strong>+${pts} pts</strong>.`,
-        `<strong>${n}</strong> did not mean to score. He scored anyway. This game rewards accidental genius and we are all richer for it. <strong>+${pts} pts</strong>.`,
-        `The keeper came for a cross he had absolutely no business attempting, missed it by a yard, and the rest followed naturally. <strong>${n}</strong>. Magnificent. <strong>+${pts} pts</strong>.`,
-        `<strong>${n}</strong> redirected it perfectly into his own net. Technically difficult. Entirely unwanted. Absolutely beautiful. <strong>+${pts} pts</strong>.`,
+        `<strong>${n}</strong> put it into his own net. Came for it, didn't get it, ball ended up in the wrong goal. <strong>+${pts} pts</strong>.`,
+        `Own goal, <strong>${n}</strong>. A deflection, an unfortunate bounce, an outcome nobody wanted. Except you. <strong>+${pts} pts</strong>.`,
+        `<strong>${n}</strong> redirected it perfectly into his own net. Technically impressive. Strategically ideal. <strong>+${pts} pts</strong>.`,
       ]);
       if (dblYellow) return pick([
-        `<strong>${n}</strong> picked up two yellows in nine minutes. The first was debatable. The second was a lifestyle choice. <strong>+${pts} pts</strong>.`,
-        `Booked. Booked again. Off. <strong>${n}</strong> had a complete shocker and we are here for every second of it. <strong>+${pts} pts</strong>.`,
-        `<strong>${n}</strong> somehow convinced himself a second yellow was a good idea. It was not a good idea. It was a great idea. <strong>+${pts} pts</strong>.`,
+        `Two yellows. <strong>${n}</strong> earned the first, then didn't learn from it. <strong>+${pts} pts</strong>.`,
+        `Booked, then booked again, then off. <strong>${n}</strong> had a full afternoon. <strong>+${pts} pts</strong>.`,
       ]);
       if (missedPen) return pick([
-        `<strong>${n}</strong> stepped up from the spot, sent the keeper the wrong way, and hit the post. Stood there. Walked back. An entire story told in twelve yards. <strong>+${pts} pts</strong>.`,
-        `<strong>${n}</strong> ballooned it over from twelve yards. Over the bar. From the penalty spot. An art form. <strong>+${pts} pts</strong>.`,
-        `The penalty was there for the taking. <strong>${n}</strong> chose not to take it. He chose chaos instead. Correct decision. <strong>+${pts} pts</strong>.`,
+        `<strong>${n}</strong> stepped up from twelve yards and didn't score. The keeper didn't save it — he just missed. <strong>+${pts} pts</strong>.`,
+        `Penalty missed. <strong>${n}</strong>. It happens. It happened here. <strong>+${pts} pts</strong>.`,
       ]);
       if (hookedOff) return pick([
-        `<strong>${n}</strong> was hauled off before the hour mark and the manager looked relieved about it. So were we. <strong>+${pts} pts</strong>.`,
-        `<strong>${n}</strong> lasted ${pick(['52','61','48','55','43'])} minutes before the dugout had seen enough. The feeling was mutual. <strong>+${pts} pts</strong>.`,
-        `Subbed off at half time. <strong>${n}</strong> did enough damage in 45 minutes that the manager clearly felt the rest of the team needed a rest from him. <strong>+${pts} pts</strong>.`,
+        `<strong>${n}</strong> was hauled off before the hour. The manager had seen enough. <strong>+${pts} pts</strong>.`,
+        `Subbed off early. <strong>${n}</strong> made an impression, just not the kind that gets you another 45 minutes. <strong>+${pts} pts</strong>.`,
       ]);
       if (yellow) return pick([
-        `<strong>${n}</strong> booked himself into the referee's notebook with a challenge that fooled absolutely nobody. <strong>+${pts} pts</strong>.`,
-        `<strong>${n}</strong> went in a bit there. The referee had several words. The card came out. Entirely predictable. Entirely welcome. <strong>+${pts} pts</strong>.`,
-        `A booking for <strong>${n}</strong> — something about unsporting conduct. Sporting conduct was never really the goal here. <strong>+${pts} pts</strong>.`,
+        `<strong>${n}</strong> booked. The challenge was reckless, the card was deserved. <strong>+${pts} pts</strong>.`,
+        `Yellow for <strong>${n}</strong>. He went in, referee had a word, card came out. <strong>+${pts} pts</strong>.`,
       ]);
       return pick([
-        `<strong>${n}</strong> spent 90 minutes being an absolute liability in the most committed, professional way possible. You drafted him for this moment. He delivered. <strong>+${pts} pts</strong>.`,
-        `<strong>${n}</strong> created more problems for his own side than the opposition managed all afternoon. A rare gift. An absolute treasure. <strong>+${pts} pts</strong>.`,
-        `<strong>${n}</strong> had a complete and utter nightmare and we mean that as the highest possible compliment. <strong>+${pts} pts</strong>.`,
-        `<strong>${n}</strong> contributed chaos at every turn, in every phase of the game, with admirable consistency. The total package. <strong>+${pts} pts</strong>.`,
+        `<strong>${n}</strong> was a liability for 90 minutes. Consistent, committed, chaotic. <strong>+${pts} pts</strong>.`,
+        `<strong>${n}</strong> caused more problems for his own side than the opposition managed all afternoon. <strong>+${pts} pts</strong>.`,
+        `<strong>${n}</strong> had a difficult match and somehow made it look effortless. <strong>+${pts} pts</strong>.`,
       ]);
     }
 
@@ -9391,29 +9977,24 @@ function _renderResults() {
       const pStr   = `<strong>${pts >= 0 ? '+' : ''}${pts} pts</strong>`;
 
       if (evts.length === 0) return pick([
-        `<strong>${n}</strong> completed his passes. Kept his shape. Went home. A man at complete peace with his own mediocrity. ${pStr}.`,
-        `<strong>${n}</strong> was technically on the pitch for 90 minutes. Spiritually, he checked out around the hour mark. ${pStr}.`,
-        `<strong>${n}</strong> touched it fourteen times. None of those touches will live long in the memory. This entry is the most attention he'll ever receive. ${pStr}.`,
-        `<strong>${n}</strong> jogged, passed sideways, jogged back. Repeat. For ninety minutes. The circle of life. ${pStr}.`,
-        `<strong>${n}</strong> positioned himself correctly on every set piece. Nothing came of any of them. A career in miniature. ${pStr}.`,
-        `<strong>${n}</strong> was available for the ball at all times. The ball was not particularly interested. A mutual understanding. ${pStr}.`,
-        `The match happened around <strong>${n}</strong> rather than involving him. Like a rock in a stream. ${pStr}.`,
-        `<strong>${n}</strong> existed. Professionally. For ninety minutes. Collected his wages and went home without incident. ${pStr}.`,
-        `<strong>${n}</strong> made one tackle. Won it. That's the whole story. That's genuinely everything. ${pStr}.`,
-        `The cameras barely found <strong>${n}</strong> all afternoon. The editors knew something we didn't. ${pStr}.`,
-        `<strong>${n}</strong> was neither a help nor a hindrance. A human traffic cone. A man-shaped placeholder. ${pStr}.`,
-        `Ninety minutes. One touch map that looks like someone dropped their phone on the pitch. <strong>${n}</strong>. ${pStr}.`,
+        `<strong>${n}</strong> kept his shape, completed his passes, and went home. ${pStr}.`,
+        `<strong>${n}</strong> was on the pitch. Technically involved. Hard to point to anything specific. ${pStr}.`,
+        `<strong>${n}</strong> touched it several times. Play moved on. Nothing of note. ${pStr}.`,
+        `A quiet afternoon from <strong>${n}</strong>. No disasters, no contributions. Just there. ${pStr}.`,
+        `<strong>${n}</strong> was available for the ball throughout. The ball had other ideas for most of it. ${pStr}.`,
+        `The match happened around <strong>${n}</strong> more than it happened to him. ${pStr}.`,
+        `<strong>${n}</strong> played 90 minutes without doing anything memorable. ${pStr}.`,
+        `One tackle won. One pass misdirected. Mostly just running. <strong>${n}</strong>. ${pStr}.`,
       ]);
       const bits = [];
-      if (evts.includes('yellow')) bits.push(pick(['a booking that surprised nobody','a yellow card, eventually','getting into the referee\'s notebook briefly']));
-      if (evts.includes('sub'))    bits.push(pick(['coming off on the hour','getting the hook — presumably for tactical reasons','being replaced, to little fanfare']));
-      if (evts.includes('goal'))   bits.push(pick(['a goal — noted, filed, forgotten','finding the net once, which is once more than expected']));
-      if (evts.includes('assist')) bits.push(pick(['an assist of sorts','laying one on, technically']));
-      const desc = bits.join(' and ') || 'a deeply average afternoon';
+      if (evts.includes('yellow')) bits.push(pick(['a booking','a yellow card','a caution']));
+      if (evts.includes('sub'))    bits.push(pick(['coming off early','being replaced','getting the hook']));
+      if (evts.includes('goal'))   bits.push(pick(['a goal','finding the net once']));
+      if (evts.includes('assist')) bits.push(pick(['an assist','laying one on']));
+      const desc = bits.join(' and ') || 'an unremarkable afternoon';
       return pick([
-        `<strong>${n}</strong> gave us ${desc}. ${pStr}. Neither one thing nor the other.`,
-        `<strong>${n}</strong> — ${desc}. ${pStr}. Could have been worse. Wasn't much better.`,
-        `${desc.charAt(0).toUpperCase() + desc.slice(1)} from <strong>${n}</strong>. ${pStr}. Make of that what you will.`,
+        `<strong>${n}</strong> — ${desc}. ${pStr}.`,
+        `${desc.charAt(0).toUpperCase() + desc.slice(1)} from <strong>${n}</strong>. ${pStr}.`,
       ]);
     }
 
@@ -9427,39 +10008,37 @@ function _renderResults() {
       const pStr      = `<strong>${pts >= 0 ? '+' : ''}${pts} pts</strong>`;
 
       if (goalCount >= 3) return pick([
-        `<strong>${n}</strong> scored a hat-trick. A hat-trick. You drafted him to be a liability and he scored a hat-trick. You are not okay. ${pStr}.`,
-        `Three goals. <strong>${n}</strong>. In your squad. Helping the wrong cause with extraordinary efficiency and zero self-awareness. ${pStr}. Unforgivable.`,
+        `<strong>${n}</strong> scored a hat-trick. Three goals. In your squad. ${pStr}.`,
+        `Hat-trick for <strong>${n}</strong>. The match ball is his. This was not part of the plan. ${pStr}.`,
       ]);
       if (goalCount === 2) return pick([
-        `<strong>${n}</strong> bagged a brace. Like someone who actually wanted to be useful. The absolute nerve. ${pStr}.`,
-        `Two goals from <strong>${n}</strong>. Two. You needed him distracted and ineffective. He had completely other ideas. ${pStr}.`,
+        `<strong>${n}</strong> scored twice. A brace. Not what was needed. ${pStr}.`,
+        `Two goals from <strong>${n}</strong>. He had a very good afternoon. You did not. ${pStr}.`,
       ]);
       if (goalCount === 1 && astCount >= 1) return pick([
-        `<strong>${n}</strong> scored and assisted. Contributing at both ends of the attacking phase like some kind of professional footballer. Disgusting. ${pStr}.`,
-        `A goal and an assist from <strong>${n}</strong>, who apparently did not receive the brief. ${pStr}. Composed. Useful. Completely wrong for this squad.`,
+        `<strong>${n}</strong> scored and set one up. Both ends of the attacking phase covered. ${pStr}.`,
+        `A goal and an assist from <strong>${n}</strong>. Useful in all the wrong ways. ${pStr}.`,
       ]);
       if (goalCount === 1) return pick([
-        `<strong>${n}</strong> scored a goal. Obviously. Because of course he did. You drafted him specifically to fail and he found the net. ${pStr}. Cheers for that.`,
-        `<strong>${n}</strong> chipped in with a goal like it was nothing. Like it was the most natural thing in the world. ${pStr}. It was not welcome.`,
-        `A goal from <strong>${n}</strong>. Cool. Great. Fantastic. Not what we needed at all but here we are. ${pStr}.`,
+        `<strong>${n}</strong> scored. He had one job, and it was not that. ${pStr}.`,
+        `<strong>${n}</strong> found the net once. Composure, placement, wrong outcome entirely. ${pStr}.`,
+        `A goal from <strong>${n}</strong>. He was calm about it, which made it worse. ${pStr}.`,
       ]);
       if (astCount >= 2) return pick([
-        `<strong>${n}</strong> set up ${astCount} goals. ${astCount}. Running the game, laying things on, making himself useful in ways that actively hurt you. ${pStr}.`,
-        `Two assists from <strong>${n}</strong>, who spent the afternoon doing exactly what you did not want him to do. ${pStr}. Sickeningly competent.`,
+        `<strong>${n}</strong> set up ${astCount} goals. Laid each one on. Nothing you could do about it. ${pStr}.`,
+        `Two assists from <strong>${n}</strong>. He was involved every time it mattered. ${pStr}.`,
       ]);
       if (astCount === 1) return pick([
-        `<strong>${n}</strong> laid one on a plate and that was more than enough of a contribution. An assist. From your squad. ${pStr}.`,
-        `<strong>${n}</strong> set one up with a pass that the commentators called intelligent. Intelligent. In a Worst Eleven squad. ${pStr}.`,
+        `<strong>${n}</strong> set one up. The right ball at the right time. ${pStr}.`,
+        `An assist from <strong>${n}</strong>. He made it look simple. ${pStr}.`,
       ]);
       return pick([
-        `<strong>${n}</strong> kept his position, won his headers, and completed passes with alarming frequency. You needed a disaster. You got a professional. ${pStr}.`,
-        `There was nothing wrong with <strong>${n}</strong>'s performance. That is the problem. That is the whole, entire problem. ${pStr}.`,
-        `<strong>${n}</strong> played the full 90, made no mistakes, and looked like he actually wanted to be there. Completely unusable. ${pStr}.`,
-        `Professional. Composed. Reliable. Three words that should never appear in a Worst Eleven report. And yet. <strong>${n}</strong>. ${pStr}.`,
-        `<strong>${n}</strong> dominated his position so thoroughly the opposition gave up trying to go through him. You did not want that. ${pStr}.`,
-        `You picked <strong>${n}</strong> specifically for his reputation for trouble. He appeared to have read the scouting report and done the opposite. ${pStr}.`,
-        `<strong>${n}</strong> read the game beautifully, stepped in at exactly the right moments, and was quietly excellent for the full 90. You are furious. He is oblivious. ${pStr}.`,
-        `<strong>${n}</strong> made his opposite number look ordinary. You did not want him making anyone look ordinary. You wanted him looking ordinary. ${pStr}.`,
+        `<strong>${n}</strong> had a composed, professional match. Nothing you could fault. ${pStr}.`,
+        `<strong>${n}</strong> won his battles, kept his shape, didn't make mistakes. A solid 90 minutes. ${pStr}.`,
+        `No errors, no drama, no chaos. <strong>${n}</strong> just played football. ${pStr}.`,
+        `<strong>${n}</strong> read the game well and was rarely troubled. Clean sheet for chaos. ${pStr}.`,
+        `<strong>${n}</strong> made himself difficult to get past and easy to rely on. Neither quality was useful today. ${pStr}.`,
+        `Precise passing, good positioning, no incidents. <strong>${n}</strong> did everything right. ${pStr}.`,
       ]);
     }
 
@@ -11249,6 +11828,7 @@ function _mpSimLoop() {
     cancelAnimationFrame(_mpSimRAF);
     _mpSimRAF = null;
     applyFull90();
+    applyV1Stats();
     _mpPushScore();
     mpSimCleanup(); // clean up all sim-phase listeners
     setTimeout(() => showResults(), 2000);
@@ -11284,6 +11864,28 @@ function _mpFireBeat(beat, beats, onDone) {
 
   // ── Clock update ──
   _mpTickClock(beat);
+
+  // ── Silent stat drip beat ──
+  if (beat.isSilent) {
+    const id    = beat.statPlayerId;
+    const pts   = beat.statDelta;
+    const pd    = state.playerData[id];
+    const cap   = captainMultiplier(id);
+    if (pd && pts) {
+      const rawDelta    = pts * cap;
+      const floored     = Math.max(pd.pts + rawDelta, -25);
+      const cappedDelta = floored - pd.pts;
+      if (cappedDelta !== 0) {
+        if (state.myTeam.includes(id)) state.myScore += cappedDelta;
+        // MP mode: oppScore comes from Firebase, not mutated locally
+        pd.pts += cappedDelta;
+      }
+    }
+    updateScoreDisplay(beat.matchMin);
+    renderSimPlayers();
+    if (onDone) onDone();
+    return;
+  }
 
   // ── Half-time beat ──
   if (beat.isHalfTime) {
@@ -11428,21 +12030,26 @@ function _mpTickClock(beat) {
   }, msPerMin);
 }
 
-function _mpApplyBeatEvents(beat) {
+function _mpApplyBeatEvents(beat, suppressTileIds = new Set()) {
   // Same logic as applyBeatEvents inside runBeats
   state.pendingFlashes = [];
   for (const e of beat.events) {
     processSimEvent(e);
-    if (e.type === 'goal') {
+    if (e.type === 'goal' || e.type === 'own_goal') {
       const scorer = getPlayer(e.playerId);
-      if (scorer && scorer.team === 'home') {
-        state.liveHomeScore = (state.liveHomeScore || 0) + 1;
-        const h = document.getElementById('live-home-score');
-        if (h) h.textContent = state.liveHomeScore;
-      } else if (scorer && scorer.team === 'away') {
-        state.liveAwayScore = (state.liveAwayScore || 0) + 1;
-        const a = document.getElementById('live-away-score');
-        if (a) a.textContent = state.liveAwayScore;
+      if (scorer) {
+        const scoringTeam = e.type === 'own_goal'
+          ? (scorer.team === 'home' ? 'away' : 'home')
+          : scorer.team;
+        if (scoringTeam === 'home') {
+          state.liveHomeScore = (state.liveHomeScore || 0) + 1;
+          const h = document.getElementById('live-home-score');
+          if (h) h.textContent = state.liveHomeScore;
+        } else {
+          state.liveAwayScore = (state.liveAwayScore || 0) + 1;
+          const a = document.getElementById('live-away-score');
+          if (a) a.textContent = state.liveAwayScore;
+        }
       }
     }
   }
@@ -11454,10 +12061,10 @@ function _mpApplyBeatEvents(beat) {
     : null;
   updateScoreDisplay(beat.matchMin, primaryEventType);
   renderSimPlayers();
-  (state.pendingFlashes || []).forEach(({ id, delta }) => {
+  (state.pendingFlashes || []).forEach(({ id, delta, eventType }) => {
     // In MP, anticipation tiles tracked in _mpAnticipPlayerIds set (set before calling this)
     const suppress = (window._mpAnticipPlayerIds || new Set()).has(id);
-    flashPlayer(id, delta, suppress);
+    flashPlayer(id, delta, suppress, eventType);
   });
   state.pendingFlashes = [];
 }
